@@ -1,0 +1,10 @@
+# Dependencies
+node_modules/
+docs/
+eslint.config.mjs
+package-lock.json
+package.json
+jsconfig.json
+
+
+

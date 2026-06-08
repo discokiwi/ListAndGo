@@ -1,0 +1,67 @@
+/* Reset and base styles */
+:root {
+  /* Colors from Calm Efficiency design system */
+  --color-primary: #0f5238;
+  --color-primary-container: #2d6a4f;
+  --color-surface: #f9f9fc;
+  --color-surface-soft: #F8F9F8;
+  --color-surface-pure: #FFFFFF;
+  --color-on-primary: #ffffff;
+  --color-on-surface: #1a1c1e;
+  --color-outline: #707973;
+  --color-error: #ba1a1a;
+  --color-success-light: #D8E2DC;
+  
+  /* Typography scales */
+  --font-display-lg: 32px/1.2 'Hanken Grotesk', sans-serif;
+  --font-headline-md: 24px/1.3 'Hanken Grotesk', sans-serif;
+  --font-body-reg: 16px/1.5 'Hanken Grotesk', sans-serif;
+  --font-item-name: 18px/1.4 'Hanken Grotesk', sans-serif;
+  --font-badge-caps: 12px/1 'Hanken Grotesk', sans-serif;
+
+  /* Spacing */
+  --space-base: 8px;
+  --space-gutter: 16px;
+  --space-list-item-gap: 12px;
+  --space-thumb-touch: 48px;
+}
+
+/* Global box‑sizing and font smoothing */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+html {
+  font-family: var(--font-body-reg);
+  color: var(--color-on-surface);
+  background-color: var(--color-surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Simple layout helpers */
+.app-nav {
+  display: flex;
+  justify-content: space-around;
+  padding: var(--space-base);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+.app-nav button {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+main {
+  flex: 1 0 auto;
+  padding: var(--space-gutter);
+}
