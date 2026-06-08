@@ -1,0 +1,142 @@
+/* =============================================
+   List&GO — App Shell Layout
+   Sticky bottom nav + main content area
+   ============================================= */
+
+/* ---- App Shell ---- */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--color-surface);
+}
+
+/* ---- Main content area ---- */
+.app-main {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: var(--spacing-gutter);
+  padding-bottom: calc(56px + var(--safe-area-bottom) + var(--spacing-gutter));
+  /* 56px = nav height, + safe area + extra breathing room */
+}
+
+/* ---- Bottom Navigation ---- */
+.app-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 56px;
+  padding-bottom: var(--safe-area-bottom);
+  background: var(--color-surface-pure);
+  border-top: 1px solid var(--color-outline-variant);
+  box-shadow: var(--shadow-nav);
+}
+
+.app-nav a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: var(--spacing-thumb-touch);
+  min-height: var(--spacing-thumb-touch);
+  color: var(--color-text-dimmed);
+  font: var(--font-badge-caps);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+}
+
+.app-nav a svg {
+  width: 24px;
+  height: 24px;
+  fill: var(--color-text-dimmed);
+  transition: fill 0.2s ease;
+}
+
+.app-nav a[aria-current="page"] {
+  color: var(--color-primary);
+}
+
+.app-nav a[aria-current="page"] svg {
+  fill: var(--color-primary);
+}
+
+/* Settings gear (top-right of nav) */
+.app-nav__settings {
+  position: absolute;
+  right: var(--spacing-gutter);
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: var(--spacing-thumb-touch);
+  min-height: var(--spacing-thumb-touch);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-dimmed);
+}
+
+.app-nav__settings svg {
+  width: 22px;
+  height: 22px;
+  fill: var(--color-text-dimmed);
+}
+
+/* ---- Page sections (router content) ---- */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-gutter);
+}
+
+.page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-base) 0;
+}
+
+.page__title {
+  font: var(--font-display-lg);
+  letter-spacing: var(--ls-display-lg);
+}
+
+.page__subtitle {
+  font: var(--font-body-reg);
+  color: var(--color-on-surface-variant);
+}
+
+/* ---- Loading / Empty states ---- */
+.page-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-gutter);
+  padding: calc(var(--spacing-thumb-touch) * 2) var(--spacing-gutter);
+  text-align: center;
+  color: var(--color-text-dimmed);
+}
+
+.page-empty svg {
+  width: 64px;
+  height: 64px;
+  fill: var(--color-outline-variant);
+}
+
+.page-empty p {
+  color: var(--color-text-dimmed);
+}
+
+/* ---- View Transition overlay ---- */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.3s;
+  animation-timing-function: ease-in-out;
+}

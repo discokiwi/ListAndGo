@@ -1,0 +1,145 @@
+/* =============================================
+   List&GO — Form Inputs, Buttons & Search
+   ============================================= */
+
+/* ---- Text Inputs ---- */
+.input {
+  width: 100%;
+  padding: 12px var(--spacing-gutter);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-default);
+  background: var(--color-surface-container-low);
+  color: var(--color-on-surface);
+  font: var(--font-body-reg);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.input::placeholder {
+  color: var(--color-text-dimmed);
+}
+
+.input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-fixed-dim);
+  outline: none;
+}
+
+.input--search {
+  padding-left: 40px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23636e72'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 12px center;
+  background-size: 20px;
+}
+
+/* ---- Buttons ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-base);
+  min-height: var(--spacing-thumb-touch);
+  padding: 12px 24px;
+  border-radius: var(--radius-default);
+  font: var(--font-body-reg);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+  border: none;
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn--primary {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.btn--primary:hover {
+  background: var(--color-primary-container);
+}
+
+.btn--secondary {
+  background: var(--color-surface-container-high);
+  color: var(--color-on-surface);
+}
+
+.btn--secondary:hover {
+  background: var(--color-surface-container-highest);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--color-primary);
+  padding: 12px 16px;
+}
+
+.btn--ghost:hover {
+  background: var(--color-primary-fixed-dim);
+  color: var(--color-on-primary-fixed);
+}
+
+.btn--danger {
+  background: var(--color-error);
+  color: var(--color-on-error);
+}
+
+.btn--danger:hover {
+  background: var(--color-error-container);
+  color: var(--color-on-error-container);
+}
+
+.btn--small {
+  min-height: 36px;
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+.btn--full {
+  width: 100%;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ---- Select / Label ---- */
+.label {
+  display: block;
+  font: var(--font-unit-label);
+  color: var(--color-on-surface-variant);
+  margin-bottom: 4px;
+}
+
+.select-wrapper {
+  position: relative;
+}
+
+.select-wrapper::after {
+  content: '';
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 6px;
+  background: var(--color-text-dimmed);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  pointer-events: none;
+}
+
+select.input {
+  padding-right: 32px;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}

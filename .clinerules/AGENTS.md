@@ -19,7 +19,7 @@ Before executing any task, you MUST read and adhere to:
 - **Explain the "Why":** Every function/method must include a JSDoc comment explaining the **Business Logic** it serves. Do not just describe the code; describe the intent.
 
 ## 3. Design & Performance
--ALL component hierarchies, layout positions, typography scales, and color variables MUST be sourced directly from our Stitch MCP Server connection.
+-ALL component hierarchies, layout positions, typography scales, and color variables MUST be sourced directly from our Stitch project"408580861323659853"
 - DO NOT manually invent CSS styles, tailwind parameters, or mockup variations without querying the current Stitch Project state.
 - Use the `Grocery List PWA Design` project and `list_screens` MCP tools during initial step planning to verify alignment with our design source of truth.
 
@@ -33,6 +33,5 @@ Before executing any task, you MUST read and adhere to:
 
 - Every line of code must pass the project's ESLint rules configuration (`eslint.config.mjs`) and TypeScript compiler check (`tsc`).
 - Before considering your work complete, you must execute `npm run validate` and fix any reported errors.
-
 - do not read or write files or folders listed in .gitignore
 
