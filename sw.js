@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-nocheck -- Service Worker globals (self, caches, clients) are provided by the SW runtime, not bundled
 // sw.js – Service Worker (offline-first)
 /**
  * Business Logic: Enables the List&GO PWA to work offline by caching static assets.
@@ -7,7 +7,7 @@
  * Bumps CACHE_VERSION to invalidate old caches on deploy.
  */
 
-const CACHE_VERSION = 'listandgo-shell-v2';
+const CACHE_VERSION = 'listandgo-shell-v3';
 const ASSETS = [
   '/',
   '/index.html',
@@ -33,19 +33,23 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_VERSION).then((cache) => cache.addAll(ASSETS))
   );
 });
 
 self.addEventListener('activate', (event) => {
-  // Clean up old caches
+  // Clean up old caches and take control of clients immediately
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter((key) => key !== CACHE_VERSION).map((key) => caches.delete(key))
-      );
-    })
+    Promise.all([
+      clients.claim(),
+      caches.keys().then((keys) => {
+        return Promise.all(
+          keys.filter((key) => key !== CACHE_VERSION).map((key) => caches.delete(key))
+        );
+      })
+    ])
   );
 });
 

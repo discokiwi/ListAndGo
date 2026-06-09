@@ -61,7 +61,11 @@ function updateActiveNav(route) {
 function resolveComponent(route) {
   const tagName = ROUTE_MAP[route];
   if (tagName && customElements.get(tagName)) {
-    return document.createElement(tagName);
+    try {
+      return document.createElement(tagName);
+    } catch (err) {
+      console.error(`Failed to create element for route "${route}":`, err);
+    }
   }
   // Fallback: create a basic page element
   const fallback = document.createElement('section');

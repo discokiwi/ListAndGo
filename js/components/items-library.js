@@ -7,21 +7,22 @@
  * @class
  */
 export class ItemsLibrary extends HTMLElement {
-  /** Construct the component and stamp template content. */
+  /** Construct the component. */
   constructor() {
     super();
-    const tmpl = /** @type {HTMLTemplateElement} */ (document.getElementById('items-library-template'));
-    if (tmpl) {
-      const content = /** @type {DocumentFragment} */ (tmpl.content.cloneNode(true));
-      this.appendChild(content);
-    }
   }
 
   /**
-   * Called when element is added to the DOM. Loads items and renders them.
+   * Called when element is added to the DOM. Stamps template, loads items and renders them.
    * @returns {Promise<void>}
    */
   async connectedCallback() {
+    // Stamp template content on connect (not in constructor — Chrome forbids children in constructor)
+    const tmpl = /** @type {HTMLTemplateElement} */ (document.getElementById('items-library-template'));
+    if (tmpl && !this.hasChildNodes()) {
+      const content = /** @type {DocumentFragment} */ (tmpl.content.cloneNode(true));
+      this.appendChild(content);
+    }
     await this.render();
     // Listen for item changes
     this.addEventListener('item-saved', () => this.render());

@@ -9,14 +9,22 @@
  */
 export class AppNav extends HTMLElement {
   /**
-   * Construct the component and stamp template content.
+   * Construct the component.
    */
   constructor() {
     super();
+  }
+
+  /**
+   * Called when element is added to the DOM. Stamps template and attaches click listeners.
+   * @returns {void}
+   */
+  connectedCallback() {
+    // Stamp template content on connect (not in constructor)
     /** @type {HTMLTemplateElement} */
     const tmpl = /** @type {HTMLTemplateElement} */ (document.getElementById('app-nav-template'));
 
-    if (tmpl) {
+    if (tmpl && !this.hasChildNodes()) {
       /** @type {DocumentFragment} */
       const content = /** @type {DocumentFragment} */ (tmpl.content.cloneNode(true));
       if (!content) {
@@ -25,16 +33,6 @@ export class AppNav extends HTMLElement {
       }
       this.appendChild(content);
     }
-    else {
-      console.error('Template not found');
-    }
-  }
-
-  /**
-   * Attach click listeners after element is added to the DOM.
-   * @returns {void}
-   */
-  connectedCallback() {
     /** @type {HTMLButtonElement[]} */
     const buttons = (Array.from(this.querySelectorAll('button[data-link]')));
     buttons.forEach((btn) => {

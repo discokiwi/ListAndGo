@@ -6,20 +6,22 @@
  * @class
  */
 export class SettingsPanel extends HTMLElement {
-  /** Construct the component and stamp template content. */
+  /** Construct the component. */
   constructor() {
     super();
-    const tmpl = /** @type {HTMLTemplateElement} */ (document.getElementById('settings-template'));
-    if (tmpl) {
-      const content = /** @type {DocumentFragment} */ (tmpl.content.cloneNode(true));
-      this.appendChild(content);
-    }
   }
 
   /**
+   * Called when element is added to the DOM. Stamps template and shows settings.
    * @returns {Promise<void>}
    */
   async connectedCallback() {
+    // Stamp template content on connect (not in constructor)
+    const tmpl = /** @type {HTMLTemplateElement} */ (document.getElementById('settings-template'));
+    if (tmpl && !this.hasChildNodes()) {
+      const content = /** @type {DocumentFragment} */ (tmpl.content.cloneNode(true));
+      this.appendChild(content);
+    }
     const container = this.querySelector('#settings-container');
     if (container) {
       container.innerHTML = `

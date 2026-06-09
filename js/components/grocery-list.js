@@ -7,23 +7,22 @@
  * @class
  */
 export class GroceryList extends HTMLElement {
-  /**
-   * Construct the component and stamp template content.
-   */
+  /** Construct the component. */
   constructor() {
     super();
-    const tmpl = /** @type {HTMLTemplateElement} */ (document.getElementById('grocery-list-template'));
-    if (tmpl) {
-      const content = /** @type {DocumentFragment} */ (tmpl.content.cloneNode(true));
-      this.appendChild(content);
-    }
   }
 
   /**
-   * Called when element is added to the DOM.
+   * Called when element is added to the DOM. Stamps template and shows initial state.
    * @returns {Promise<void>}
    */
   async connectedCallback() {
+    // Stamp template content on connect (not in constructor)
+    const tmpl = /** @type {HTMLTemplateElement} */ (document.getElementById('grocery-list-template'));
+    if (tmpl && !this.hasChildNodes()) {
+      const content = /** @type {DocumentFragment} */ (tmpl.content.cloneNode(true));
+      this.appendChild(content);
+    }
     // Placeholder: will load grocery items from store in future iteration
     const container = this.querySelector('#grocery-list-container');
     if (container) {

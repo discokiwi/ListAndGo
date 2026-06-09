@@ -10,6 +10,15 @@
 
 import { initRouter } from './router.js';
 
+// Import all Web Components so their customElements.define() calls execute.
+// The router creates these elements by tag name, so they must be registered.
+import './components/app-nav.js';
+import './components/grocery-list.js';
+import './components/items-library.js';
+import './components/meal-planner.js';
+import './components/recipe-library.js';
+import './components/settings-panel.js';
+
 /**
  * Register the Service Worker for offline-first support.
  * @returns {Promise<void>}
