@@ -21,29 +21,29 @@
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   -webkit-tap-highlight-color: transparent;
-}
 
-.fab:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(15, 82, 56, 0.4);
-}
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(15, 82, 56, 0.4);
+  }
 
-.fab:active {
-  transform: scale(0.95);
-}
+  &:active {
+    transform: scale(0.95);
+  }
 
-.fab svg {
-  width: 24px;
-  height: 24px;
-  fill: currentColor;
+  & svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+  }
 }
 
 .fab--small {
   width: 40px;
   height: 40px;
-}
 
-.fab--small svg {
-  width: 18px;
-  height: 18px;
+  & svg {
+    width: 18px;
+    height: 18px;
+  }
 }

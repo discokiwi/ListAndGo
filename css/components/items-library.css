@@ -1,0 +1,386 @@
+/* =============================================
+   List&GO — Items Library (Inventory Manager View)
+   Source: Stitch "Inventory Manager - Categorized List View"
+   ============================================= */
+
+/* ---- Search Section ---- */
+.items-search-section {
+  margin-bottom: 4px;
+}
+
+.items-search-wrapper {
+  position: relative;
+}
+
+.items-search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-primary);
+  pointer-events: none;
+
+  & svg {
+    width: 20px;
+    height: 20px;
+    fill: var(--color-primary);
+  }
+}
+
+.items-search-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 96px 0 48px;
+  background: var(--color-surface-pure);
+  border: 1px solid color-mix(in srgb, var(--color-outline-variant) 30%, transparent);
+  border-radius: var(--radius-xl);
+  font: var(--font-body-reg);
+  color: var(--color-on-surface);
+  outline: none;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  -webkit-appearance: none;
+  appearance: none;
+
+  &::placeholder {
+    color: var(--color-on-surface-variant);
+    opacity: 0.6;
+  }
+
+  &:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-fixed-dim) 50%, transparent);
+  }
+}
+
+.items-search-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  padding: 6px 16px;
+  border-radius: var(--radius-default);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Hanken Grotesk', sans-serif;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
+/* ---- Filter Pills ---- */
+.items-filter-pills {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.items-filter-pill {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--color-surface-pure);
+  color: var(--color-on-surface-variant);
+  border: 1px solid color-mix(in srgb, var(--color-outline-variant) 30%, transparent);
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Hanken Grotesk', sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+
+  &:hover {
+    background: var(--color-surface-variant);
+  }
+
+  & svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+  }
+}
+
+.items-filter-pill--active {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border-color: var(--color-primary);
+
+  &:hover {
+    background: var(--color-primary-container);
+  }
+}
+
+/* ---- Inventory List Sections ---- */
+.items-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Category section (collapsible <details>) */
+.items-category {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+
+  & summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    list-style: none;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+  }
+
+  &[open] .items-category-chevron {
+    transform: rotate(180deg);
+  }
+}
+
+.items-category-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px;
+}
+
+.items-category-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: var(--font-badge-caps);
+  letter-spacing: var(--ls-badge-caps);
+  text-transform: uppercase;
+  color: var(--color-text-dimmed);
+  white-space: nowrap;
+}
+
+.items-category-divider {
+  flex: 1;
+  height: 1px;
+  background: color-mix(in srgb, var(--color-outline-variant) 30%, transparent);
+  min-width: 24px;
+}
+
+.items-category-chevron {
+  color: var(--color-on-surface-variant);
+  transition: transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  & svg {
+    width: 20px;
+    height: 20px;
+    fill: var(--color-on-surface-variant);
+  }
+}
+
+.items-category-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* ---- Inventory Item Row ---- */
+.inventory-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: var(--color-surface-pure);
+  border: 1px solid color-mix(in srgb, var(--color-outline-variant) 30%, transparent);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  transition: background 0.15s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background: var(--color-surface-container-low);
+  }
+
+  &:active {
+    transform: scale(0.995);
+  }
+}
+
+.inventory-row-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.inventory-row-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inventory-row-name {
+  font: var(--font-item-name);
+  color: var(--color-on-surface);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inventory-row-favorite {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  transition: opacity 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  & svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+  }
+}
+
+.inventory-row-favorite--off svg {
+  fill: color-mix(in srgb, var(--color-primary) 40%, transparent);
+}
+
+.inventory-row-favorite--off:hover svg {
+  fill: var(--color-primary);
+}
+
+.inventory-row-favorite--on svg {
+  fill: var(--color-primary);
+}
+
+.inventory-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--color-on-surface-variant);
+}
+
+.inventory-row-qty {
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.inventory-row-usage {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.6;
+  font-size: 12px;
+  line-height: 1.2;
+
+  & svg {
+    width: 16px;
+    height: 16px;
+    fill: var(--color-on-surface-variant);
+  }
+}
+
+.inventory-row-add-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--color-surface-muted);
+  color: var(--color-primary);
+  border: none;
+  border-radius: var(--radius-default);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Hanken Grotesk', sans-serif;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+
+  &:active {
+    opacity: 0.9;
+  }
+
+  & svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+  }
+}
+
+/* ---- Toast Notification ---- */
+.items-toast {
+  position: fixed;
+  bottom: calc(56px + var(--safe-area-bottom) + 16px);
+  left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  background: var(--color-on-surface);
+  color: var(--color-surface-soft);
+  padding: 12px 24px;
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Hanken Grotesk', sans-serif;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 200;
+}
+
+.items-toast--visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ---- Empty State ---- */
+.items-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 64px 20px;
+  text-align: center;
+  color: var(--color-text-dimmed);
+
+  & p {
+    font: var(--font-body-reg);
+    color: var(--color-text-dimmed);
+  }
+}

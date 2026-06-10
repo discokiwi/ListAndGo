@@ -62,10 +62,10 @@
 
 .app-nav a[aria-current="page"] {
   color: var(--color-primary);
-}
 
-.app-nav a[aria-current="page"] svg {
-  fill: var(--color-primary);
+  & svg {
+    fill: var(--color-primary);
+  }
 }
 
 /* Settings gear (top-right of nav) */

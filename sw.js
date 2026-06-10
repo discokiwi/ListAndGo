@@ -2,12 +2,13 @@
 // sw.js – Service Worker (offline-first)
 /**
  * Business Logic: Enables the List&GO PWA to work offline by caching static assets.
- * Uses Cache-First strategy for the app shell (HTML, CSS, JS) and
+ * Uses Stale-While-Revalidate for the app shell (HTML, CSS, JS) so updates
+ * are picked up automatically on next page load, and
  * Network-First for API calls. On install, precaches all shell assets.
  * Bumps CACHE_VERSION to invalidate old caches on deploy.
  */
 
-const CACHE_VERSION = 'listandgo-shell-v3';
+const CACHE_VERSION = 'listandgo-shell-v4';
 const ASSETS = [
   '/',
   '/index.html',
@@ -57,10 +58,20 @@ self.addEventListener('fetch', (event) => {
   // Cache-First for shell assets, Network-First for everything else
   const url = new URL(event.request.url);
 
-  // For app shell assets, serve from cache first (network fallback)
+  // For app shell assets, stale-while-revalidate: serve cached instantly,
+  // then update cache from network in background for next time
   if (ASSETS.includes(url.pathname)) {
     event.respondWith(
-      caches.match(event.request).then((cached) => cached || fetch(event.request))
+      caches.match(event.request).then((cached) => {
+        // Return cached version immediately (works offline)
+        // Then fetch fresh version and update cache for next time
+        const fetchPromise = fetch(event.request).then((response) => {
+          const clone = response.clone();
+          caches.open(CACHE_VERSION).then((cache) => cache.put(event.request, clone));
+          return response;
+        }).catch(() => cached);
+        return cached || fetchPromise;
+      })
     );
   } else {
     // For everything else (API calls, fonts, etc.), network first with cache fallback

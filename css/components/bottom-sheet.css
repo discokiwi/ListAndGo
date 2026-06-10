@@ -20,17 +20,17 @@
   overflow: hidden;
   /* Slide-up animation handled via CSS */
   transition: transform 0.3s ease, opacity 0.3s ease;
-}
 
-/* Slide-up enter/exit via dialog.open */
-.bottom-sheet:not([open]) {
-  display: none;
-}
+  /* Slide-up enter/exit via dialog.open */
+  &:not([open]) {
+    display: none;
+  }
 
-.bottom-sheet::backdrop {
-  background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  &::backdrop {
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
 }
 
 .bottom-sheet__content {
@@ -73,16 +73,16 @@
   color: var(--color-text-dimmed);
   border-radius: var(--radius-full);
   transition: background 0.2s ease;
-}
 
-.bottom-sheet__close:hover {
-  background: var(--color-surface-container-high);
-}
+  &:hover {
+    background: var(--color-surface-container-high);
+  }
 
-.bottom-sheet__close svg {
-  width: 20px;
-  height: 20px;
-  fill: currentColor;
+  & svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
 }
 
 .bottom-sheet__body {
@@ -98,8 +98,8 @@
   flex-shrink: 0;
   padding-top: var(--spacing-gutter);
   border-top: 1px solid var(--color-outline-variant);
-}
 
-.bottom-sheet__actions > * {
-  flex: 1;
+  & > * {
+    flex: 1;
+  }
 }

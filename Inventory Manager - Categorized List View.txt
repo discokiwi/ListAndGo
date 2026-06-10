@@ -1,0 +1,429 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>Inventory Database | List&amp;GO</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary": "#53634e",
+                    "outline": "#707973",
+                    "primary-fixed": "#b1f0ce",
+                    "text-dimmed": "#636E72",
+                    "on-primary-fixed-variant": "#0e5138",
+                    "on-primary": "#ffffff",
+                    "on-tertiary-container": "#ffcfce",
+                    "inverse-primary": "#95d4b3",
+                    "success-light": "#D8E2DC",
+                    "on-error-container": "#93000a",
+                    "on-primary-fixed": "#002114",
+                    "surface": "#f9f9fc",
+                    "on-surface-variant": "#404943",
+                    "surface-tint": "#2c694e",
+                    "surface-pure": "#FFFFFF",
+                    "tertiary-fixed-dim": "#ffb3b3",
+                    "surface-container-low": "#f3f3f6",
+                    "surface-bright": "#f9f9fc",
+                    "on-secondary-fixed-variant": "#3b4b38",
+                    "tertiary-container": "#8d4d4e",
+                    "surface-soft": "#F8F9F8",
+                    "secondary-container": "#d3e5cb",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-surface": "#2f3133",
+                    "on-secondary-fixed": "#111f0f",
+                    "on-secondary-container": "#576752",
+                    "secondary-fixed": "#d6e8ce",
+                    "tertiary": "#713638",
+                    "surface-muted": "#EEF1EF",
+                    "inverse-on-surface": "#f0f0f3",
+                    "on-background": "#1a1c1e",
+                    "on-tertiary-fixed-variant": "#6f3537",
+                    "background": "#f9f9fc",
+                    "secondary-fixed-dim": "#baccb3",
+                    "error-container": "#ffdad6",
+                    "surface-container-high": "#e8e8ea",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "surface-container": "#eeeef0",
+                    "outline-variant": "#bfc9c1",
+                    "on-primary-container": "#a8e7c5",
+                    "primary": "#0f5238",
+                    "surface-variant": "#e2e2e5",
+                    "tertiary-fixed": "#ffdad9",
+                    "on-surface": "#1a1c1e",
+                    "primary-fixed-dim": "#95d4b3",
+                    "surface-dim": "#dadadc",
+                    "error": "#ba1a1a",
+                    "primary-container": "#2d6a4f",
+                    "on-tertiary-fixed": "#390b0e",
+                    "surface-container-highest": "#e2e2e5",
+                    "on-error": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "safe-margin": "20px",
+                    "base": "8px",
+                    "thumb-touch": "48px",
+                    "gutter": "16px",
+                    "list-item-gap": "12px"
+            },
+            "fontFamily": {
+                    "badge-caps": ["Hanken Grotesk"],
+                    "headline-md": ["Hanken Grotesk"],
+                    "item-name": ["Hanken Grotesk"],
+                    "display-lg": ["Hanken Grotesk"],
+                    "unit-label": ["Hanken Grotesk"],
+                    "body-reg": ["Hanken Grotesk"]
+            },
+            "fontSize": {
+                    "badge-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "item-name": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "display-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "unit-label": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "400"}],
+                    "body-reg": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .filled-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+        body {
+            background-color: #F8F9F8;
+            font-family: 'Hanken Grotesk', sans-serif;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        details > summary::-webkit-details-marker { display: none; }
+        details > summary { list-style: none; }
+        
+        .inventory-row:hover {
+            background-color: #f3f3f6;
+        }
+        .inventory-row:active { transform: scale(0.995); transition: transform 0.1s ease; }
+    </style>
+</head>
+<body class="flex min-h-screen">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col h-full border-r border-outline-variant fixed left-0 top-0 w-64 bg-surface-pure p-4 shadow-[0_4px_20px_rgba(0,0,0,0.05)] z-20">
+<div class="mb-8 px-2">
+<h1 class="font-display-lg text-display-lg text-primary">List&amp;GO</h1>
+<p class="text-on-surface-variant text-sm mt-1">Master List</p>
+<p class="text-on-surface-variant text-xs opacity-60">Central Management</p>
+</div>
+<nav class="flex-grow space-y-2">
+<a class="text-on-surface-variant flex items-center gap-list-item-gap p-3 hover:bg-surface-muted transition-all rounded-xl" href="#">
+<span class="material-symbols-outlined">shopping_cart</span>
+<span class="font-item-name text-item-name">Grocery List</span>
+</a>
+<a class="text-on-surface-variant flex items-center gap-list-item-gap p-3 hover:bg-surface-muted transition-all rounded-xl" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="font-item-name text-item-name">Meal Plan</span>
+</a>
+<a class="text-on-surface-variant flex items-center gap-list-item-gap p-3 hover:bg-surface-muted transition-all rounded-xl" href="#">
+<span class="material-symbols-outlined">restaurant_menu</span>
+<span class="font-item-name text-item-name">Recipes</span>
+</a>
+<a class="bg-secondary-container text-on-secondary-container rounded-xl flex items-center gap-list-item-gap p-3 shadow-sm" href="#">
+<span class="material-symbols-outlined filled-icon">inventory_2</span>
+<span class="font-item-name text-item-name">Inventory</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 space-y-4">
+<button class="w-full bg-primary text-on-primary py-3 px-4 rounded-xl font-body-reg hover:opacity-90 active:scale-95 transition-all">
+            Add Custom Item
+        </button>
+<div class="flex items-center gap-3 px-3 py-2">
+<div class="w-8 h-8 rounded-full bg-surface-container overflow-hidden">
+<img alt="User Profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJJqPVZBGhFmgha0CtibcrqZ80TuAWfWBxfuxqrno9V3Z2jQ4HlbWXszj7L07vkHdoSFjsRQF0PAV5SaOu1rLT6WQ-wieAhkKtWv955h4PfDDindn7rvEvHuDKpHwaTf1z9IwHwflavES1J9QtQ-O1xRr2v-HkaYyt43VlO6RRgcn2KrKwWfCRmYa8qHRDIduegdYPP75zJFXAUMk9t9_rYYT_aETVzMHwi9ctK2eOxoZ4NH_wCsrXBNi7WIIwQ2xtRxhW5XUhzQ" class="">
+</div>
+<div>
+<p class="text-on-surface font-semibold text-sm">User Profile</p>
+</div>
+</div>
+<a class="text-on-surface-variant flex items-center gap-list-item-gap p-3 hover:bg-surface-muted transition-all rounded-xl" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-item-name text-item-name">Settings</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-grow flex flex-col md:ml-64 relative bg-surface-soft min-h-screen">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-safe-margin h-16 bg-surface-soft sticky top-0 z-10">
+<div class="flex items-center gap-4">
+<button class="md:hidden text-primary p-2">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h2 class="font-headline-md text-headline-md text-primary">Item list</h2>
+</div>
+<div class="flex items-center gap-base">
+<div class="relative hidden sm:block">
+<input class="bg-surface-pure border-none rounded-full px-10 py-2 w-64 shadow-sm text-on-surface focus:ring-2 focus:ring-primary-container focus:ring-opacity-30 transition-all text-sm" placeholder="Search items..." type="text">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant opacity-60">search</span>
+</div>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors active:opacity-80">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors active:opacity-80">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Content Area -->
+<div class="px-safe-margin py-base flex flex-col gap-4 max-w-[1024px] mx-auto w-full pb-24">
+<!-- Search-First Header -->
+<section class="mb-2">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">search</span>
+<input class="w-full h-12 pl-12 pr-4 bg-surface-pure rounded-xl border border-outline-variant/30 shadow-sm focus:ring-2 focus:ring-primary focus:border-primary font-body-reg text-body-reg transition-all outline-none" placeholder="Search ingredients or categories..." type="text">
+<button class="absolute right-4 top-1/2 -translate-y-1/2 bg-primary text-on-primary px-4 py-1.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-all">Search</button>
+</div>
+<!-- Filter Pills -->
+<div class="flex gap-2 mt-4 overflow-x-auto no-scrollbar pb-2">
+<button class="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 bg-primary text-on-primary rounded-full text-sm font-semibold whitespace-nowrap">
+<span class="material-symbols-outlined text-sm filled-icon">star</span> Favorites
+                </button>
+<button class="flex-shrink-0 bg-surface-pure text-on-surface-variant border border-outline-variant/30 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap hover:bg-surface-variant transition-colors">All Items</button>
+<button class="flex-shrink-0 bg-surface-pure text-on-surface-variant border border-outline-variant/30 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap hover:bg-surface-variant transition-colors">Produce</button>
+<button class="flex-shrink-0 bg-surface-pure text-on-surface-variant border border-outline-variant/30 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap hover:bg-surface-variant transition-colors">Dairy</button>
+<button class="flex-shrink-0 bg-surface-pure text-on-surface-variant border border-outline-variant/30 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap hover:bg-surface-variant transition-colors">Pantry</button>
+<button class="flex-shrink-0 bg-surface-pure text-on-surface-variant border border-outline-variant/30 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap hover:bg-surface-variant transition-colors">Freezer</button>
+</div>
+</section>
+<!-- Inventory List Sections -->
+<div class="space-y-4">
+<!-- Produce Category -->
+<details class="group" open="">
+<summary class="flex items-center justify-between py-2 cursor-pointer select-none">
+<div class="flex items-center justify-between w-full gap-4">
+<div class="flex items-center gap-2">
+<span class="font-badge-caps text-badge-caps text-text-dimmed">PRODUCE (2)</span>
+</div>
+<div class="h-px flex-grow bg-outline-variant/30"></div>
+<span class="material-symbols-outlined text-on-surface-variant transition-transform group-open:rotate-180">expand_more</span>
+</div>
+</summary>
+<div class="mt-2 space-y-2">
+<!-- Item Row: Hass Avocados -->
+<div class="inventory-row flex items-center justify-between p-3 bg-surface-pure rounded-xl border border-outline-variant/30 shadow-sm transition-all">
+<div class="flex-grow">
+<div class="flex items-center gap-2">
+<span class="font-item-name text-item-name text-on-surface">Hass Avocados</span>
+<button class="text-primary/40 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">star</span>
+</button>
+</div>
+<div class="flex items-center gap-3 text-xs text-on-surface-variant">
+<span class="">3 pcs</span>
+<span class="flex items-center gap-1 opacity-60">
+<span class="material-symbols-outlined text-sm">repeat</span>
+<span class="">Recurring</span>
+</span>
+</div>
+</div>
+<button class="bg-surface-muted text-primary px-4 py-2 rounded-lg font-semibold text-sm hover:bg-primary hover:text-on-primary transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add_shopping_cart</span>
+<span class="hidden sm:inline">Add to List</span>
+</button>
+</div>
+<!-- Item Row: Apples -->
+<div class="inventory-row flex items-center justify-between p-3 bg-surface-pure rounded-xl border border-outline-variant/30 shadow-sm transition-all">
+<div class="flex-grow">
+<div class="flex items-center gap-2">
+<span class="font-item-name text-item-name text-on-surface">Honey Crisp Apples</span>
+<button class="text-primary">
+<span class="material-symbols-outlined text-lg filled-icon">star</span>
+</button>
+</div>
+<div class="flex items-center gap-3 text-xs text-on-surface-variant">
+<span class="">6 units</span>
+<span class="flex items-center gap-1 opacity-60">
+<span class="material-symbols-outlined text-sm">history</span>
+<span class="">One-time use</span>
+</span>
+</div>
+</div>
+<button class="bg-surface-muted text-primary px-4 py-2 rounded-lg font-semibold text-sm hover:bg-primary hover:text-on-primary transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add_shopping_cart</span>
+<span class="hidden sm:inline">Add to List</span>
+</button>
+</div>
+</div>
+</details>
+<!-- Dairy Category -->
+<details class="group" open="">
+<summary class="flex items-center justify-between py-2 cursor-pointer select-none">
+<div class="flex items-center justify-between w-full gap-4">
+<div class="flex items-center gap-2">
+<span class="font-badge-caps text-badge-caps text-text-dimmed">DAIRY (2)</span>
+</div>
+<div class="h-px flex-grow bg-outline-variant/30"></div>
+<span class="material-symbols-outlined text-on-surface-variant transition-transform group-open:rotate-180">expand_more</span>
+</div>
+</summary>
+<div class="mt-2 space-y-2">
+<!-- Item Row: Whole Milk -->
+<div class="inventory-row flex items-center justify-between p-3 bg-surface-pure rounded-xl border border-outline-variant/30 shadow-sm transition-all">
+<div class="flex-grow">
+<div class="flex items-center gap-2">
+<span class="font-item-name text-item-name text-on-surface">Whole Milk</span>
+<button class="text-primary">
+<span class="material-symbols-outlined text-lg filled-icon">star</span>
+</button>
+</div>
+<div class="flex items-center gap-3 text-xs text-on-surface-variant">
+<span class="">1 Litre</span>
+<span class="flex items-center gap-1 opacity-60">
+<span class="material-symbols-outlined text-sm">history</span>
+<span class="">One-time use</span>
+</span>
+</div>
+</div>
+<button class="bg-surface-muted text-primary px-4 py-2 rounded-lg font-semibold text-sm hover:bg-primary hover:text-on-primary transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add_shopping_cart</span>
+<span class="hidden sm:inline">Add to List</span>
+</button>
+</div>
+<!-- Item Row: Greek Yogurt -->
+<div class="inventory-row flex items-center justify-between p-3 bg-surface-pure rounded-xl border border-outline-variant/30 shadow-sm transition-all">
+<div class="flex-grow">
+<div class="flex items-center gap-2">
+<span class="font-item-name text-item-name text-on-surface">Greek Yogurt</span>
+<button class="text-primary/40 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">star</span>
+</button>
+</div>
+<div class="flex items-center gap-3 text-xs text-on-surface-variant">
+<span class="">500g</span>
+<span class="flex items-center gap-1 opacity-60">
+<span class="material-symbols-outlined text-sm">history</span>
+<span class="">One-time use</span>
+</span>
+</div>
+</div>
+<button class="bg-surface-muted text-primary px-4 py-2 rounded-lg font-semibold text-sm hover:bg-primary hover:text-on-primary transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add_shopping_cart</span>
+<span class="hidden sm:inline">Add to List</span>
+</button>
+</div>
+</div>
+</details>
+<!-- Pantry Category -->
+<details class="group" open="">
+<summary class="flex items-center justify-between py-2 cursor-pointer select-none">
+<div class="flex items-center justify-between w-full gap-4">
+<div class="flex items-center gap-2">
+<span class="font-badge-caps text-badge-caps text-text-dimmed">PANTRY (1)</span>
+</div>
+<div class="h-px flex-grow bg-outline-variant/30"></div>
+<span class="material-symbols-outlined text-on-surface-variant transition-transform group-open:rotate-180">expand_more</span>
+</div>
+</summary>
+<div class="mt-2 space-y-2">
+<div class="inventory-row flex items-center justify-between p-3 bg-surface-pure rounded-xl border border-outline-variant/30 shadow-sm transition-all">
+<div class="flex-grow">
+<div class="flex items-center gap-2">
+<span class="font-item-name text-item-name text-on-surface">Basmati Rice</span>
+<button class="text-primary">
+<span class="material-symbols-outlined text-lg filled-icon">star</span>
+</button>
+</div>
+<div class="flex items-center gap-3 text-xs text-on-surface-variant">
+<span class="">5 kg</span>
+<span class="flex items-center gap-1 opacity-60">
+<span class="material-symbols-outlined text-sm">repeat</span>
+<span class="">Recurring</span>
+</span>
+</div>
+</div>
+<button class="bg-surface-muted text-primary px-4 py-2 rounded-lg font-semibold text-sm hover:bg-primary hover:text-on-primary transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add_shopping_cart</span>
+<span class="hidden sm:inline">Add to List</span>
+</button>
+</div>
+</div>
+</details>
+</div>
+</div>
+<!-- Floating Action Button (Mobile Only) -->
+<button class="md:hidden fixed bottom-20 right-6 w-14 h-14 bg-primary text-on-primary rounded-full shadow-lg flex items-center justify-center z-30 active:scale-90 transition-transform">
+<span class="material-symbols-outlined">add</span>
+</button>
+</main>
+<!-- Mobile Bottom Navigation -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full bg-surface-pure border-t border-outline-variant flex justify-around py-3 z-30 px-safe-margin">
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined">shopping_cart</span>
+<span class="text-[10px] font-bold">LIST</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="text-[10px] font-bold">MEAL</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined filled-icon">inventory_2</span>
+<span class="text-[10px] font-bold">STOCK</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined">list_alt</span>
+<span class="text-[10px] font-bold">ITEMS</span>
+</a>
+</nav>
+<!-- Simple Feedback Toast -->
+<div class="fixed bottom-24 left-1/2 -translate-x-1/2 bg-on-surface text-surface-soft px-6 py-3 rounded-full text-sm font-semibold shadow-xl opacity-0 translate-y-4 pointer-events-none transition-all duration-300 z-50" id="toast">
+    Added to Grocery List
+</div>
+<script>
+    // Star toggle interaction
+    document.querySelectorAll('.inventory-row button:first-of-type').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const icon = this.querySelector('span');
+            const isFilled = icon.classList.contains('filled-icon');
+            
+            if (isFilled) {
+                icon.classList.remove('filled-icon');
+                this.classList.replace('text-primary', 'text-primary/40');
+            } else {
+                icon.classList.add('filled-icon');
+                this.classList.replace('text-primary/40', 'text-primary');
+            }
+        });
+    });
+
+    // Add to list interaction
+    document.querySelectorAll('.inventory-row button:last-of-type').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const toast = document.getElementById('toast');
+            toast.classList.remove('opacity-0', 'translate-y-4');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-4');
+                toast.classList.remove('opacity-100', 'translate-y-0');
+            }, 2000);
+        });
+    });
+</script>
+
+
+</body></html>

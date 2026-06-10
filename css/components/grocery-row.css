@@ -56,10 +56,10 @@
   border-bottom: 1px solid var(--color-outline-variant);
   transition: opacity 0.2s ease;
   -webkit-tap-highlight-color: transparent;
-}
 
-.grocery-row:last-child {
-  border-bottom: none;
+  &:last-child {
+    border-bottom: none;
+  }
 }
 
 /* Left: quantity + name */
@@ -108,32 +108,34 @@
   cursor: pointer;
   transition: background 0.2s ease, border-color 0.2s ease;
   -webkit-tap-highlight-color: transparent;
-}
 
-.grocery-row__check svg {
-  width: 20px;
-  height: 20px;
-  fill: transparent;
-  transition: fill 0.2s ease;
+  & svg {
+    width: 20px;
+    height: 20px;
+    fill: transparent;
+    transition: fill 0.2s ease;
+  }
 }
 
 /* ---- Checked (in-cart) state ---- */
-.grocery-row--checked .grocery-row__name {
-  color: var(--color-text-dimmed);
-  text-decoration: line-through;
-}
+.grocery-row--checked {
+  & .grocery-row__name {
+    color: var(--color-text-dimmed);
+    text-decoration: line-through;
+  }
 
-.grocery-row--checked .grocery-row__qty {
-  color: var(--color-text-dimmed);
-}
+  & .grocery-row__qty {
+    color: var(--color-text-dimmed);
+  }
 
-.grocery-row--checked .grocery-row__check {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-}
+  & .grocery-row__check {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
 
-.grocery-row--checked .grocery-row__check svg {
-  fill: var(--color-on-primary);
+    & svg {
+      fill: var(--color-on-primary);
+    }
+  }
 }
 
 /* Script link indicator */

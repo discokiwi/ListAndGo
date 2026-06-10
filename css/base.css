@@ -53,10 +53,10 @@ p {
 a {
   color: var(--color-primary);
   text-decoration: none;
-}
 
-a:hover {
-  text-decoration: underline;
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 /* Buttons reset */
@@ -67,12 +67,12 @@ button {
   background: none;
   color: inherit;
   font: inherit;
-}
 
-button:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-  border-radius: var(--radius-default);
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-default);
+  }
 }
 
 /* Lists reset */
@@ -98,12 +98,12 @@ input, select, textarea {
   padding: var(--spacing-base) var(--spacing-gutter);
   width: 100%;
   transition: border-color 0.2s ease;
-}
 
-input:focus, select:focus, textarea:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px var(--color-primary-fixed-dim);
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px var(--color-primary-fixed-dim);
+  }
 }
 
 /* Selection */
