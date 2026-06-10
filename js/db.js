@@ -19,6 +19,7 @@
  * @property {string} unitId - Reference to a unit of measurement.
  * @property {number} defaultQty - Default quantity for the item.
  * @property {boolean} isEssential - Whether the item appears in the Essentials quick-add sheet.
+ * @property {boolean} isOneTime - Whether the item is a single-use consumable (e.g. milk) vs multi-use (e.g. pepper).
  * @property {string} updatedAt - ISO timestamp for sync conflict resolution.
  * @property {number} isSynced - 0 = dirty, 1 = synced.
  */
@@ -174,7 +175,7 @@ export class ListAndGoDB extends Dexie {
   constructor() {
     super('listandgo-db');
     this.version(1).stores({
-      items: 'id, familyId, name, categoryId, isEssential, updatedAt, isSynced',
+      items: 'id, familyId, name, categoryId, isEssential, isOneTime, updatedAt, isSynced',
       categories: 'id, familyId, name, updatedAt, isSynced',
       units: 'id, familyId, name, updatedAt, isSynced',
       recipes: 'id, familyId, title, categoryId, prepTime, servingsBase, updatedAt, isSynced',

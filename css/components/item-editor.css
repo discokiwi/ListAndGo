@@ -1,0 +1,474 @@
+/* =============================================
+   List&GO — Item Editor Side Drawer
+   Source: Stitch "Edit Item - Inventory Manager" side drawer design
+   ============================================= */
+
+/* ---- Side Drawer Container ---- */
+.side-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Backdrop overlay */
+.side-drawer__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* ---- Drawer Panel ---- */
+.side-drawer__content {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  height: 100%;
+  background: var(--color-surface-pure);
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.25s ease-out;
+  z-index: 1;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* ---- Header ---- */
+.side-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-surface-muted);
+  flex-shrink: 0;
+  min-height: 60px;
+}
+
+.side-drawer__header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.side-drawer__back {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  border-radius: var(--radius-full);
+  color: var(--color-on-surface-variant);
+  cursor: pointer;
+  transition: background 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background: var(--color-surface-muted);
+  }
+
+  & svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+  }
+}
+
+.side-drawer__title {
+  font: var(--font-headline-md);
+  color: var(--color-primary);
+  margin: 0;
+}
+
+.side-drawer__delete {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-lg);
+  background: none;
+  color: var(--color-error);
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background: var(--color-error-container);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+/* ---- Scrollable Body ---- */
+.side-drawer__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 20px;
+}
+
+/* ---- Footer (Action Buttons) ---- */
+.side-drawer__footer {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  padding-bottom: calc(16px + var(--safe-area-bottom));
+  border-top: 1px solid var(--color-surface-muted);
+  flex-shrink: 0;
+}
+
+.side-drawer__btn {
+  height: 48px;
+  border-radius: var(--radius-xl);
+  font-family: 'Hanken Grotesk', sans-serif;
+  font: var(--font-item-name);
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+.side-drawer__btn--secondary {
+  flex: 1;
+  background: var(--color-surface-muted);
+  color: var(--color-on-surface-variant);
+
+  &:hover {
+    background: var(--color-surface-variant);
+  }
+}
+
+.side-drawer__btn--primary {
+  flex: 2;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: 0 4px 12px rgba(15, 82, 56, 0.3);
+
+  &:hover {
+    opacity: 0.9;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* =============================================
+   Form Styles (inside .side-drawer__body)
+   ============================================= */
+
+.ie-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.ie-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ie-field--half {
+  flex: 1;
+  min-width: 0;
+}
+
+.ie-label {
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-on-surface-variant);
+}
+
+.ie-input {
+  width: 100%;
+  height: 56px;
+  padding: 0 16px;
+  background: var(--color-surface-soft);
+  border: none;
+  border-radius: var(--radius-xl);
+  font-family: 'Hanken Grotesk', sans-serif;
+  font: var(--font-item-name);
+  color: var(--color-on-surface);
+  outline: none;
+  transition: box-shadow 0.2s ease;
+
+  &::placeholder {
+    color: var(--color-outline-variant);
+  }
+
+  &:focus {
+    box-shadow: inset 0 0 0 2px var(--color-primary);
+  }
+}
+
+.ie-row {
+  display: flex;
+  gap: 16px;
+}
+
+/* Custom Select Wrapper */
+.ie-select-wrap {
+  position: relative;
+}
+
+.ie-select {
+  width: 100%;
+  height: 56px;
+  padding: 0 40px 0 16px;
+  background: var(--color-surface-soft);
+  border: none;
+  border-radius: var(--radius-xl);
+  font-family: 'Hanken Grotesk', sans-serif;
+  font: var(--font-body-reg);
+  color: var(--color-on-surface);
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease;
+
+  &:focus {
+    box-shadow: inset 0 0 0 2px var(--color-primary);
+  }
+}
+
+.ie-select-chevron {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  fill: var(--color-on-surface-variant);
+  pointer-events: none;
+}
+
+/* Quantity Stepper */
+.ie-stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-surface-soft);
+  border-radius: var(--radius-xl);
+  padding: 8px;
+  height: 56px;
+}
+
+.ie-stepper-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface-pure);
+  border: none;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background: var(--color-surface-container-high);
+  }
+
+  &:active {
+    transform: scale(0.9);
+  }
+
+  & svg {
+    width: 20px;
+    height: 20px;
+    fill: var(--color-on-surface);
+  }
+}
+
+.ie-stepper-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  text-align: center;
+  font: var(--font-headline-md);
+  color: var(--color-on-surface);
+  outline: none;
+  -moz-appearance: textfield;
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+/* ---- Toggles ---- */
+.ie-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 8px;
+}
+
+.ie-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ie-toggle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ie-toggle-label {
+  font: var(--font-item-name);
+  color: var(--color-on-surface);
+}
+
+.ie-toggle-sub {
+  font: var(--font-unit-label);
+  color: var(--color-on-surface-variant);
+}
+
+/* iOS-style Switch */
+.ie-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.ie-switch-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.ie-switch-track {
+  position: absolute;
+  inset: 0;
+  background: var(--color-outline-variant);
+  border-radius: 9999px;
+  transition: background 0.2s ease;
+  cursor: pointer;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease;
+  }
+}
+
+.ie-switch-input:checked + .ie-switch-track {
+  background: var(--color-primary);
+
+  &::after {
+    transform: translateX(20px);
+  }
+}
+
+/* Star button */
+.ie-star-btn {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: background 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background: var(--color-surface-muted);
+  }
+
+  & svg {
+    width: 28px;
+    height: 28px;
+    fill: var(--color-on-surface-variant);
+    transition: fill 0.2s ease;
+  }
+}
+
+.ie-star-btn--on svg {
+  fill: #f59e0b;
+}
+
+/* ---- Duplicate Item Button ---- */
+.ie-duplicate {
+  padding-top: 16px;
+  border-top: 1px solid var(--color-surface-muted);
+}
+
+.ie-duplicate-btn {
+  width: 100%;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: none;
+  border: 2px solid var(--color-outline-variant);
+  border-radius: var(--radius-xl);
+  font-family: 'Hanken Grotesk', sans-serif;
+  font: var(--font-item-name);
+  color: var(--color-on-surface-variant);
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background: var(--color-surface-muted);
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  & svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
+}

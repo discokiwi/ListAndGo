@@ -21,6 +21,7 @@
   <link rel="stylesheet" href="css/components/inputs.css" />
   <link rel="stylesheet" href="css/components/grocery-row.css" />
   <link rel="stylesheet" href="css/components/items-library.css" />
+  <link rel="stylesheet" href="css/components/item-editor.css" />
 
   <link rel="manifest" href="manifest.webmanifest" />
 </head>
@@ -169,28 +170,38 @@
     </template>
 
     <!-- ============================================= -->
-    <!-- Bottom Sheet Dialogs                          -->
+    <!-- Side Drawer Dialogs                           -->
     <!-- ============================================= -->
 
-    <!-- Add/Edit Item Sheet -->
-    <dialog class="bottom-sheet" id="item-editor-sheet">
-      <div class="bottom-sheet__content">
-        <div class="bottom-sheet__handle"></div>
-        <div class="bottom-sheet__header">
-          <h2 class="bottom-sheet__title" id="item-editor-title">Add Item</h2>
-          <button class="bottom-sheet__close" id="item-editor-close" aria-label="Close">
-            <svg width="20" height="20" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+    <!-- Add/Edit Item Drawer (Stitch "Edit Item - Inventory Manager" side drawer) -->
+    <!-- Uses a div rather than <dialog> because Chromium's top-layer layout for
+         showModal() doesn't support display:flex + justify-content:flex-end.
+         This div is shown/hidden via inline styles. -->
+    <div class="side-drawer" id="item-editor-sheet" style="display:none">
+      <div class="side-drawer__backdrop" id="item-editor-overlay"></div>
+      <div class="side-drawer__content">
+        <div class="side-drawer__header">
+          <div class="side-drawer__header-left">
+            <button class="side-drawer__back" id="item-editor-close" aria-label="Close">
+              <svg width="24" height="24" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+            </button>
+            <h2 class="side-drawer__title" id="item-editor-title">Edit Item</h2>
+          </div>
+          <button class="side-drawer__delete" id="item-editor-delete-btn" aria-label="Delete item">
+            DELETE ITEM
           </button>
         </div>
-        <div class="bottom-sheet__body" id="item-editor-body">
+
+        <div class="side-drawer__body" id="item-editor-body">
           <!-- Rendered by item-editor component -->
         </div>
-        <div class="bottom-sheet__actions">
-          <button class="btn btn--secondary" id="item-editor-cancel">Cancel</button>
-          <button class="btn btn--primary" id="item-editor-save">Save</button>
+
+        <div class="side-drawer__footer">
+          <button class="side-drawer__btn side-drawer__btn--secondary" id="item-editor-cancel">Cancel</button>
+          <button class="side-drawer__btn side-drawer__btn--primary" id="item-editor-save">Save Changes</button>
         </div>
       </div>
-    </dialog>
+    </div>
 
     <!-- Add/Edit Recipe Sheet -->
     <dialog class="bottom-sheet" id="recipe-editor-sheet">

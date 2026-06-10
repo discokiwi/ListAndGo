@@ -8,7 +8,7 @@
  * Bumps CACHE_VERSION to invalidate old caches on deploy.
  */
 
-const CACHE_VERSION = 'listandgo-shell-v4';
+const CACHE_VERSION = 'listandgo-shell-v5';
 const ASSETS = [
   '/',
   '/index.html',
@@ -30,7 +30,10 @@ const ASSETS = [
   '/js/components/recipe-library.js',
   '/js/components/settings-panel.js',
   '/js/components/items-library.js',
+  '/js/components/item-editor.js',
   '/js/store/items.store.js',
+  '/css/components/items-library.css',
+  '/css/components/item-editor.css',
 ];
 
 self.addEventListener('install', (event) => {

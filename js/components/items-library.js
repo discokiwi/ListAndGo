@@ -38,9 +38,12 @@ export class ItemsLibrary extends HTMLElement {
     this.#wireListeners();
 
     await this.render();
-    // Re-render on item changes
-    this.addEventListener('item-saved', () => this.render());
-    this.addEventListener('item-deleted', () => this.render());
+    // Re-render on item changes.
+    // Listen on document because the item-editor lives inside a <dialog>
+    // which is a sibling of <main>, not an ancestor — so bubbled events
+    // from the editor never reach this component.
+    document.addEventListener('item-saved', this.#onItemSaved);
+    document.addEventListener('item-deleted', this.#onItemDeleted);
   }
 
   /**
@@ -54,6 +57,14 @@ export class ItemsLibrary extends HTMLElement {
       searchInput.addEventListener('input', () => {
         this.#searchQuery = searchInput.value.trim().toLowerCase();
         this.#applyFilters();
+      });
+    }
+
+    // FAB button opens the editor in add mode
+    const fabBtn = this.querySelector('#add-item-btn');
+    if (fabBtn) {
+      fabBtn.addEventListener('click', () => {
+        this.#openItemEditor();
       });
     }
 
@@ -227,6 +238,18 @@ export class ItemsLibrary extends HTMLElement {
         this.#addItemToList(itemId);
       });
     });
+
+    // Wire up item row clicks to open the editor in edit mode
+    container.querySelectorAll('.inventory-row').forEach((/** @type {Element} */ row) => {
+      row.addEventListener('click', (e) => {
+        // Don't open editor if clicking a button inside the row
+        const target = /** @type {HTMLElement} */ (e.target);
+        if (target.closest('button')) return;
+        const itemId = row.getAttribute('data-item-id');
+        if (!itemId) return;
+        this.#openItemEditor(itemId);
+      });
+    });
   }
 
   /**
@@ -237,9 +260,9 @@ export class ItemsLibrary extends HTMLElement {
   #renderItemRow(item) {
     const favClass = item.isEssential ? 'inventory-row-favorite--on' : 'inventory-row-favorite--off';
     const qtyText = item.defaultQty ? `${item.defaultQty} ${item.unitId || ''}`.trim() : '';
-    // Show "Recurring" for essential items (matching design)
-    const usageType = item.isEssential ? 'Recurring' : '';
-    const usageIconPath = item.isEssential
+    // Show "One-time use" badge for items that are fully consumed in a single recipe
+    const usageType = item.isOneTime ? 'One-time use' : '';
+    const usageIconPath = item.isOneTime
       ? '<svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>'
       : '';
 
@@ -286,25 +309,25 @@ export class ItemsLibrary extends HTMLElement {
       btn.classList.toggle('inventory-row-favorite--off', !isOn);
       btn.setAttribute('aria-label', isOn ? 'Remove from favorites' : 'Add to favorites');
 
-      // Update the usage type text in the meta row
+      // Update the usage type text in the meta row based on isOneTime (unchanged by this toggle)
       const row = btn.closest('.inventory-row');
       if (row) {
         const usageEl = row.querySelector('.inventory-row-usage');
         const meta = row.querySelector('.inventory-row-meta');
         if (usageEl) {
-          usageEl.innerHTML = isOn
-            ? '<svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg> <span>Recurring</span>'
+          usageEl.innerHTML = item.isOneTime
+            ? '<svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg> <span>One-time use</span>'
             : '';
-        } else if (isOn && meta) {
+        } else if (item.isOneTime && meta) {
           const usageEl2 = document.createElement('span');
           usageEl2.className = 'inventory-row-usage';
-          usageEl2.innerHTML = '<svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg> <span>Recurring</span>';
+          usageEl2.innerHTML = '<svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg> <span>One-time use</span>';
           meta.appendChild(usageEl2);
         }
       }
 
       // Dispatch event so other components can react
-      this.dispatchEvent(new CustomEvent('item-saved'));
+      this.dispatchEvent(new CustomEvent('item-saved', { bubbles: true }));
     } catch (err) {
       console.error('Failed to toggle favorite:', err);
     }
@@ -340,6 +363,68 @@ export class ItemsLibrary extends HTMLElement {
     } catch (err) {
       console.error('Failed to add item to list:', err);
     }
+  }
+
+  /**
+   * Open the item editor in add mode (triggered by FAB) or edit mode (click on row).
+   * @param {string} [itemId] - Optional item UUID for edit mode.
+   * @returns {Promise<void>}
+   */
+  async #openItemEditor(itemId) {
+    try {
+      // Ensure the item-editor component is loaded
+      await import('./item-editor.js');
+
+      const sheet = /** @type {HTMLDialogElement | null} */ (document.getElementById('item-editor-sheet'));
+      if (!sheet) return;
+
+      // @ts-ignore -- dynamic import, type resolved at runtime
+      let editor = /** @type {any} */ (sheet.querySelector('item-editor'));
+      if (!editor) {
+        // Inject the component if not present
+        editor = document.createElement('item-editor');
+        const body = sheet.querySelector('#item-editor-body');
+        if (body) body.appendChild(editor);
+      }
+
+      if (itemId) {
+        const { getItemById } = await import('../store/items.store.js');
+        const item = await getItemById(itemId);
+        if (item) editor.openEdit(item);
+      } else {
+        editor.openAdd();
+      }
+    } catch (err) {
+      console.error('Failed to open item editor:', err);
+    }
+  }
+
+  /**
+   * Handle item-saved event: re-render the items list.
+   * Bound as a method so it works as a document event listener.
+   * @returns {Promise<void>}
+   */
+  #onItemSaved = async () => {
+    await this.render();
+  };
+
+  /**
+   * Handle item-deleted event: re-render the items list.
+   * Bound as a method so it works as a document event listener.
+   * @returns {Promise<void>}
+   */
+  #onItemDeleted = async () => {
+    await this.render();
+  };
+
+  /**
+   * Called when the element is removed from the DOM.
+   * Removes document-level listeners to prevent stale references.
+   * @returns {void}
+   */
+  disconnectedCallback() {
+    document.removeEventListener('item-saved', this.#onItemSaved);
+    document.removeEventListener('item-deleted', this.#onItemDeleted);
   }
 
   /**
