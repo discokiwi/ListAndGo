@@ -107,6 +107,10 @@
   letter-spacing: var(--ls-display-lg);
 }
 
+.page__header--hidden {
+  display: none;
+}
+
 .page__subtitle {
   font: var(--font-body-reg);
   color: var(--color-on-surface-variant);

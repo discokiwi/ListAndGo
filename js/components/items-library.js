@@ -198,17 +198,17 @@ export class ItemsLibrary extends HTMLElement {
     let html = '';
     for (const [category, catItems] of Object.entries(grouped)) {
       html += `
-        <details class="items-category" open>
+        <details class="category-section" open>
           <summary>
-            <div class="items-category-header">
-              <span class="items-category-label">${category.toUpperCase()} (${catItems.length})</span>
-              <span class="items-category-divider"></span>
-              <span class="items-category-chevron">
+            <div class="category-section__header">
+              <span class="category-section__label">${category.toUpperCase()} (${catItems.length})</span>
+              <span class="category-section__divider"></span>
+              <span class="category-section__chevron">
                 <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
               </span>
             </div>
           </summary>
-          <div class="items-category-items">
+          <div class="category-section__items">
             ${catItems.map((item) => this.#renderItemRow(item)).join('')}
           </div>
         </details>

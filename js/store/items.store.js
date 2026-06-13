@@ -4,7 +4,6 @@
  * Business Logic: Provides CRUD operations on the `items` table with sync fields
  * (familyId, updatedAt, isSynced) and seeds the store with default grocery items
  * on first run. Every write sets isSynced = 0 so the sync engine can push changes.
- *
  * @module
  */
 

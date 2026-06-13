@@ -4,16 +4,18 @@
  * Business Logic: Initializes the Dexie database, seeds default data,
  * registers the router for SPA navigation, and registers the Service Worker
  * for offline support.
- *
  * @module
  */
 
-import { initRouter } from './router.js';
+import { initRouter, goTo } from './router.js';
 
 // Import all Web Components so their customElements.define() calls execute.
 // The router creates these elements by tag name, so they must be registered.
 import './components/app-nav.js';
+import './components/top-bar.js';
 import './components/grocery-list.js';
+import './components/grocery-row.js';
+import './components/ingredient-picker.js';
 import './components/items-library.js';
 import './components/meal-planner.js';
 import './components/recipe-library.js';
@@ -66,6 +68,11 @@ async function initApp() {
 
   // Start the SPA router
   initRouter();
+
+  // Wire the top bar settings button to navigate to settings route
+  document.addEventListener('open-settings', () => {
+    goTo('settings');
+  });
 
   // Register Service Worker (non-blocking)
   registerServiceWorker().catch(console.warn);

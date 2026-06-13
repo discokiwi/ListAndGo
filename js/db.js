@@ -6,7 +6,6 @@
  * updatedAt, isSynced) for offline-first family sync. Every write sets
  * isSynced = 0 so the sync engine can push dirty records to PocketBase.
  * Dexie is loaded globally via <script> tag in index.html.
- *
  * @module
  */
 
@@ -181,7 +180,7 @@ export class ListAndGoDB extends Dexie {
       recipes: 'id, familyId, title, categoryId, prepTime, servingsBase, updatedAt, isSynced',
       recipeIngredients: 'id, familyId, recipeId, itemId, unitId, updatedAt, isSynced',
       groceryLists: 'id, familyId, name, isActive, isArchived, createdAt, updatedAt, isSynced',
-      groceryItems: 'id, familyId, listId, itemId, name, categoryId, isChecked, updatedAt, isSynced',
+      groceryItems: 'id, familyId, [listId+itemId], listId, itemId, name, categoryId, isChecked, updatedAt, isSynced',
       mealPlans: 'id, familyId, date, recipeId, isCooked, updatedAt, isSynced',
       storeLayouts: 'id, familyId, name, isActive, updatedAt, isSynced',
       settings: 'key, value',

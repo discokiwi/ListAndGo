@@ -1,0 +1,84 @@
+/* =============================================
+   List&GO — Top Bar Component
+   Sticky header with app title, notification bell,
+   and settings icon.
+   Design sourced from Stitch "Grocery List PWA Design"
+   ============================================= */
+
+.app-top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+  background: var(--color-surface-soft);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.app-top-bar__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-gutter);
+}
+
+.app-top-bar__title {
+  font: var(--font-headline-md);
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+.app-top-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.app-top-bar__btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.app-top-bar__btn:hover {
+  background: var(--color-surface-container);
+}
+
+.app-top-bar__btn:active {
+  transform: scale(0.95);
+}
+
+.app-top-bar__btn svg {
+  width: 24px;
+  height: 24px;
+  fill: var(--color-primary);
+}
+
+.app-top-bar__notif-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-error);
+  border: 2px solid var(--color-surface-pure);
+  pointer-events: none;
+}
+
+/* Material Symbols fallback: use SVG icons */

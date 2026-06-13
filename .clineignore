@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+docs/
+eslint.config.mjs
+package-lock.json
+package.json
+jsconfig.json
+
+# other screens 
+
+items-library.js
+item-editor.js
+
+meal-planner.js
+recipe-library.js
+settings-panel.js
+items.store.js
+top-bar.js
+
+Router.js
+
+item-editor.css
+top-bar.css
+items-library.css
+fab.css
+

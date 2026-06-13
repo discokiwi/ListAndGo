@@ -3,47 +3,178 @@
    Thumb-zone optimized layout
    ============================================= */
 
-/* ---- Category section (collapsible) ---- */
-.grocery-section {
-  margin-bottom: var(--spacing-list-item-gap);
+/* ---- Search & Action Bar ---- */
+.search-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
-.grocery-section summary {
+.search-bar__input-wrapper {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: var(--spacing-base);
-  min-height: var(--spacing-thumb-touch);
-  padding: var(--spacing-base) 0;
-  cursor: pointer;
-  font: var(--font-item-name);
-  color: var(--color-on-surface);
-  -webkit-tap-highlight-color: transparent;
-  list-style: none;
 }
 
-.grocery-section summary::-webkit-details-marker {
+.search-bar__icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  fill: var(--color-on-surface-variant);
+  pointer-events: none;
+  transition: fill 0.2s ease;
+  z-index: 1;
+}
+
+.search-bar__input {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px 0 40px;
+  font: var(--font-body-reg);
+  background: var(--color-surface-pure);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-md);
+  color: var(--color-on-surface);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.search-bar__input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-fixed-dim);
+}
+
+.search-bar__input::placeholder {
+  color: var(--color-text-dimmed);
+}
+
+.search-bar__pills {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.search-bar__pills::-webkit-scrollbar {
   display: none;
 }
 
-.grocery-section summary::before {
-  content: '';
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  background: var(--color-text-dimmed);
-  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
-  transition: transform 0.2s ease;
-  flex-shrink: 0;
+/* ---- Inline search dropdown ---- */
+.search-bar__dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: var(--color-surface-pure, #ffffff);
+  border: 1px solid var(--color-outline-variant, #bfc9c1);
+  border-radius: var(--radius-md, 0.75rem);
+  box-shadow: var(--shadow-card, 0 4px 20px rgba(0,0,0,0.05));
+  max-height: 240px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-.grocery-section[open] summary::before {
-  transform: rotate(90deg);
+.search-bar__dropdown-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.grocery-section__count {
+.search-bar__dropdown-item:not(:last-child) {
+  border-bottom: 1px solid var(--color-outline-variant, #bfc9c1);
+}
+
+.search-bar__dropdown-item:hover {
+  background: var(--color-surface-container, #eeeef0);
+}
+
+.search-bar__dropdown-item:active {
+  background: var(--color-surface-container-high, #e8e8ea);
+}
+
+.search-bar__dropdown-item-name {
+  font: var(--font-item-name, 600 18px/1.4 'Hanken Grotesk', sans-serif);
+  color: var(--color-on-surface, #1a1c1e);
+}
+
+.search-bar__dropdown-item-meta {
+  font: var(--font-unit-label, 400 14px/1.2 'Hanken Grotesk', sans-serif);
+  color: var(--color-text-dimmed, #636e72);
+}
+
+.search-bar__dropdown-empty {
+  padding: 16px 14px;
+  font: var(--font-body-reg, 400 16px/1.5 'Hanken Grotesk', sans-serif);
+  color: var(--color-text-dimmed, #636e72);
+  text-align: center;
+}
+
+/* ---- Pill buttons ---- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
   font: var(--font-badge-caps);
-  color: var(--color-text-dimmed);
-  margin-left: auto;
+  letter-spacing: var(--ls-badge-caps);
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.pill svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.pill--filled {
+  background: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+  border-color: var(--color-secondary-container);
+}
+
+.pill--filled:hover {
+  background: var(--color-primary-fixed-dim);
+}
+
+.pill--outlined {
+  background: var(--color-surface-pure);
+  color: var(--color-on-surface-variant);
+  border-color: var(--color-outline-variant);
+}
+
+.pill--outlined:hover {
+  background: var(--color-surface-container);
+}
+
+.pill--danger {
+  color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.pill--danger:hover {
+  background: var(--color-error-container);
 }
 
 /* ---- Individual row ---- */
@@ -68,7 +199,7 @@
   display: flex;
   align-items: baseline;
   gap: var(--spacing-base);
-  min-width: 0; /* allow text truncation */
+  min-width: 0;
 }
 
 .grocery-row__qty {
@@ -145,6 +276,50 @@
   text-decoration: none;
   padding: 2px 0;
   display: inline-block;
+}
+
+/* =============================================
+   Edit Mode Overlay
+   ============================================= */
+
+.edit-mode-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: none;
+  background: rgba(249, 249, 252, 0.4);
+  pointer-events: auto;
+}
+
+.edit-mode-overlay--visible {
+  display: block;
+}
+
+/* Blur effect for all content behind the list items */
+body.edit-mode .blur-target {
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+/* Prevent the list container itself from being blurred */
+body.edit-mode #grocery-list-container,
+body.edit-mode .grocery-sections {
+  filter: none;
+  pointer-events: auto;
+}
+
+/* Ensure grocery rows remain interactive in edit mode */
+body.edit-mode grocery-row {
+  filter: none;
+  pointer-events: auto;
+  position: relative;
+  z-index: 50;
+}
+
+/* Keep the search bar and pills interactive on desktop, but blur them on mobile */
+body.edit-mode .search-bar {
+  filter: blur(4px);
+  pointer-events: none;
 }
 
 /* Swipe-to-delete container */
