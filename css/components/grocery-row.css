@@ -52,6 +52,32 @@
   color: var(--color-text-dimmed);
 }
 
+/* When search-autocomplete replaces the static input inside the search bar,
+   its internal input needs the same left padding to clear the magnifying glass icon. */
+.search-bar__input-wrapper search-autocomplete .search-autocomplete__input {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px 0 40px;
+  font: var(--font-body-reg);
+  background: var(--color-surface-pure);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-md);
+  color: var(--color-on-surface);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.search-bar__input-wrapper search-autocomplete .search-autocomplete__input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-fixed-dim);
+}
+
+.search-bar__input-wrapper search-autocomplete .search-autocomplete__input::placeholder {
+  color: var(--color-text-dimmed);
+}
+
 .search-bar__pills {
   display: flex;
   gap: 8px;
@@ -118,6 +144,73 @@
 }
 
 .search-bar__dropdown-empty {
+  padding: 16px 14px;
+  font: var(--font-body-reg, 400 16px/1.5 'Hanken Grotesk', sans-serif);
+  color: var(--color-text-dimmed, #636e72);
+  text-align: center;
+}
+
+/* ---- search-autocomplete Web Component styles ---- */
+/* These mirror the old static .search-bar__dropdown styles but target the
+   <search-autocomplete> component's internal elements. */
+
+.search-autocomplete {
+  position: relative;
+  width: 100%;
+}
+
+.search-autocomplete__dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: var(--color-surface-pure, #ffffff);
+  border: 1px solid var(--color-outline-variant, #bfc9c1);
+  border-radius: var(--radius-md, 0.75rem);
+  box-shadow: var(--shadow-card, 0 4px 20px rgba(0,0,0,0.05));
+  max-height: 240px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.search-autocomplete__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.search-autocomplete__item:not(:last-child) {
+  border-bottom: 1px solid var(--color-outline-variant, #bfc9c1);
+}
+
+.search-autocomplete__item:hover {
+  background: var(--color-surface-container, #eeeef0);
+}
+
+.search-autocomplete__item:active {
+  background: var(--color-surface-container-high, #e8e8ea);
+}
+
+.search-autocomplete__item-name {
+  font: var(--font-item-name, 600 18px/1.4 'Hanken Grotesk', sans-serif);
+  color: var(--color-on-surface, #1a1c1e);
+}
+
+.search-autocomplete__item-meta {
+  font: var(--font-unit-label, 400 14px/1.2 'Hanken Grotesk', sans-serif);
+  color: var(--color-text-dimmed, #636e72);
+}
+
+.search-autocomplete__empty {
   padding: 16px 14px;
   font: var(--font-body-reg, 400 16px/1.5 'Hanken Grotesk', sans-serif);
   color: var(--color-text-dimmed, #636e72);

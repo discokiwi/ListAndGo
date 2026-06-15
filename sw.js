@@ -10,30 +10,61 @@
 
 const CACHE_VERSION = 'listandgo-shell-v5';
 const ASSETS = [
+  // ---- Root ----
   '/',
   '/index.html',
   '/manifest.webmanifest',
+
+  // ---- CSS ----
   '/css/variables.css',
   '/css/base.css',
   '/css/layout.css',
   '/css/components/badge.css',
   '/css/components/bottom-sheet.css',
+  '/css/components/category-section.css',
   '/css/components/fab.css',
-  '/css/components/inputs.css',
   '/css/components/grocery-row.css',
+  '/css/components/inputs.css',
+  '/css/components/item-editor.css',
+  '/css/components/items-library.css',
+  '/css/components/top-bar.css',
+
+  // ---- JS App ----
   '/js/app.js',
   '/js/router.js',
   '/js/db.js',
+
+  // ---- JS Components ----
   '/js/components/app-nav.js',
   '/js/components/grocery-list.js',
+  '/js/components/grocery-row.js',
+  '/js/components/ingredient-picker.js',
+  '/js/components/item-editor.js',
+  '/js/components/items-library.js',
   '/js/components/meal-planner.js',
   '/js/components/recipe-library.js',
+  '/js/components/search-autocomplete.js',
   '/js/components/settings-panel.js',
-  '/js/components/items-library.js',
-  '/js/components/item-editor.js',
+  '/js/components/top-bar.js',
+
+  // ---- JS Store ----
+  '/js/store/grocery.store.js',
   '/js/store/items.store.js',
-  '/css/components/items-library.css',
-  '/css/components/item-editor.css',
+
+  // ---- JS Utils ----
+  '/js/utils/dom-utils.js',
+
+  // ---- Vendor ----
+  '/js/vendor/dexie.min.js',
+
+  // ---- Assets: Fonts ----
+  '/assets/fonts/HankenGrotesk-Regular.ttf',
+  '/assets/fonts/HankenGrotesk-SemiBold.ttf',
+  '/assets/fonts/HankenGrotesk-Bold.ttf',
+
+  // ---- Assets: Icons ----
+  '/assets/icons/icon-192.png',
+  '/assets/icons/icon-512.png',
 ];
 
 self.addEventListener('install', (event) => {
