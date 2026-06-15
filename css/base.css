@@ -2,7 +2,30 @@
    List&GO — Base Reset & Typography
    ============================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&display=swap');
+/* Hanken Grotesk — self-hosted for offline-first resilience */
+@font-face {
+  font-family: 'Hanken Grotesk';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/HankenGrotesk-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Hanken Grotesk';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../assets/fonts/HankenGrotesk-SemiBold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Hanken Grotesk';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../assets/fonts/HankenGrotesk-Bold.ttf') format('truetype');
+}
 
 *, *::before, *::after {
   box-sizing: border-box;

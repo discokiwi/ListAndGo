@@ -1,4 +1,6 @@
 // @ts-check
+import { escapeHtml } from '../utils/dom-utils.js';
+
 /**
  * Ingredient Picker Web Component — autocomplete search bottom sheet.
  * Business Logic: Provides a searchable list of items from the Items Library
@@ -151,11 +153,11 @@ export class IngredientPicker extends HTMLElement {
 
     const itemsHtml = items.map((item) => `
       <button class="picker-result" data-item-id="${item.id}"
-              data-name="${this._escapeHtml(item.name)}"
-              data-category="${this._escapeHtml(item.categoryId)}"
-              data-unit="${this._escapeHtml(item.unitId)}"
+              data-name="${escapeHtml(item.name)}"
+              data-category="${escapeHtml(item.categoryId)}"
+              data-unit="${escapeHtml(item.unitId)}"
               data-qty="${item.defaultQty}">
-        <span class="picker-result__name">${this._escapeHtml(item.name)}</span>
+        <span class="picker-result__name">${escapeHtml(item.name)}</span>
         <span class="picker-result__meta">${item.categoryId} · ${item.defaultQty} ${item.unitId}</span>
       </button>
     `).join('');
@@ -220,16 +222,6 @@ export class IngredientPicker extends HTMLElement {
     }
   }
 
-  /**
-   * Escape HTML for safe rendering.
-   * @param {string} str
-   * @returns {string}
-   */
-  _escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
 }
 
 customElements.define('ingredient-picker', IngredientPicker);

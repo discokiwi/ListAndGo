@@ -1,4 +1,18 @@
 // @ts-check
+import { escapeHtml, formatQty, formatQtyForStepper } from '../utils/dom-utils.js';
+
+/** @type {Record<string, string>} */
+const CATEGORY_COLORS = {
+  produce: 'var(--color-primary, #0f5238)',
+  dairy: '#A8DADC',
+  bakery: 'var(--color-secondary, #53634e)',
+  meat: 'var(--color-tertiary, #713638)',
+  pantry: 'var(--color-outline-variant, #bfc9c1)',
+  condiments: 'var(--color-outline-variant, #bfc9c1)',
+  beverages: 'var(--color-primary-fixed-dim, #95d4b3)',
+  frozen: 'var(--color-secondary-fixed-dim, #baccb3)',
+};
+
 /**
  * Grocery Row Web Component — single item row in the grocery list.
  * Business Logic: Displays one grocery item with quantity, name, optional
@@ -8,7 +22,6 @@
  * Also supports Edit Mode: on long press emits 'item-long-press' to trigger
  * edit mode at the list level. In edit mode, the checkbox is replaced by a
  * stepper (qty +/-) and delete button.
- * @class
  * @augments {HTMLElement}
  */
 export class GroceryRow extends HTMLElement {
@@ -27,15 +40,11 @@ export class GroceryRow extends HTMLElement {
   _currentX = 0;
   /** @type {boolean} */
   _swiping = false;
-  /** @type {boolean} */
-  _deleted = false;
 
   /** @type {HTMLDivElement | null} */
   _rowEl = null;
   /** @type {HTMLInputElement | null} */
   _checkboxEl = null;
-  /** @type {HTMLDivElement | null} */
-  _infoEl = null;
   /** @type {HTMLDivElement | null} */
   _standardControls = null;
   /** @type {HTMLDivElement | null} */
@@ -107,7 +116,7 @@ export class GroceryRow extends HTMLElement {
     const hasRecipe = recipeIds.length > 0;
 
     // Determine category accent color (left border)
-    const categoryColor = this._getCategoryColor(item.categoryId || '');
+    const categoryColor = CATEGORY_COLORS[item.categoryId || ''] || 'var(--color-outline-variant, #bfc9c1)';
 
     this._shadow.innerHTML = `
       <style>
@@ -381,11 +390,11 @@ export class GroceryRow extends HTMLElement {
         <div class="row" part="row">
           <div class="info">
             <div class="info-top">
-              <span class="name">${this._escapeHtml(item.name)}</span>
+              <span class="name">${escapeHtml(item.name)}</span>
               ${item.categoryId === 'produce' ? '<span class="badge">ORGANIC</span>' : ''}
             </div>
             <div class="info-bottom">
-              <span class="qty">${this._formatQty(item.qty, item.unit)}</span>
+              <span class="qty">${formatQty(item.qty, item.unit)}</span>
               ${hasRecipe ? `<span class="recipe-link">
                 <svg viewBox="0 0 24 24"><path d="M8.1 13.34l2.83-2.83L3.91 3.5c-1.56 1.56-1.56 4.09 0 5.66l4.19 4.18zm6.78-1.81c1.53.71 3.68.21 5.27-1.38 1.91-1.91 2.28-4.65.81-6.12-1.46-1.46-4.2-1.1-6.12.81-1.59 1.59-2.09 3.74-1.38 5.27L3.7 19.87l1.41 1.41L12 14.41l6.88 6.88 1.41-1.41L13.41 13l1.47-1.47z"/></svg>
                 Recipe</span>` : ''}
@@ -403,7 +412,7 @@ export class GroceryRow extends HTMLElement {
               <button class="stepper-btn stepper-minus" aria-label="Decrease quantity">
                 <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
               </button>
-              <span class="stepper-value">${this._formatQtyForStepper(item.qty)}</span>
+              <span class="stepper-value">${formatQtyForStepper(item.qty)}</span>
               <button class="stepper-btn stepper-plus" aria-label="Increase quantity">
                 <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
               </button>
@@ -418,7 +427,6 @@ export class GroceryRow extends HTMLElement {
 
     this._rowEl = this._shadow.querySelector('.row');
     this._checkboxEl = this._shadow.querySelector('.check');
-    this._infoEl = this._shadow.querySelector('.info');
     this._standardControls = this._shadow.querySelector('.standard-controls');
     this._editControls = this._shadow.querySelector('.edit-controls');
     this._deleteBtn = this._shadow.querySelector('.delete-btn');
@@ -511,12 +519,17 @@ export class GroceryRow extends HTMLElement {
     }
 
     // Long press for entering edit mode
-    this.addEventListener('mousedown', (e) => this._onPointerDown(e));
-    this.addEventListener('touchstart', (e) => this._onPointerDown(e), { passive: true });
-    this.addEventListener('mouseup', () => this._cancelPress());
-    this.addEventListener('mouseleave', () => this._cancelPress());
-    this.addEventListener('touchend', () => this._cancelPress());
-    this.addEventListener('touchmove', () => this._cancelPress());
+    // Attached to .row inside the shadow DOM so that e.target resolves correctly
+    // (unlike on the host element with closed shadow where event retargeting
+    //  makes the button guard - e.target.closest('button') - always fail).
+    if (this._rowEl) {
+      this._rowEl.addEventListener('mousedown', (e) => this._onRowPointerDown(e));
+      this._rowEl.addEventListener('touchstart', (e) => this._onRowPointerDown(e), { passive: true });
+      this._rowEl.addEventListener('mouseup', () => this._cancelPress());
+      this._rowEl.addEventListener('mouseleave', () => this._cancelPress());
+      this._rowEl.addEventListener('touchend', () => this._cancelPress());
+      this._rowEl.addEventListener('touchmove', () => this._cancelPress());
+    }
 
     // Touch events for swipe-to-delete (only when NOT in edit mode)
     this.addEventListener('touchstart', (e) => this._onTouchStart(e), { passive: true });
@@ -525,18 +538,21 @@ export class GroceryRow extends HTMLElement {
   }
 
   /**
-   * Handle pointer down for long-press detection.
-   * Business Logic: If not already in edit mode, starts a timer.
-   * When the timer fires, dispatches 'item-long-press' to trigger edit mode
-   * at the list level. The timer is cancelled on release/move.
+   * Handle pointer down for long-press detection on the row body.
+   * Business Logic: If not already in edit mode and the target is NOT a button
+   * (checkbox, stepper, delete, etc.), starts a 500ms timer. When the timer
+   * fires, dispatches 'item-long-press' to trigger edit mode at the list level.
+   * The timer is cancelled on release/move.
    * @param {Event} e - Mouse or touch event.
    */
-  _onPointerDown(e) {
-    // Don't trigger if clicking child buttons
-    if (e.target && /** @type {HTMLElement} */ (e.target).closest('button')) return;
-
-    // Don't trigger long press if already in edit mode
+  _onRowPointerDown(e) {
+    // Don't trigger if already in edit mode
     if (this._editMode) return;
+
+    // Don't trigger if the target or any ancestor is a button (checkbox,
+    // delete, stepper, etc.). Inside the shadow DOM this works correctly —
+    // e.target resolves to the actual clicked element, not the host.
+    if (e.target && /** @type {HTMLElement} */ (e.target).closest('button')) return;
 
     this._pressTimer = window.setTimeout(() => {
       this.dispatchEvent(new CustomEvent('item-long-press', {
@@ -544,7 +560,7 @@ export class GroceryRow extends HTMLElement {
         composed: true,
         detail: { id: this._item ? this._item.id : null },
       }));
-    }, 1500);
+    }, 500);
   }
 
   /** Cancel the long-press timer. */
@@ -592,13 +608,13 @@ export class GroceryRow extends HTMLElement {
 
     // Update stepper display
     if (this._qtyDisplay) {
-      this._qtyDisplay.textContent = this._formatQtyForStepper(newQty);
+      this._qtyDisplay.textContent = formatQtyForStepper(newQty);
     }
 
     // Update the small qty label in the info section
     const qtyEl = this._shadow.querySelector('.qty');
     if (qtyEl) {
-      qtyEl.textContent = this._formatQty(newQty, this._item.unit);
+      qtyEl.textContent = formatQty(newQty, this._item.unit);
     }
 
     this.dispatchEvent(new CustomEvent('item-qty-change', {
@@ -674,66 +690,6 @@ export class GroceryRow extends HTMLElement {
     }
 
     this._swiping = false;
-  }
-
-  /**
-   * Get the accent border color for a category.
-   * @param {string} categoryId
-   * @returns {string} CSS color value.
-   */
-  _getCategoryColor(categoryId) {
-    /** @type {Record<string, string>} */
-    const colors = {
-      produce: 'var(--color-primary, #0f5238)',
-      dairy: '#A8DADC',
-      bakery: 'var(--color-secondary, #53634e)',
-      meat: 'var(--color-tertiary, #713638)',
-      pantry: 'var(--color-outline-variant, #bfc9c1)',
-      condiments: 'var(--color-outline-variant, #bfc9c1)',
-      beverages: 'var(--color-primary-fixed-dim, #95d4b3)',
-      frozen: 'var(--color-secondary-fixed-dim, #baccb3)',
-    };
-    return colors[categoryId] || 'var(--color-outline-variant, #bfc9c1)';
-  }
-
-  /**
-   * Escape HTML special characters for safe rendering.
-   * @param {string} str
-   * @returns {string}
-   */
-  _escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
-
-  /**
-   * Format quantity + unit for display.
-   * @param {number} qty
-   * @param {string} unit
-   * @returns {string}
-   */
-  _formatQty(qty, unit) {
-    const unitMap = /** @type {Record<string, string>} */ ({
-      'pcs': 'pcs',
-      'g': 'g',
-      'kg': 'kg',
-      'l': 'L',
-      'ml': 'ml',
-    });
-    const unitLabel = unitMap[unit] || unit;
-    // If qty is a round number, omit decimals
-    const qtyStr = Number.isInteger(qty) ? qty.toString() : qty.toFixed(1);
-    return `${qtyStr} ${unitLabel}`;
-  }
-
-  /**
-   * Format quantity for the stepper display (integer only).
-   * @param {number} qty
-   * @returns {string}
-   */
-  _formatQtyForStepper(qty) {
-    return Number.isInteger(qty) ? qty.toString() : qty.toFixed(1);
   }
 }
 

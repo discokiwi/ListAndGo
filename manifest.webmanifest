@@ -1,7 +1,7 @@
 {
   "name": "List&GO – Grocery & Meal Planner",
   "short_name": "List&GO",
-  "description": "A local-first, offline-first PWA for managing grocery lists and meal planning.",
+  "description": "App for managing grocery lists and meal planning.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

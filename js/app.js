@@ -20,6 +20,7 @@ import './components/items-library.js';
 import './components/meal-planner.js';
 import './components/recipe-library.js';
 import './components/settings-panel.js';
+import './components/search-autocomplete.js';
 
 /**
  * Register the Service Worker for offline-first support.

@@ -1,11 +1,11 @@
-// @ts-nocheck -- Dexie types unavailable at compile time; loaded via CDN
+// @ts-nocheck -- Dexie types unavailable at compile time; loaded via vendor file
 /* global Dexie -- provided by <script> tag in index.html */
 /**
  * Dexie database definition for List&GO.
  * Business Logic: Defines all IndexedDB tables with sync fields (family_id,
  * updatedAt, isSynced) for offline-first family sync. Every write sets
  * isSynced = 0 so the sync engine can push dirty records to PocketBase.
- * Dexie is loaded globally via <script> tag in index.html.
+ * Dexie is loaded globally via <script> tag pointing to js/vendor/dexie.min.js.
  * @module
  */
 
