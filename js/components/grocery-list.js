@@ -549,6 +549,14 @@ export class GroceryList extends HTMLElement {
   }
 
   /**
+   * Helper to get the <app-snackbar> element for showing notifications.
+   * @returns {import("./app-snackbar.js").AppSnackbar | null}
+   */
+  _getSnackbar() {
+    return /** @type {import("./app-snackbar.js").AppSnackbar | null} */ (document.querySelector('app-snackbar'));
+  }
+
+  /**
    * Handle ingredient selected from the picker — add it to the grocery list.
    * @param {{ itemId: string, name: string, categoryId: string, unit: string, qty: number }} detail
    */
@@ -561,6 +569,10 @@ export class GroceryList extends HTMLElement {
         this._activeListId, detail.itemId, detail.name,
         detail.categoryId, detail.qty, detail.unit,
       );
+      const snackbar = this._getSnackbar();
+      if (snackbar) {
+        snackbar.show('Item added to list');
+      }
     } catch (err) {
       console.error('Failed to add ingredient:', err);
     }
@@ -581,14 +593,54 @@ export class GroceryList extends HTMLElement {
 
   /**
    * Handle item delete event from a grocery-row.
+   * Business Logic: Removes the item from Dexie, then shows a snackbar
+   * with an "Undo" button. On undo, re-adds the item using the item data
+   * captured from the in-memory _items array before deletion.
    * @param {{ id: string }} detail
    */
   async _handleItemDelete(detail) {
+    // Capture item data from the in-memory array for potential undo
+    const deletedItem = this._items.find((item) => item.id === detail.id);
+
     try {
       const { removeItem } = await import('../store/grocery.store.js');
       await removeItem(detail.id);
     } catch (err) {
       console.error('Failed to remove item:', err);
+      return;
+    }
+
+    const snackbar = this._getSnackbar();
+    if (!snackbar) return;
+
+    if (deletedItem) {
+      /**
+       * Re-add the deleted item to the grocery list after undo.
+       * Business Logic: Uses the captured deletedItem data to re-insert
+       * the item into Dexie via addGroceryItem, then shows confirmation.
+       * @returns {Promise<void>}
+       */
+      const handleUndo = async () => {
+        try {
+          const { addGroceryItem } = await import('../store/grocery.store.js');
+          await addGroceryItem(
+            /** @type {string} */ (this._activeListId),
+            deletedItem.itemId,
+            deletedItem.name,
+            deletedItem.categoryId || 'other',
+            deletedItem.qty,
+            deletedItem.unit,
+          );
+          snackbar.show('Item restored');
+        } catch (err) {
+          console.error('Failed to restore item:', err);
+        }
+      };
+
+      snackbar.show('Item removed', {
+        undo: true,
+        onUndo: handleUndo,
+      });
     }
   }
 

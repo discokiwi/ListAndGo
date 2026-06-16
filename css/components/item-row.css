@@ -1,0 +1,130 @@
+/* =============================================
+   List&GO — Flat List Item Row Component
+   Reusable flat list row with category accent border
+   Used by: Items Library (and Grocery List via Shadow DOM)
+   ============================================= */
+
+.item-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-base, 8px);
+  min-height: 38px;
+  padding: 6px 0;
+  padding-left: var(--spacing-gutter, 16px);
+  padding-right: var(--spacing-gutter, 16px);
+  background: var(--color-surface-pure, #ffffff);
+  border-bottom: 1px solid var(--color-outline-variant, #bfc9c1);
+  border-left: 4px solid var(--accent-color, var(--color-outline-variant, #bfc9c1));
+  border-radius: var(--radius-md, 0.75rem);
+  transition: background 0.2s ease, opacity 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.item-row:active {
+  background: var(--color-surface-container-low, #f3f3f6);
+}
+
+.item-row__info {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.item-row__name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.item-row__name {
+  font: var(--font-item-name, 600 18px/1.4 'Hanken Grotesk', sans-serif);
+  color: var(--color-on-surface, #1a1c1e);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-row__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-on-surface-variant);
+  line-height: 1.2;
+}
+
+.item-row__qty {
+  font: var(--font-unit-label, 400 14px/1.2 'Hanken Grotesk', sans-serif);
+  color: var(--color-primary, #0f5238);
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.item-row__usage {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.6;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.item-row__usage svg {
+  width: 16px;
+  height: 16px;
+  fill: var(--color-on-surface-variant);
+}
+
+/* Star icon for essential items (decorative only) */
+.item-row__essential-star {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+}
+
+.item-row__essential-star svg {
+  width: 18px;
+  height: 18px;
+  fill: var(--color-primary, #0f5238);
+  opacity: 0.6;
+  display: block;
+}
+
+/* Add to List button */
+.item-row__add-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--color-surface-muted);
+  color: var(--color-primary, #0f5238);
+  border: none;
+  border-radius: var(--radius-default);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Hanken Grotesk', sans-serif;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+
+.item-row__add-btn:hover {
+  background: var(--color-primary, #0f5238);
+  color: var(--color-on-primary, #ffffff);
+}
+
+.item-row__add-btn:active {
+  opacity: 0.9;
+}
+
+.item-row__add-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}

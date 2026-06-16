@@ -1,66 +1,30 @@
 // @ts-check
 import { escapeHtml, formatQty, formatQtyForStepper } from '../utils/dom-utils.js';
-
-/** @type {Record<string, string>} */
-const CATEGORY_COLORS = {
-  produce: 'var(--color-primary, #0f5238)',
-  dairy: '#A8DADC',
-  bakery: 'var(--color-secondary, #53634e)',
-  meat: 'var(--color-tertiary, #713638)',
-  pantry: 'var(--color-outline-variant, #bfc9c1)',
-  condiments: 'var(--color-outline-variant, #bfc9c1)',
-  beverages: 'var(--color-primary-fixed-dim, #95d4b3)',
-  frozen: 'var(--color-secondary-fixed-dim, #baccb3)',
-};
+import { CATEGORY_COLORS } from '../utils/category-colors.js';
 
 /**
  * Grocery Row Web Component — single item row in the grocery list.
  * Business Logic: Displays one grocery item with quantity, name, optional
- * recipe link badge, and a circular check toggle. Supports swipe-to-delete
- * via touch events. Emits custom events so the parent <grocery-list> can
- * handle state changes without this component knowing the store.
- * Also supports Edit Mode: on long press emits 'item-long-press' to trigger
+ * recipe link badge, and a circular check toggle. Uses light DOM so styles
+ * come from shared CSS files (item-row.css + grocery-row.css).
+ * Supports Edit Mode: on long press emits 'item-long-press' to trigger
  * edit mode at the list level. In edit mode, the checkbox is replaced by a
  * stepper (qty +/-) and delete button.
  * @augments {HTMLElement}
  */
 export class GroceryRow extends HTMLElement {
-  /** @type {ShadowRoot} */
-  _shadow;
-
   /** @type {import("../store/grocery.store.js").GroceryItem | null} */
   _item = null;
 
   /** @type {boolean} */
   _editMode = false;
 
-  /** @type {number} */
-  _startX = 0;
-  /** @type {number} */
-  _currentX = 0;
-  /** @type {boolean} */
-  _swiping = false;
-
-  /** @type {HTMLDivElement | null} */
-  _rowEl = null;
-  /** @type {HTMLInputElement | null} */
-  _checkboxEl = null;
-  /** @type {HTMLDivElement | null} */
-  _standardControls = null;
-  /** @type {HTMLDivElement | null} */
-  _editControls = null;
-  /** @type {HTMLButtonElement | null} */
-  _deleteBtn = null;
-  /** @type {HTMLElement | null} */
-  _qtyDisplay = null;
-
   /** @type {number | undefined} */
   _pressTimer = undefined;
 
-  /** Construct the component with a closed Shadow Root. */
+  /** Construct the component. */
   constructor() {
     super();
-    this._shadow = this.attachShadow({ mode: 'closed' });
   }
 
   /**
@@ -100,7 +64,7 @@ export class GroceryRow extends HTMLElement {
     this._render();
   }
 
-  /** Internal render — stamps the row HTML from a template string. */
+  /** Internal render — builds the row HTML. */
   _render() {
     if (!this._item) return;
     const item = this._item;
@@ -118,319 +82,43 @@ export class GroceryRow extends HTMLElement {
     // Determine category accent color (left border)
     const categoryColor = CATEGORY_COLORS[item.categoryId || ''] || 'var(--color-outline-variant, #bfc9c1)';
 
-    this._shadow.innerHTML = `
-      <style>
-        :host {
-          display: block;
-          position: relative;
-          overflow: hidden;
-          user-select: none;
-          -webkit-user-select: none;
-        }
-
-        .row-wrapper {
-          position: relative;
-          overflow: hidden;
-        }
-
-        .delete-overlay {
-          position: absolute;
-          top: 0;
-          right: 0;
-          bottom: 0;
-          width: 72px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: var(--color-error, #ba1a1a);
-          color: var(--color-on-error, #ffffff);
-          border: none;
-          cursor: pointer;
-          transform: translateX(100%);
-          transition: transform 0.2s ease;
-          font: var(--font-badge-caps, 700 12px/1 'Hanken Grotesk', sans-serif);
-          letter-spacing: 0.05em;
-        }
-
-        .delete-overlay--visible {
-          transform: translateX(0);
-        }
-
-        .row {
-          display: flex;
-          align-items: center;
-          gap: var(--spacing-base, 8px);
-          min-height: var(--spacing-thumb-touch, 48px);
-          padding: var(--spacing-base, 8px) 0;
-          padding-left: var(--spacing-gutter, 16px);
-          padding-right: var(--spacing-gutter, 16px);
-          background: var(--color-surface-pure, #ffffff);
-          border-bottom: 1px solid var(--color-outline-variant, #bfc9c1);
-          border-left: 4px solid ${categoryColor};
-          transition: opacity 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
-          position: relative;
-          z-index: 1;
-          background-color: var(--color-surface-pure, #ffffff);
-          touch-action: pan-y;
-        }
-
-        .row--checked {
-          background-color: var(--color-surface-container-low, #f3f3f6);
-          opacity: 0.6;
-        }
-
-        .row--edit-mode {
-          background-color: var(--color-surface-pure, #ffffff);
-          border-color: var(--color-outline-variant, #bfc9c1);
-          box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-          z-index: 100;
-        }
-
-        .info {
-          flex: 1 1 auto;
-          min-width: 0;
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-        }
-
-        .info-top {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-
-        .name {
-          font: var(--font-item-name, 600 18px/1.4 'Hanken Grotesk', sans-serif);
-          color: var(--color-on-surface, #1a1c1e);
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          transition: color 0.2s ease;
-        }
-
-        .name--checked {
-          color: var(--color-text-dimmed, #636e72);
-          text-decoration: line-through;
-        }
-
-        .badge {
-          font: var(--font-badge-caps, 700 12px/1 'Hanken Grotesk', sans-serif);
-          font-size: 9px;
-          padding: 1px 6px;
-          border-radius: var(--radius-full, 9999px);
-          background: var(--color-success-light, #d8e2dc);
-          color: var(--color-on-secondary-fixed-variant, #3b4b38);
-          white-space: nowrap;
-          flex-shrink: 0;
-        }
-
-        .info-bottom {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .qty {
-          font: var(--font-unit-label, 400 14px/1.2 'Hanken Grotesk', sans-serif);
-          color: var(--color-primary, #0f5238);
-          white-space: nowrap;
-        }
-
-        .qty--checked {
-          color: var(--color-text-dimmed, #636e72);
-        }
-
-        .recipe-link {
-          display: inline-flex;
-          align-items: center;
-          gap: 3px;
-          font: var(--font-badge-caps, 700 12px/1 'Hanken Grotesk', sans-serif);
-          font-size: 11px;
-          color: var(--color-primary, #0f5238);
-          white-space: nowrap;
-        }
-
-        .recipe-link svg {
-          width: 14px;
-          height: 14px;
-          fill: var(--color-primary, #0f5238);
-        }
-
-        /* Standard controls (check toggle) */
-        .check {
-          width: var(--spacing-thumb-touch, 48px);
-          height: var(--spacing-thumb-touch, 48px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          border: 2px solid var(--color-outline, #707973);
-          border-radius: var(--radius-full, 9999px);
-          background: transparent;
-          cursor: pointer;
-          transition: background 0.2s ease, border-color 0.2s ease;
-          -webkit-tap-highlight-color: transparent;
-          padding: 0;
-        }
-
-        .check--checked {
-          background: var(--color-primary, #0f5238);
-          border-color: var(--color-primary, #0f5238);
-        }
-
-        .check svg {
-          width: 20px;
-          height: 20px;
-          fill: transparent;
-          transition: fill 0.2s ease;
-        }
-
-        .check--checked svg {
-          fill: var(--color-on-primary, #ffffff);
-        }
-
-        /* Edit mode controls (stepper + delete) */
-        .edit-controls {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          flex-shrink: 0;
-        }
-
-        .edit-controls--hidden {
-          display: none;
-        }
-
-        .stepper {
-          display: flex;
-          align-items: center;
-          background: var(--color-surface-container-low, #f3f3f6);
-          border-radius: var(--radius-full, 9999px);
-          padding: 2px;
-          gap: 4px;
-          border: 1px solid var(--color-outline-variant, #bfc9c1);
-        }
-
-        .stepper-btn {
-          width: 28px;
-          height: 28px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: var(--radius-full, 9999px);
-          border: none;
-          background: transparent;
-          cursor: pointer;
-          color: var(--color-on-surface, #1a1c1e);
-          transition: background-color 0.1s ease;
-          -webkit-tap-highlight-color: transparent;
-          padding: 0;
-        }
-
-        .stepper-btn:active {
-          background-color: var(--color-secondary-container, #d3e5cb);
-        }
-
-        .stepper-btn svg {
-          width: 18px;
-          height: 18px;
-          fill: currentColor;
-        }
-
-        .stepper-value {
-          font: var(--font-item-name, 600 18px/1.4 'Hanken Grotesk', sans-serif);
-          font-weight: 700;
-          font-size: 14px;
-          min-width: 16px;
-          text-align: center;
-          color: var(--color-on-surface, #1a1c1e);
-        }
-
-        .delete-btn {
-          width: 36px;
-          height: 36px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border: none;
-          background: transparent;
-          border-radius: var(--radius-full, 9999px);
-          cursor: pointer;
-          color: var(--color-error, #ba1a1a);
-          transition: background-color 0.15s ease;
-          -webkit-tap-highlight-color: transparent;
-          padding: 0;
-        }
-
-        .delete-btn:active {
-          background-color: var(--color-error-container, #ffdad6);
-        }
-
-        .delete-btn svg {
-          width: 20px;
-          height: 20px;
-          fill: currentColor;
-        }
-
-        /* Standard controls wrapper */
-        .standard-controls {
-          display: flex;
-          align-items: center;
-          flex-shrink: 0;
-        }
-
-        .standard-controls--hidden {
-          display: none;
-        }
-      </style>
-
-      <div class="row-wrapper">
-        <button class="delete-overlay" part="delete-btn">DELETE</button>
-        <div class="row" part="row">
-          <div class="info">
-            <div class="info-top">
-              <span class="name">${escapeHtml(item.name)}</span>
-              ${item.categoryId === 'produce' ? '<span class="badge">ORGANIC</span>' : ''}
-            </div>
-            <div class="info-bottom">
-              <span class="qty">${formatQty(item.qty, item.unit)}</span>
-              ${hasRecipe ? `<span class="recipe-link">
-                <svg viewBox="0 0 24 24"><path d="M8.1 13.34l2.83-2.83L3.91 3.5c-1.56 1.56-1.56 4.09 0 5.66l4.19 4.18zm6.78-1.81c1.53.71 3.68.21 5.27-1.38 1.91-1.91 2.28-4.65.81-6.12-1.46-1.46-4.2-1.1-6.12.81-1.59 1.59-2.09 3.74-1.38 5.27L3.7 19.87l1.41 1.41L12 14.41l6.88 6.88 1.41-1.41L13.41 13l1.47-1.47z"/></svg>
-                Recipe</span>` : ''}
-            </div>
+    this.innerHTML = `
+      <div class="gr-row" style="--accent-color: ${categoryColor}" data-item-id="${item.id}">
+        <div class="gr-row__info">
+          <div class="gr-row__info-top">
+            <span class="gr-row__name">${escapeHtml(item.name)}</span>
+            ${item.categoryId === 'produce' ? '<span class="gr-row__badge">ORGANIC</span>' : ''}
           </div>
-          <!-- Standard controls (checkbox) -->
-          <div class="standard-controls">
-            <button class="check" part="check-btn">
-              <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+          <div class="gr-row__info-bottom">
+            <span class="gr-row__qty">${formatQty(item.qty, item.unit)}</span>
+            ${hasRecipe ? `<span class="gr-row__recipe-link">
+              <svg viewBox="0 0 24 24"><path d="M8.1 13.34l2.83-2.83L3.91 3.5c-1.56 1.56-1.56 4.09 0 5.66l4.19 4.18zm6.78-1.81c1.53.71 3.68.21 5.27-1.38 1.91-1.91 2.28-4.65.81-6.12-1.46-1.46-4.2-1.1-6.12.81-1.59 1.59-2.09 3.74-1.38 5.27L3.7 19.87l1.41 1.41L12 14.41l6.88 6.88 1.41-1.41L13.41 13l1.47-1.47z"/></svg>
+              Recipe</span>` : ''}
+          </div>
+        </div>
+        <!-- Standard controls (checkbox) -->
+        <div class="gr-row__controls">
+          <button class="gr-row__check" aria-label="${item.isChecked ? 'Uncheck' : 'Check'} ${escapeHtml(item.name)}">
+            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+          </button>
+        </div>
+        <!-- Edit mode controls (stepper + delete) -->
+        <div class="gr-row__edit-controls" style="display:none">
+          <div class="gr-row__stepper">
+            <button class="gr-row__stepper-btn gr-row__stepper-minus" aria-label="Decrease quantity">
+              <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
+            </button>
+            <span class="gr-row__stepper-value">${formatQtyForStepper(item.qty)}</span>
+            <button class="gr-row__stepper-btn gr-row__stepper-plus" aria-label="Increase quantity">
+              <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
             </button>
           </div>
-          <!-- Edit mode controls (stepper + delete) -->
-          <div class="edit-controls edit-controls--hidden">
-            <div class="stepper">
-              <button class="stepper-btn stepper-minus" aria-label="Decrease quantity">
-                <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
-              </button>
-              <span class="stepper-value">${formatQtyForStepper(item.qty)}</span>
-              <button class="stepper-btn stepper-plus" aria-label="Increase quantity">
-                <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-              </button>
-            </div>
-            <button class="delete-btn" aria-label="Delete item">
-              <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-            </button>
-          </div>
+          <button class="gr-row__delete-btn" aria-label="Delete item">
+            <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+          </button>
         </div>
       </div>
     `;
-
-    this._rowEl = this._shadow.querySelector('.row');
-    this._checkboxEl = this._shadow.querySelector('.check');
-    this._standardControls = this._shadow.querySelector('.standard-controls');
-    this._editControls = this._shadow.querySelector('.edit-controls');
-    this._deleteBtn = this._shadow.querySelector('.delete-btn');
-    this._qtyDisplay = this._shadow.querySelector('.stepper-value');
 
     // Apply checked state if item is already checked
     if (item.isChecked) {
@@ -449,36 +137,39 @@ export class GroceryRow extends HTMLElement {
    * @param {boolean} checked
    */
   _applyChecked(checked) {
-    if (!this._rowEl || !this._checkboxEl) return;
-    this._rowEl.classList.toggle('row--checked', checked);
-    this._checkboxEl.classList.toggle('check--checked', checked);
-
-    const nameEl = this._shadow.querySelector('.name');
-    const qtyEl = this._shadow.querySelector('.qty');
-    if (nameEl) nameEl.classList.toggle('name--checked', checked);
-    if (qtyEl) qtyEl.classList.toggle('qty--checked', checked);
+    const row = this.querySelector('.gr-row');
+    const checkBtn = this.querySelector('.gr-row__check');
+    const nameEl = this.querySelector('.gr-row__name');
+    const qtyEl = this.querySelector('.gr-row__qty');
+    if (row) row.classList.toggle('gr-row--checked', checked);
+    if (checkBtn) checkBtn.classList.toggle('gr-row__check--checked', checked);
+    if (nameEl) nameEl.classList.toggle('gr-row__name--checked', checked);
+    if (qtyEl) qtyEl.classList.toggle('gr-row__qty--checked', checked);
   }
 
   /**
    * Apply edit mode visual state — show/hide standard vs edit controls.
    */
   _applyEditMode() {
-    if (!this._standardControls || !this._editControls || !this._rowEl) return;
+    const controls = this.querySelector('.gr-row__controls');
+    const editControls = this.querySelector('.gr-row__edit-controls');
+    const row = this.querySelector('.gr-row');
+    if (!controls || !editControls || !row) return;
 
     if (this._editMode) {
-      this._standardControls.classList.add('standard-controls--hidden');
-      this._editControls.classList.remove('edit-controls--hidden');
-      this._rowEl.classList.add('row--edit-mode');
+      (/** @type {HTMLElement} */ (controls)).style.display = 'none';
+      (/** @type {HTMLElement} */ (editControls)).style.display = 'flex';
+      row.classList.add('gr-row--edit-mode');
     } else {
-      this._standardControls.classList.remove('standard-controls--hidden');
-      this._editControls.classList.add('edit-controls--hidden');
-      this._rowEl.classList.remove('row--edit-mode');
+      (/** @type {HTMLElement} */ (controls)).style.display = '';
+      (/** @type {HTMLElement} */ (editControls)).style.display = 'none';
+      row.classList.remove('gr-row--edit-mode');
     }
   }
 
   /** Bind DOM event listeners. */
   _setupListeners() {
-    const checkBtn = this._shadow.querySelector('.check');
+    const checkBtn = this.querySelector('.gr-row__check');
     if (checkBtn) {
       checkBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -486,25 +177,16 @@ export class GroceryRow extends HTMLElement {
       });
     }
 
-    const deleteOverlayBtn = this._shadow.querySelector('.delete-overlay');
-    if (deleteOverlayBtn) {
-      deleteOverlayBtn.addEventListener('click', (e) => {
+    const deleteBtn = this.querySelector('.gr-row__delete-btn');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         this._handleDelete();
       });
     }
 
-    // Edit mode delete button
-    if (this._deleteBtn) {
-      this._deleteBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this._handleDelete();
-      });
-    }
-
-    // Stepper buttons
-    const minusBtn = this._shadow.querySelector('.stepper-minus');
-    const plusBtn = this._shadow.querySelector('.stepper-plus');
+    const minusBtn = this.querySelector('.gr-row__stepper-minus');
+    const plusBtn = this.querySelector('.gr-row__stepper-plus');
     if (minusBtn) {
       minusBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -519,22 +201,15 @@ export class GroceryRow extends HTMLElement {
     }
 
     // Long press for entering edit mode
-    // Attached to .row inside the shadow DOM so that e.target resolves correctly
-    // (unlike on the host element with closed shadow where event retargeting
-    //  makes the button guard - e.target.closest('button') - always fail).
-    if (this._rowEl) {
-      this._rowEl.addEventListener('mousedown', (e) => this._onRowPointerDown(e));
-      this._rowEl.addEventListener('touchstart', (e) => this._onRowPointerDown(e), { passive: true });
-      this._rowEl.addEventListener('mouseup', () => this._cancelPress());
-      this._rowEl.addEventListener('mouseleave', () => this._cancelPress());
-      this._rowEl.addEventListener('touchend', () => this._cancelPress());
-      this._rowEl.addEventListener('touchmove', () => this._cancelPress());
+    const row = this.querySelector('.gr-row');
+    if (row) {
+      row.addEventListener('mousedown', (e) => this._onRowPointerDown(e));
+      row.addEventListener('touchstart', (e) => this._onRowPointerDown(e), { passive: true });
+      row.addEventListener('mouseup', () => this._cancelPress());
+      row.addEventListener('mouseleave', () => this._cancelPress());
+      row.addEventListener('touchend', () => this._cancelPress());
+      row.addEventListener('touchmove', () => this._cancelPress());
     }
-
-    // Touch events for swipe-to-delete (only when NOT in edit mode)
-    this.addEventListener('touchstart', (e) => this._onTouchStart(e), { passive: true });
-    this.addEventListener('touchmove', (e) => this._onTouchMove(e), { passive: true });
-    this.addEventListener('touchend', (e) => this._onTouchEnd(e), { passive: false });
   }
 
   /**
@@ -546,18 +221,12 @@ export class GroceryRow extends HTMLElement {
    * @param {Event} e - Mouse or touch event.
    */
   _onRowPointerDown(e) {
-    // Don't trigger if already in edit mode
     if (this._editMode) return;
-
-    // Don't trigger if the target or any ancestor is a button (checkbox,
-    // delete, stepper, etc.). Inside the shadow DOM this works correctly —
-    // e.target resolves to the actual clicked element, not the host.
     if (e.target && /** @type {HTMLElement} */ (e.target).closest('button')) return;
 
     this._pressTimer = window.setTimeout(() => {
       this.dispatchEvent(new CustomEvent('item-long-press', {
         bubbles: true,
-        composed: true,
         detail: { id: this._item ? this._item.id : null },
       }));
     }, 500);
@@ -580,7 +249,6 @@ export class GroceryRow extends HTMLElement {
 
     this.dispatchEvent(new CustomEvent('item-checked', {
       bubbles: true,
-      composed: true,
       detail: { id: this._item.id, isChecked: newChecked },
     }));
   }
@@ -590,7 +258,6 @@ export class GroceryRow extends HTMLElement {
     if (!this._item) return;
     this.dispatchEvent(new CustomEvent('item-delete', {
       bubbles: true,
-      composed: true,
       detail: { id: this._item.id },
     }));
   }
@@ -607,89 +274,21 @@ export class GroceryRow extends HTMLElement {
     this._item.qty = newQty;
 
     // Update stepper display
-    if (this._qtyDisplay) {
-      this._qtyDisplay.textContent = formatQtyForStepper(newQty);
+    const stepperValue = this.querySelector('.gr-row__stepper-value');
+    if (stepperValue) {
+      stepperValue.textContent = formatQtyForStepper(newQty);
     }
 
     // Update the small qty label in the info section
-    const qtyEl = this._shadow.querySelector('.qty');
+    const qtyEl = this.querySelector('.gr-row__qty');
     if (qtyEl) {
       qtyEl.textContent = formatQty(newQty, this._item.unit);
     }
 
     this.dispatchEvent(new CustomEvent('item-qty-change', {
       bubbles: true,
-      composed: true,
       detail: { id: this._item.id, qty: newQty },
     }));
-  }
-
-  /**
-   * Touch start — record initial X position.
-   * @param {TouchEvent} e
-   */
-  _onTouchStart(e) {
-    this._startX = e.touches[0].clientX;
-    this._currentX = this._startX;
-    this._swiping = false;
-  }
-
-  /**
-   * Touch move — calculate swipe distance.
-   * @param {TouchEvent} e
-   */
-  _onTouchMove(e) {
-    // Don't swipe in edit mode
-    if (this._editMode) return;
-
-    this._currentX = e.touches[0].clientX;
-    const diff = this._startX - this._currentX;
-
-    if (Math.abs(diff) > 10) {
-      this._swiping = true;
-    }
-
-    if (this._swiping && diff > 0) {
-      const deleteOverlay = /** @type {HTMLElement | null} */ (this._shadow.querySelector('.delete-overlay'));
-      const row = /** @type {HTMLElement | null} */ (this._shadow.querySelector('.row'));
-      if (deleteOverlay && row) {
-        const swipeAmount = Math.min(diff, 72);
-        row.style.transform = `translateX(-${swipeAmount}px)`;
-        deleteOverlay.classList.toggle('delete-overlay--visible', swipeAmount >= 36);
-      }
-    }
-  }
-
-  /**
-   * Touch end — commit or cancel swipe.
-   * @param {TouchEvent} _e - Touch event (unused, we use stored coordinates).
-   */
-  _onTouchEnd(_e) {
-    void _e; // Unused — we use stored touch coordinates
-    if (!this._swiping) return;
-
-    const diff = this._startX - this._currentX;
-    const row = /** @type {HTMLElement | null} */ (this._shadow.querySelector('.row'));
-    const deleteOverlay = /** @type {HTMLElement | null} */ (this._shadow.querySelector('.delete-overlay'));
-
-    if (row) {
-      row.style.transform = '';
-    }
-
-    if (diff > 36) {
-      // Commit delete
-      if (deleteOverlay) {
-        deleteOverlay.classList.add('delete-overlay--visible');
-      }
-      this._handleDelete();
-    } else {
-      // Cancel swipe
-      if (deleteOverlay) {
-        deleteOverlay.classList.remove('delete-overlay--visible');
-      }
-    }
-
-    this._swiping = false;
   }
 }
 

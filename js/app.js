@@ -12,6 +12,7 @@ import { initRouter, goTo } from './router.js';
 // Import all Web Components so their customElements.define() calls execute.
 // The router creates these elements by tag name, so they must be registered.
 import './components/app-nav.js';
+import './components/app-snackbar.js';
 import './components/top-bar.js';
 import './components/grocery-list.js';
 import './components/grocery-row.js';

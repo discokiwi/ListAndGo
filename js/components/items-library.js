@@ -1,10 +1,12 @@
 // @ts-check
+import { getCategoryColor } from '../utils/category-colors.js';
 /**
- * Items Library Web Component — Inventory Manager Categorized List View.
+ * Items Library Web Component — Categorized inventory of all grocery items.
  * Business Logic: Displays the catalogue of grocery items grouped by category,
- * with a search bar, filter pills, expandable category sections, favorite toggles,
- * and an "Add to List" button per item. Follows the Stitch "Inventory Manager -
- * Categorized List View" design spec.
+ * with a search bar, reusable pill filter buttons, expandable category sections,
+ * and an "Add to List" button per item. Uses flat list rows with category color
+ * accent borders (matching the grocery list visual style). Essential items show
+ * a decorative star icon — no interactive toggle.
  * Stamps content from `<template id="items-library-template">`.
  * @class
  */
@@ -68,27 +70,16 @@ export class ItemsLibrary extends HTMLElement {
       });
     }
 
-    // Filter pills are delegated via the pills container
-    const pillsContainer = this.querySelector('#items-filter-pills');
-    if (pillsContainer) {
-      pillsContainer.addEventListener('click', (e) => {
-        const evtTarget = /** @type {EventTarget} */ (e.target);
-        const target = /** @type {HTMLElement} */ (evtTarget);
-        const pill = /** @type {HTMLElement} */ (target.closest('[data-filter]'));
-        if (!pill) return;
-        const filter = pill.getAttribute('data-filter');
-        if (!filter) return;
-
-        // Toggle: if clicking the already-active Essentials pill, reset to "all"
-        if (filter === 'essential' && this.#currentFilter === 'essential') {
-          this.#currentFilter = 'all';
-        } else {
-          this.#currentFilter = filter;
-        }
-        // Update active state on all pills
-        pillsContainer.querySelectorAll('[data-filter]').forEach((/** @type {Element} */ p) => {
-          (/** @type {HTMLElement} */ (p)).classList.toggle('items-filter-pill--active', (/** @type {HTMLElement} */ (p)).getAttribute('data-filter') === this.#currentFilter);
-        });
+    // Essentials toggle button — same design as grocery list's EVERY WEEK button
+    const essentialsBtn = this.querySelector('#items-essentials-btn');
+    if (essentialsBtn) {
+      essentialsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Toggle essentials filter on/off
+        this.#currentFilter = this.#currentFilter === 'essential' ? 'all' : 'essential';
+        // Use pill--filled for active state, pill--outlined for inactive
+        essentialsBtn.classList.toggle('pill--filled', this.#currentFilter === 'essential');
+        essentialsBtn.classList.toggle('pill--outlined', this.#currentFilter === 'all');
         this.#applyFilters();
       });
     }
@@ -110,11 +101,6 @@ export class ItemsLibrary extends HTMLElement {
         item.name.toLowerCase().includes(this.#searchQuery) ||
         (item.categoryId && item.categoryId.toLowerCase().includes(this.#searchQuery))
       );
-    }
-
-    // Category filter (if not "all")
-    if (this.#currentFilter !== 'all' && this.#currentFilter !== 'essential') {
-      filtered = filtered.filter((item) => item.categoryId === this.#currentFilter);
     }
 
     // Essentials filter
@@ -155,23 +141,18 @@ export class ItemsLibrary extends HTMLElement {
   }
 
   /**
-   * No dynamic category pills needed — only the static "All Items" and "Essentials"
-   * pills from the template remain.
+   * Update the essentials toggle pill to match the current filter state.
+   * Uses pill--filled (active) vs pill--outlined (inactive) styles,
+   * matching the grocery list's EVERY WEEK button pattern.
    * @returns {void}
    */
   #updateFilterPills() {
-    const pillsContainer = this.querySelector('#items-filter-pills');
-    if (!pillsContainer) return;
+    const essentialsBtn = /** @type {HTMLElement | null} */ (this.querySelector('#items-essentials-btn'));
+    if (!essentialsBtn) return;
 
-    // Remove any dynamically injected pills from previous renders
-    const existingDynamic = pillsContainer.querySelectorAll('[data-filter][data-dynamic]');
-    existingDynamic.forEach((el) => el.remove());
-
-    // Keep only the static "All Items" and "Essentials" pills from the template
-    // Ensure the active state reflects #currentFilter
-    pillsContainer.querySelectorAll('[data-filter]').forEach((/** @type {Element} */ p) => {
-      (/** @type {HTMLElement} */ (p)).classList.toggle('items-filter-pill--active', (/** @type {HTMLElement} */ (p)).getAttribute('data-filter') === this.#currentFilter);
-    });
+    const isActive = this.#currentFilter === 'essential';
+    essentialsBtn.classList.toggle('pill--filled', isActive);
+    essentialsBtn.classList.toggle('pill--outlined', !isActive);
   }
 
   /**
@@ -217,17 +198,6 @@ export class ItemsLibrary extends HTMLElement {
 
     container.innerHTML = html;
 
-    // Wire up favorite toggles
-    container.querySelectorAll('[data-action="favorite"]').forEach((/** @type {Element} */ _btn) => {
-      const btn = /** @type {HTMLElement} */ (_btn);
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const itemId = btn.getAttribute('data-item-id');
-        if (!itemId) return;
-        this.#toggleFavorite(itemId, btn);
-      });
-    });
-
     // Wire up "Add to List" buttons
     container.querySelectorAll('[data-action="add-to-list"]').forEach((/** @type {Element} */ _btn) => {
       const btn = /** @type {HTMLElement} */ (_btn);
@@ -240,7 +210,7 @@ export class ItemsLibrary extends HTMLElement {
     });
 
     // Wire up item row clicks to open the editor in edit mode
-    container.querySelectorAll('.inventory-row').forEach((/** @type {Element} */ row) => {
+    container.querySelectorAll('.item-row').forEach((/** @type {Element} */ row) => {
       row.addEventListener('click', (e) => {
         // Don't open editor if clicking a button inside the row
         const target = /** @type {HTMLElement} */ (e.target);
@@ -253,84 +223,41 @@ export class ItemsLibrary extends HTMLElement {
   }
 
   /**
-   * Render a single inventory item row.
+   * Render a single item row using flat list style with category accent border.
+   * Essential items show a decorative star icon (non-interactive).
    * @param {import("../db.js").Item} item - The item data to render.
    * @returns {string} HTML string for the row.
    */
   #renderItemRow(item) {
-    const favClass = item.isEssential ? 'inventory-row-favorite--on' : 'inventory-row-favorite--off';
+    const accentColor = getCategoryColor(item.categoryId || '');
     const qtyText = item.defaultQty ? `${item.defaultQty} ${item.unitId || ''}`.trim() : '';
-    // Show "One-time use" badge for items that are fully consumed in a single recipe
     const usageType = item.isOneTime ? 'One-time use' : '';
     const usageIconPath = item.isOneTime
       ? '<svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>'
       : '';
+    // Decorative star for essential items only
+    const starHtml = item.isEssential
+      ? '<span class="item-row__essential-star" aria-label="Essential"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></span>'
+      : '';
 
     return `
-      <div class="inventory-row" data-item-id="${item.id}">
-        <div class="inventory-row-info">
-          <div class="inventory-row-name-row">
-            <span class="inventory-row-name">${this.#escapeHtml(item.name)}</span>
-            <button class="inventory-row-favorite ${favClass}" data-action="favorite" data-item-id="${item.id}" aria-label="${item.isEssential ? 'Remove from' : 'Add to'} favorites">
-              <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-            </button>
+      <div class="item-row" style="--accent-color: ${accentColor}" data-item-id="${item.id}">
+        <div class="item-row__info">
+          <div class="item-row__name-row">
+            <span class="item-row__name">${this.#escapeHtml(item.name)}</span>
+            ${starHtml}
           </div>
-          <div class="inventory-row-meta">
-            ${qtyText ? `<span class="inventory-row-qty">${this.#escapeHtml(qtyText)}</span>` : ''}
-            ${usageType ? `<span class="inventory-row-usage">${usageIconPath} <span>${usageType}</span></span>` : ''}
+          <div class="item-row__meta">
+            ${qtyText ? `<span class="item-row__qty">${this.#escapeHtml(qtyText)}</span>` : ''}
+            ${usageType ? `<span class="item-row__usage">${usageIconPath} <span>${usageType}</span></span>` : ''}
           </div>
         </div>
-        <button class="inventory-row-add-btn" data-action="add-to-list" data-item-id="${item.id}" aria-label="Add ${item.name} to list">
+        <button class="item-row__add-btn" data-action="add-to-list" data-item-id="${item.id}" aria-label="Add ${item.name} to list">
           <svg viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2S15.9 22 17 22s2-.9 2-2-.9-2-2-2zm-8.9-5h7.45c.75 0 1.41-.41 1.75-1.03L21 4.96 19.25 4l-3.7 7H8.53L4.27 2H1v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5.48 17 7 17h12v-2H7l1.1-2z"/></svg>
-          <span class="inventory-row-add-label">Add to List</span>
+          <span class="item-row__add-label">Add to List</span>
         </button>
       </div>
     `;
-  }
-
-  /**
-   * Toggle the essential/favorite state of an item.
-   * @param {string} itemId - UUID of the item.
-   * @param {HTMLElement} btn - The favorite button element.
-   * @returns {Promise<void>}
-   */
-  async #toggleFavorite(itemId, btn) {
-    try {
-      const { getItemById, updateItem } = await import('../store/items.store.js');
-      const item = await getItemById(itemId);
-      if (!item) return;
-
-      item.isEssential = !item.isEssential;
-      await updateItem(item);
-
-      // Toggle visual state
-      const isOn = item.isEssential;
-      btn.classList.toggle('inventory-row-favorite--on', isOn);
-      btn.classList.toggle('inventory-row-favorite--off', !isOn);
-      btn.setAttribute('aria-label', isOn ? 'Remove from favorites' : 'Add to favorites');
-
-      // Update the usage type text in the meta row based on isOneTime (unchanged by this toggle)
-      const row = btn.closest('.inventory-row');
-      if (row) {
-        const usageEl = row.querySelector('.inventory-row-usage');
-        const meta = row.querySelector('.inventory-row-meta');
-        if (usageEl) {
-          usageEl.innerHTML = item.isOneTime
-            ? '<svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg> <span>One-time use</span>'
-            : '';
-        } else if (item.isOneTime && meta) {
-          const usageEl2 = document.createElement('span');
-          usageEl2.className = 'inventory-row-usage';
-          usageEl2.innerHTML = '<svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg> <span>One-time use</span>';
-          meta.appendChild(usageEl2);
-        }
-      }
-
-      // Dispatch event so other components can react
-      this.dispatchEvent(new CustomEvent('item-saved', { bubbles: true }));
-    } catch (err) {
-      console.error('Failed to toggle favorite:', err);
-    }
   }
 
   /**

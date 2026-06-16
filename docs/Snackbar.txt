@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>List&amp;GO - Grocery List &amp; Notifications</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed": "#390b0e",
+                        "on-primary-fixed": "#002114",
+                        "on-primary-fixed-variant": "#0e5138",
+                        "inverse-surface": "#2f3133",
+                        "surface-tint": "#2c694e",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "surface-container": "#eeeef0",
+                        "surface-container-high": "#e8e8ea",
+                        "on-secondary-fixed-variant": "#3b4b38",
+                        "surface": "#f9f9fc",
+                        "on-tertiary-container": "#ffcfce",
+                        "error": "#ba1a1a",
+                        "surface-muted": "#EEF1EF",
+                        "secondary": "#53634e",
+                        "text-dimmed": "#636E72",
+                        "on-error-container": "#93000a",
+                        "on-error": "#ffffff",
+                        "on-surface": "#1a1c1e",
+                        "success-light": "#D8E2DC",
+                        "on-secondary-fixed": "#111f0f",
+                        "error-container": "#ffdad6",
+                        "background": "#f9f9fc",
+                        "surface-container-low": "#f3f3f6",
+                        "on-tertiary-fixed-variant": "#6f3537",
+                        "tertiary-fixed": "#ffdad9",
+                        "secondary-fixed": "#d6e8ce",
+                        "inverse-primary": "#95d4b3",
+                        "on-tertiary": "#ffffff",
+                        "primary": "#0f5238",
+                        "on-secondary": "#ffffff",
+                        "surface-bright": "#f9f9fc",
+                        "surface-dim": "#dadadc",
+                        "secondary-fixed-dim": "#baccb3",
+                        "primary-fixed-dim": "#95d4b3",
+                        "on-secondary-container": "#576752",
+                        "on-primary-container": "#a8e7c5",
+                        "primary-container": "#2d6a4f",
+                        "tertiary": "#713638",
+                        "outline": "#707973",
+                        "surface-variant": "#e2e2e5",
+                        "primary-fixed": "#b1f0ce",
+                        "surface-container-highest": "#e2e2e5",
+                        "surface-pure": "#FFFFFF",
+                        "secondary-container": "#d3e5cb",
+                        "on-surface-variant": "#404943",
+                        "inverse-on-surface": "#f0f0f3",
+                        "outline-variant": "#bfc9c1",
+                        "surface-soft": "#F8F9F8",
+                        "on-background": "#1a1c1e",
+                        "tertiary-fixed-dim": "#ffb3b3",
+                        "tertiary-container": "#8d4d4e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "list-item-gap": "12px",
+                        "gutter": "16px",
+                        "base": "8px",
+                        "thumb-touch": "48px",
+                        "safe-margin": "20px"
+                    },
+                    "fontFamily": {
+                        "body-reg": ["Hanken Grotesk"],
+                        "unit-label": ["Hanken Grotesk"],
+                        "display-lg": ["Hanken Grotesk"],
+                        "badge-caps": ["Hanken Grotesk"],
+                        "item-name": ["Hanken Grotesk"],
+                        "headline-md": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "body-reg": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "unit-label": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "400"}],
+                        "display-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "badge-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "item-name": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Hanken Grotesk', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .snackbar-animate {
+            animation: slideUp 0.3s ease-out forwards;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        /* Custom scrollbar for clean UI */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #dadadc; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-surface-soft text-on-surface">
+<!-- Top Navigation Bar -->
+<header class="w-full top-0 sticky bg-surface-soft dark:bg-surface-dim shadow-[0_4px_20px_rgba(0,0,0,0.05)] z-40">
+<div class="flex justify-between items-center px-gutter py-4 w-full max-w-[1024px] mx-auto">
+<h1 class="font-display-lg text-display-lg font-bold text-primary dark:text-primary-fixed-dim">List&amp;GO</h1>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-primary dark:text-primary-fixed-dim hover:bg-surface-muted dark:hover:bg-surface-container-high transition-colors p-2 rounded-full active:scale-95 transition-transform">notifications</button>
+<button class="material-symbols-outlined text-primary dark:text-primary-fixed-dim hover:bg-surface-muted dark:hover:bg-surface-container-high transition-colors p-2 rounded-full active:scale-95 transition-transform">account_circle</button>
+</div>
+</div>
+</header>
+<div class="flex max-w-[1024px] mx-auto min-h-screen">
+<!-- Side Navigation Bar (Desktop Only) -->
+<aside class="hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 bg-surface-pure dark:bg-surface-container shadow-[0_4px_20px_rgba(0,0,0,0.05)] py-8 z-30">
+<div class="px-6 mb-10">
+<h2 class="font-display-lg text-display-lg text-primary dark:text-primary-fixed-dim">List&amp;GO</h2>
+<p class="text-on-surface-variant font-unit-label">Calm Planning</p>
+</div>
+<nav class="flex-1 space-y-2 px-2">
+<a class="flex items-center gap-4 bg-secondary-container dark:bg-on-primary-fixed-variant text-on-secondary-container dark:text-primary-fixed border-l-4 border-primary rounded-r-xl px-4 py-3 transition-all" href="#">
+<span class="material-symbols-outlined">shopping_cart</span>
+<span class="font-item-name text-item-name">Grocery List</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant dark:text-outline px-4 py-3 hover:bg-surface-muted dark:hover:bg-surface-container-highest transition-all" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="font-item-name text-item-name">Meal Plan</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant dark:text-outline px-4 py-3 hover:bg-surface-muted dark:hover:bg-surface-container-highest transition-all" href="#">
+<span class="material-symbols-outlined">restaurant_menu</span>
+<span class="font-item-name text-item-name">Recipes</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant dark:text-outline px-4 py-3 hover:bg-surface-muted dark:hover:bg-surface-container-highest transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-item-name text-item-name">Settings</span>
+</a>
+</nav>
+</aside>
+<!-- Main Canvas -->
+<main class="flex-1 lg:ml-64 px-safe-margin py-8 pb-32">
+<!-- List Header -->
+<div class="mb-8 flex justify-between items-end">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Weekly Essentials</h2>
+<p class="font-body-reg text-body-reg text-text-dimmed">12 items remaining</p>
+</div>
+<button class="bg-primary-container text-on-primary-container px-6 py-3 rounded-xl font-item-name text-item-name flex items-center gap-2 shadow-md active:scale-95 transition-transform">
+<span class="material-symbols-outlined">add</span>
+                    Add Item
+                </button>
+</div>
+<!-- Grocery List Content (Simulated SCREEN_4) -->
+<div class="space-y-6">
+<!-- Produce Section -->
+<details class="group" open="">
+<summary class="flex items-center justify-between font-item-name text-item-name py-2 cursor-pointer border-b border-surface-variant mb-4">
+<div class="flex items-center gap-3">
+<span class="w-2 h-6 bg-green-500 rounded-full"></span>
+                            Produce
+                        </div>
+<span class="material-symbols-outlined transition-transform group-open:rotate-180">expand_more</span>
+</summary>
+<div class="grid gap-list-item-gap">
+<!-- List Item -->
+<div class="flex items-center bg-surface-pure p-4 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] border-l-4 border-transparent hover:border-primary transition-all">
+<div class="flex-1">
+<h3 class="font-item-name text-item-name">Organic Hass Avocados</h3>
+<p class="font-unit-label text-unit-label text-text-dimmed">3 units</p>
+</div>
+<div class="px-3 py-1 bg-success-light text-primary rounded-full font-badge-caps text-badge-caps uppercase mr-4">Produce</div>
+<button class="w-thumb-touch h-thumb-touch flex items-center justify-center rounded-full hover:bg-surface-muted active:scale-90 transition-all text-outline">
+<span class="material-symbols-outlined">radio_button_unchecked</span>
+</button>
+</div>
+<!-- List Item (Active Interaction Point) -->
+<div class="flex items-center bg-surface-pure p-4 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] border-l-4 border-transparent">
+<div class="flex-1">
+<h3 class="font-item-name text-item-name">Honeycrisp Apples</h3>
+<p class="font-unit-label text-unit-label text-text-dimmed">1 bag (2lb)</p>
+</div>
+<div class="px-3 py-1 bg-success-light text-primary rounded-full font-badge-caps text-badge-caps uppercase mr-4">Produce</div>
+<button class="w-thumb-touch h-thumb-touch flex items-center justify-center rounded-full hover:bg-red-50 text-error active:scale-90 transition-all" onclick="showDeleteSnackbar()">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+</details>
+<!-- Dairy Section -->
+<details class="group" open="">
+<summary class="flex items-center justify-between font-item-name text-item-name py-2 cursor-pointer border-b border-surface-variant mb-4">
+<div class="flex items-center gap-3">
+<span class="w-2 h-6 bg-blue-400 rounded-full"></span>
+                            Dairy &amp; Eggs
+                        </div>
+<span class="material-symbols-outlined transition-transform group-open:rotate-180">expand_more</span>
+</summary>
+<div class="grid gap-list-item-gap">
+<div class="flex items-center bg-surface-pure p-4 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] border-l-4 border-primary">
+<div class="flex-1">
+<h3 class="font-item-name text-item-name text-text-dimmed line-through">Whole Grass-Fed Milk</h3>
+<p class="font-unit-label text-unit-label text-text-dimmed">1 gallon</p>
+</div>
+<div class="px-3 py-1 bg-surface-container text-on-surface-variant rounded-full font-badge-caps text-badge-caps uppercase mr-4">Dairy</div>
+<button class="w-thumb-touch h-thumb-touch flex items-center justify-center rounded-full text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</button>
+</div>
+</div>
+</details>
+</div>
+</main>
+</div>
+<!-- Floating UI Overlays (Snackbars) -->
+<!-- Snackbar Container -->
+<div class="fixed bottom-8 left-1/2 -translate-x-1/2 md:left-auto md:right-8 md:translate-x-0 z-50 flex flex-col gap-4 items-center md:items-end w-full max-w-sm px-4 md:px-0" id="snackbar-container">
+<!-- 1. "Item Added" Snackbar -->
+<div class="snackbar-animate hidden flex items-center gap-3 bg-inverse-surface text-inverse-on-surface px-4 py-3 rounded-lg shadow-xl w-full md:w-auto" id="added-snackbar">
+<span class="material-symbols-outlined text-primary-fixed-dim text-[20px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-body-reg text-body-reg">Item added to list</span>
+<button class="ml-auto material-symbols-outlined text-outline-variant hover:text-white transition-colors" onclick="this.parentElement.classList.add('hidden')">close</button>
+</div>
+<!-- 2. "Item Deleted" Snackbar -->
+<div class="snackbar-animate hidden flex items-center justify-between bg-inverse-surface text-inverse-on-surface px-4 py-3 rounded-lg shadow-xl w-full min-w-[320px]" id="deleted-snackbar">
+<div class="flex items-center gap-3">
+<span class="font-body-reg text-body-reg">Item removed</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="font-item-name text-item-name text-[#95d4b3] px-2 py-1 rounded hover:bg-surface-container-highest/20 transition-colors" onclick="undoDelete()">Undo</button>
+<button class="material-symbols-outlined text-outline-variant hover:text-white transition-colors" onclick="this.parentElement.parentElement.classList.add('hidden')">close</button>
+</div>
+</div>
+</div>
+<!-- Demo Trigger Controls (For Presentation) -->
+<div class="fixed bottom-24 right-8 flex flex-col gap-2 pointer-events-none opacity-40 hover:opacity-100 transition-opacity">
+<p class="text-[10px] uppercase font-bold text-center mb-1">Preview Actions</p>
+<button class="pointer-events-auto bg-primary text-white text-xs px-3 py-2 rounded-full shadow-lg" onclick="showAddedSnackbar()">Trigger Added</button>
+<button class="pointer-events-auto bg-error text-white text-xs px-3 py-2 rounded-full shadow-lg" onclick="showDeleteSnackbar()">Trigger Deleted</button>
+</div>
+<script>
+        function showAddedSnackbar() {
+            const el = document.getElementById('added-snackbar');
+            el.classList.remove('hidden');
+            setTimeout(() => {
+                el.classList.add('hidden');
+            }, 4000);
+        }
+
+        function showDeleteSnackbar() {
+            const el = document.getElementById('deleted-snackbar');
+            el.classList.remove('hidden');
+            // Longer duration for items with actions
+            setTimeout(() => {
+                el.classList.add('hidden');
+            }, 6000);
+        }
+
+        function undoDelete() {
+            // Logic for undoing delete would go here
+            document.getElementById('deleted-snackbar').classList.add('hidden');
+            showAddedSnackbar(); // Show visual feedback that it was restored
+        }
+
+        // Auto-show for demo purposes
+        window.onload = () => {
+            setTimeout(showAddedSnackbar, 1000);
+            setTimeout(showDeleteSnackbar, 2500);
+        };
+    </script>
+<!-- Bottom Navigation Bar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface-pure shadow-[0_-4px_20px_rgba(0,0,0,0.05)] px-4 py-3 flex justify-around items-center z-40">
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">shopping_cart</span>
+<span class="text-[10px] font-bold">List</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="text-[10px]">Plans</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined">restaurant_menu</span>
+<span class="text-[10px]">Recipes</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px]">Settings</span>
+</button>
+</nav>
+</body></html>

@@ -50,6 +50,8 @@
 
   /* ---- Colors: Feedback ---- */
   --color-error: #ba1a1a;
+  --color-inverse-on-surface: #f0f0f3;
+
   --color-error-container: #ffdad6;
   --color-on-error: #ffffff;
   --color-on-error-container: #93000a;

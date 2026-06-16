@@ -1,0 +1,129 @@
+/* =============================================
+   List&GO — Snackbar Component Styles
+   Business Logic: Provides a reusable notification
+   bar anchored above the bottom nav (or bottom of
+   viewport on desktop). Supports "added" confirmation
+   and "removed with Undo" action patterns.
+   ============================================= */
+
+/* Snackbar host element — fixed at bottom center, above nav */
+app-snackbar {
+  position: fixed;
+  bottom: calc(56px + 16px + var(--safe-area-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  width: 100%;
+  max-width: calc(100% - 2 * var(--spacing-gutter, 16px));
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-base, 8px);
+  align-items: center;
+}
+
+/* On desktop (≥768px), right-align */
+@media (min-width: 768px) {
+  app-snackbar {
+    left: auto;
+    right: var(--spacing-safe-margin, 20px);
+    transform: none;
+    width: auto;
+    max-width: 400px;
+  }
+}
+
+/* The snackbar bar itself */
+.snackbar {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-base, 8px);
+  background: var(--color-inverse-surface, #2f3133);
+  color: var(--color-inverse-on-surface, #f0f0f3);
+  padding: 12px 16px;
+  border-radius: var(--radius-md, 0.75rem);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+  font: var(--font-body-reg, 400 16px/1.5 'Hanken Grotesk', sans-serif);
+  width: 100%;
+  box-sizing: border-box;
+  animation: snackbar-enter 0.3s ease-out forwards;
+}
+
+/* Exit animation (triggered when dismissed) */
+.snackbar--exit {
+  animation: snackbar-exit 0.2s ease-in forwards;
+}
+
+@keyframes snackbar-enter {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes snackbar-exit {
+  from { transform: translateY(0); opacity: 1; }
+  to   { transform: translateY(100%); opacity: 0; }
+}
+
+/* Icon area */
+.snackbar__icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--color-inverse-primary, #95d4b3);
+}
+
+/* Message text */
+.snackbar__message {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Action button (e.g. "Undo") */
+.snackbar__action {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  margin: -4px 0;
+  font: var(--font-item-name, 600 18px/1.4 'Hanken Grotesk', sans-serif);
+  font-size: 14px;
+  color: var(--color-inverse-primary, #95d4b3);
+  cursor: pointer;
+  border-radius: var(--radius-sm, 0.25rem);
+  transition: background 0.15s;
+}
+
+.snackbar__action:hover,
+.snackbar__action:focus-visible {
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+}
+
+/* Close button */
+.snackbar__close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 4px;
+  margin: -4px 0;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  color: var(--color-outline-variant, #bfc9c1);
+  border-radius: var(--radius-sm, 0.25rem);
+  transition: color 0.15s, background 0.15s;
+}
+
+.snackbar__close:hover,
+.snackbar__close:focus-visible {
+  color: var(--color-inverse-on-surface, #f0f0f3);
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+}
+
+.snackbar__close svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+}

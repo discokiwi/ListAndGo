@@ -1,26 +1,40 @@
 # Dependencies
 node_modules/
-docs/
+
 eslint.config.mjs
 package-lock.json
 package.json
 jsconfig.json
 
+js/vendor/
+assets/
+docs/
+
+
 # other screens 
 
-items-library.js
-item-editor.js
 
-meal-planner.js
-recipe-library.js
-settings-panel.js
-items.store.js
-top-bar.js
+css/components/badge.css
+css/components/bottom-sheet.css
+css/components/category-section.css
+css/components/fab.css
+css/components/grocery-row.css
+css/components/inputs.css
+css/components/item-editor.css
+css/components/items-library.css
+css/components/top-bar.css
 
-Router.js
+css/components/items-library.css
+css/components/top-bar.css
 
-item-editor.css
-top-bar.css
-items-library.css
-fab.css
+
+js/components/ingredient-picker.js
+js/components/item-editor.js
+js/components/items-library.js
+js/components/meal-planner.js
+js/components/recipe-library.js
+js/components/search-autocomplete.js
+js/components/settings-panel.js
+js/components/top-bar.js
+
 
