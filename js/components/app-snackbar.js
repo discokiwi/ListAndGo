@@ -28,7 +28,7 @@ export class AppSnackbar extends HTMLElement {
   _visible = false;
   /** @type {boolean} */
   _entering = false;
-  /** @type {{ message: string, undo: boolean, duration: number, onUndo: (() => void) | null }[]} */
+  /** @type {{ message: string, undo: boolean, duration: number, onUndo: (() => void) | null, type: 'added' | 'removed' }[]} */
   _queue = [];
 
   /** Construct the component. */
@@ -46,19 +46,21 @@ export class AppSnackbar extends HTMLElement {
    * Business Logic: If a snackbar is already visible, the request is queued.
    * Each snackbar auto-dismisses after the specified duration. If undo is
    * true, an "Undo" action button is shown that calls the provided callback.
+   * The `type` option controls the icon and styling: 'added' (default, green checkmark)
+   * or 'removed' (red trash can with red undo text).
    * @param {string} message - The message text to display.
-   * @param {{ undo?: boolean, duration?: number, onUndo?: () => void }} [options] - Optional config.
+   * @param {{ undo?: boolean, duration?: number, onUndo?: () => void, type?: 'added' | 'removed' }} [options] - Optional config.
    */
   show(message, options) {
-    const { undo = false, duration = undo ? 6000 : 4000, onUndo = null } = options || {};
+    const { undo = false, duration = undo ? 6000 : 4000, onUndo = null, type = 'added' } = options || {};
 
     if (this._visible || this._entering) {
       // Queue the request
-      this._queue.push({ message, undo, duration, onUndo });
+      this._queue.push({ message, undo, duration, onUndo, type });
       return;
     }
 
-    this._render(message, undo, onUndo, duration);
+    this._render(message, undo, onUndo, duration, type);
   }
 
   /**
@@ -74,8 +76,9 @@ export class AppSnackbar extends HTMLElement {
    * @param {boolean} undo - Whether to show an Undo button.
    * @param {(() => void) | null} onUndo - Callback for Undo action.
    * @param {number} duration - Auto-dismiss duration in ms.
+   * @param {'added' | 'removed'} type - Controls icon and styling.
    */
-  _render(message, undo, onUndo, duration) {
+  _render(message, undo, onUndo, duration, type = 'added') {
     this._message = message;
     this._onUndo = onUndo;
     this._visible = true;
@@ -86,14 +89,18 @@ export class AppSnackbar extends HTMLElement {
 
     // Build the snackbar bar
     const bar = document.createElement('div');
-    bar.className = 'snackbar';
+    bar.className = `snackbar${type === 'removed' ? ' snackbar--removed' : ''}`;
     bar.setAttribute('role', 'status');
     bar.setAttribute('aria-live', 'polite');
 
-    // Check icon (always show for consistency)
+    // Icon: checkmark for 'added', trash can for 'removed'
     const icon = document.createElement('span');
     icon.className = 'snackbar__icon';
-    icon.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>`;
+    if (type === 'removed') {
+      icon.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
+    } else {
+      icon.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>`;
+    }
     bar.appendChild(icon);
 
     // Message
@@ -187,7 +194,7 @@ export class AppSnackbar extends HTMLElement {
   _processQueue() {
     const next = this._queue.shift();
     if (next) {
-      this._render(next.message, next.undo, next.onUndo, next.duration);
+      this._render(next.message, next.undo, next.onUndo, next.duration, next.type);
     }
   }
 }

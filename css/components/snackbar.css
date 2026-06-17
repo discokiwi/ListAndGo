@@ -100,6 +100,20 @@ app-snackbar {
   outline: none;
 }
 
+/* Removed snackbar variant — trash icon in red, undo text in red, dark background stays */
+.snackbar--removed .snackbar__icon {
+  color: var(--color-error, #ba1a1a);
+}
+
+.snackbar--removed .snackbar__action {
+  color: var(--color-error, #ba1a1a);
+}
+
+.snackbar--removed .snackbar__action:hover,
+.snackbar--removed .snackbar__action:focus-visible {
+  background: rgba(186, 26, 26, 0.1);
+}
+
 /* Close button */
 .snackbar__close {
   flex-shrink: 0;

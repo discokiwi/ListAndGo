@@ -231,8 +231,9 @@ export class ItemsLibrary extends HTMLElement {
   #renderItemRow(item) {
     const accentColor = getCategoryColor(item.categoryId || '');
     const qtyText = item.defaultQty ? `${item.defaultQty} ${item.unitId || ''}`.trim() : '';
-    const usageType = item.isOneTime ? 'One-time use' : '';
-    const usageIconPath = item.isOneTime
+    const isMultiUse = item.isMultiUse;
+    const usageType = isMultiUse ? 'Multi-use' : '';
+    const usageIconPath = isMultiUse
       ? '<svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>'
       : '';
     // Decorative star for essential items only
@@ -254,38 +255,44 @@ export class ItemsLibrary extends HTMLElement {
         </div>
         <button class="item-row__add-btn" data-action="add-to-list" data-item-id="${item.id}" aria-label="Add ${item.name} to list">
           <svg viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2S15.9 22 17 22s2-.9 2-2-.9-2-2-2zm-8.9-5h7.45c.75 0 1.41-.41 1.75-1.03L21 4.96 19.25 4l-3.7 7H8.53L4.27 2H1v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5.48 17 7 17h12v-2H7l1.1-2z"/></svg>
-          <span class="item-row__add-label">Add to List</span>
         </button>
       </div>
     `;
   }
 
   /**
-   * Add an item to the active grocery list and show a toast.
+   * Add an item to the active grocery list with its default quantity and show a toast.
+   * Business Logic: When the user taps "Add to List" on an item in the library,
+   * the item is added to the active grocery list using its defaultQty and unitId.
+   * If the item already exists on the list, the quantity is incremented (handled
+   * by addGroceryItem's merge logic).
    * @param {string} itemId - UUID of the item.
    * @returns {Promise<void>}
    */
   async #addItemToList(itemId) {
     try {
-      // Import grocery store and add item to active list
       const { getItemById } = await import('../store/items.store.js');
       const item = await getItemById(itemId);
       if (!item) return;
 
-      // Dispatch an event so grocery-list component can handle insertion
-      this.dispatchEvent(new CustomEvent('add-to-grocery', {
-        bubbles: true,
-        detail: { item },
-      }));
+      const { getOrCreateActiveList, addGroceryItem } = await import('../store/grocery.store.js');
+      const list = await getOrCreateActiveList();
 
-      // Show toast
-      const toast = this.querySelector('#items-toast');
-      if (toast) {
-        toast.textContent = `Added ${item.name} to Grocery List`;
-        toast.classList.add('items-toast--visible');
-        setTimeout(() => {
-          toast.classList.remove('items-toast--visible');
-        }, 2000);
+      await addGroceryItem(
+        list.id,
+        item.id,
+        item.name,
+        item.categoryId || '',
+        item.defaultQty || 1,
+        item.unitId || '',
+      );
+
+      // Show snackbar confirmation
+      const snackbar = /** @type {import("./app-snackbar.js").AppSnackbar | null} */ (
+        document.querySelector('app-snackbar')
+      );
+      if (snackbar) {
+        snackbar.show(`Added ${item.name} to Grocery List`);
       }
     } catch (err) {
       console.error('Failed to add item to list:', err);

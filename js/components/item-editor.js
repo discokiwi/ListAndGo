@@ -108,14 +108,14 @@ export class ItemEditor extends HTMLElement {
 
         <!-- Toggles -->
         <div class="ie-toggles">
-          <!-- One-time use Toggle (switch style) -->
+          <!-- Multi-use Toggle (switch style) -->
           <label class="ie-toggle-row">
             <div class="ie-toggle-info">
-              <span class="ie-toggle-label">One-time use</span>
-              <span class="ie-toggle-sub">Remove after first shop</span>
+              <span class="ie-toggle-label">Multi-use</span>
+              <span class="ie-toggle-sub">Lasts beyond one meal</span>
             </div>
             <div class="ie-switch">
-              <input type="checkbox" id="ie-one-time" ${item?.isOneTime ? 'checked' : ''} class="ie-switch-input" />
+              <input type="checkbox" id="ie-multi-use" ${item?.isMultiUse ? 'checked' : ''} class="ie-switch-input" />
               <span class="ie-switch-track"></span>
             </div>
           </label>
@@ -279,7 +279,7 @@ export class ItemEditor extends HTMLElement {
     const categorySelect = /** @type {HTMLSelectElement | null} */ (this.querySelector('#ie-category'));
     const qtyInput = /** @type {HTMLInputElement | null} */ (this.querySelector('#ie-qty'));
     const unitSelect = /** @type {HTMLSelectElement | null} */ (this.querySelector('#ie-unit'));
-    const oneTimeCheck = /** @type {HTMLInputElement | null} */ (this.querySelector('#ie-one-time'));
+    const multiUseCheck = /** @type {HTMLInputElement | null} */ (this.querySelector('#ie-multi-use'));
     const essentialBtn = this.querySelector('#ie-essential');
 
     if (!nameInput || !nameInput.value.trim()) {
@@ -292,7 +292,7 @@ export class ItemEditor extends HTMLElement {
     const categoryId = categorySelect?.value || 'uncategorized';
     const defaultQty = qtyInput?.value ? parseInt(qtyInput.value, 10) : 1;
     const unitId = unitSelect?.value || 'pcs';
-    const isOneTime = oneTimeCheck?.checked || false;
+    const isMultiUse = multiUseCheck?.checked || false;
     const isEssential = essentialBtn?.classList.contains('ie-star-btn--on') || false;
 
     try {
@@ -306,7 +306,7 @@ export class ItemEditor extends HTMLElement {
           unitId,
           defaultQty,
           isEssential,
-          isOneTime,
+          isMultiUse,
         });
       } else if (this.#currentItem) {
         this.#currentItem.name = name;
@@ -314,7 +314,7 @@ export class ItemEditor extends HTMLElement {
         this.#currentItem.unitId = unitId;
         this.#currentItem.defaultQty = defaultQty;
         this.#currentItem.isEssential = isEssential;
-        this.#currentItem.isOneTime = isOneTime;
+        this.#currentItem.isMultiUse = isMultiUse;
         await updateItem(this.#currentItem);
       }
 
@@ -368,7 +368,7 @@ export class ItemEditor extends HTMLElement {
         unitId: dup.unitId,
         defaultQty: dup.defaultQty,
         isEssential: dup.isEssential,
-        isOneTime: dup.isOneTime,
+        isMultiUse: dup.isMultiUse,
       });
 
       this.dispatchEvent(new CustomEvent('item-saved', { bubbles: true }));

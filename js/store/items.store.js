@@ -44,7 +44,7 @@ export async function searchItems(query) {
  * @returns {Promise<import("../db.js").Item[]>} Array of essential items.
  */
 export async function getEssentialItems() {
-  return await db.items.where('isEssential').equals(1).toArray();
+  return await db.items.filter((/** @type {import("../db.js").Item} */ item) => item.isEssential).toArray();
 }
 
 /**
@@ -103,39 +103,39 @@ export async function seedItems() {
   /** @type {import("../db.js").Item[]} */
   const defaultItems = [
     // Produce
-    { id: crypto.randomUUID(), familyId, name: "Apple", categoryId: "produce", unitId: "pcs", defaultQty: 4, isEssential: true, isOneTime: false, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Banana", categoryId: "produce", unitId: "pcs", defaultQty: 6, isEssential: true, isOneTime: false, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Carrot", categoryId: "produce", unitId: "kg", defaultQty: 1, isEssential: false, isOneTime: false, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Lettuce", categoryId: "produce", unitId: "pcs", defaultQty: 1, isEssential: false, isOneTime: true, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Tomato", categoryId: "produce", unitId: "pcs", defaultQty: 6, isEssential: false, isOneTime: false, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Onion", categoryId: "produce", unitId: "kg", defaultQty: 1, isEssential: false, isOneTime: false, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Potato", categoryId: "produce", unitId: "kg", defaultQty: 2, isEssential: false, isOneTime: false, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Garlic", categoryId: "produce", unitId: "pcs", defaultQty: 1, isEssential: false, isOneTime: false, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Apple", categoryId: "produce", unitId: "pcs", defaultQty: 4, isEssential: true, isMultiUse: true, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Banana", categoryId: "produce", unitId: "pcs", defaultQty: 6, isEssential: true, isMultiUse: true, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Carrot", categoryId: "produce", unitId: "kg", defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Lettuce", categoryId: "produce", unitId: "pcs", defaultQty: 1, isEssential: false, isMultiUse: false, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Tomato", categoryId: "produce", unitId: "pcs", defaultQty: 6, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Onion", categoryId: "produce", unitId: "kg", defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Potato", categoryId: "produce", unitId: "kg", defaultQty: 2, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Garlic", categoryId: "produce", unitId: "pcs", defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
     // Dairy
-    { id: crypto.randomUUID(), familyId, name: "Milk", categoryId: "dairy", unitId: "l", defaultQty: 1, isEssential: true, isOneTime: true, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Butter", categoryId: "dairy", unitId: "pcs", defaultQty: 1, isEssential: false, isOneTime: true, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Cheese", categoryId: "dairy", unitId: "g", defaultQty: 200, isEssential: false, isOneTime: false, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Yogurt", categoryId: "dairy", unitId: "pcs", defaultQty: 4, isEssential: false, isOneTime: true, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Eggs", categoryId: "dairy", unitId: "pcs", defaultQty: 12, isEssential: true, isOneTime: false, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Milk", categoryId: "dairy", unitId: "l", defaultQty: 1, isEssential: true, isMultiUse: false, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Butter", categoryId: "dairy", unitId: "pcs", defaultQty: 1, isEssential: false, isMultiUse: false, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Cheese", categoryId: "dairy", unitId: "g", defaultQty: 200, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Yogurt", categoryId: "dairy", unitId: "pcs", defaultQty: 4, isEssential: false, isMultiUse: false, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Eggs", categoryId: "dairy", unitId: "pcs", defaultQty: 12, isEssential: true, isMultiUse: true, updatedAt: now, isSynced },
     // Bakery
-    { id: crypto.randomUUID(), familyId, name: "Bread", categoryId: "bakery", unitId: "pcs", defaultQty: 1, isEssential: true, isOneTime: true, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Croissant", categoryId: "bakery", unitId: "pcs", defaultQty: 4, isEssential: false, isOneTime: true, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Bread", categoryId: "bakery", unitId: "pcs", defaultQty: 1, isEssential: true, isMultiUse: false, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Croissant", categoryId: "bakery", unitId: "pcs", defaultQty: 4, isEssential: false, isMultiUse: false, updatedAt: now, isSynced },
     // Meat
-    { id: crypto.randomUUID(), familyId, name: "Chicken Breast", categoryId: "meat", unitId: "g", defaultQty: 500, isEssential: false, isOneTime: true, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Ground Beef", categoryId: "meat", unitId: "g", defaultQty: 500, isEssential: false, isOneTime: true, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Chicken Breast", categoryId: "meat", unitId: "g", defaultQty: 500, isEssential: false, isMultiUse: false, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Ground Beef", categoryId: "meat", unitId: "g", defaultQty: 500, isEssential: false, isMultiUse: false, updatedAt: now, isSynced },
     // Pantry
-    { id: crypto.randomUUID(), familyId, name: "Rice", categoryId: "pantry", unitId: "kg", defaultQty: 1, isEssential: false, isOneTime: false, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Pasta", categoryId: "pantry", unitId: "g", defaultQty: 500, isEssential: false, isOneTime: false, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Olive Oil", categoryId: "pantry", unitId: "l", defaultQty: 1, isEssential: false, isOneTime: false, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Rice", categoryId: "pantry", unitId: "kg", defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Pasta", categoryId: "pantry", unitId: "g", defaultQty: 500, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Olive Oil", categoryId: "pantry", unitId: "l", defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
     // Condiments
-    { id: crypto.randomUUID(), familyId, name: "Salt", categoryId: "condiments", unitId: "pcs", defaultQty: 1, isEssential: false, isOneTime: false, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Black Pepper", categoryId: "condiments", unitId: "pcs", defaultQty: 1, isEssential: false, isOneTime: false, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Salt", categoryId: "condiments", unitId: "pcs", defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Black Pepper", categoryId: "condiments", unitId: "pcs", defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
     // Beverages
-    { id: crypto.randomUUID(), familyId, name: "Orange Juice", categoryId: "beverages", unitId: "l", defaultQty: 1, isEssential: false, isOneTime: true, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Coffee", categoryId: "beverages", unitId: "pcs", defaultQty: 1, isEssential: false, isOneTime: false, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Orange Juice", categoryId: "beverages", unitId: "l", defaultQty: 1, isEssential: false, isMultiUse: false, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Coffee", categoryId: "beverages", unitId: "pcs", defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
     // Frozen
-    { id: crypto.randomUUID(), familyId, name: "Frozen Peas", categoryId: "frozen", unitId: "g", defaultQty: 500, isEssential: false, isOneTime: false, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Ice Cream", categoryId: "frozen", unitId: "l", defaultQty: 1, isEssential: false, isOneTime: true, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Frozen Peas", categoryId: "frozen", unitId: "g", defaultQty: 500, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Ice Cream", categoryId: "frozen", unitId: "l", defaultQty: 1, isEssential: false, isMultiUse: false, updatedAt: now, isSynced },
   ];
 
   await db.items.bulkAdd(defaultItems);

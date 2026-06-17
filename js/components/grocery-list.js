@@ -571,7 +571,7 @@ export class GroceryList extends HTMLElement {
       );
       const snackbar = this._getSnackbar();
       if (snackbar) {
-        snackbar.show('Item added to list');
+        snackbar.show(`Added ${detail.name} to Grocery List`);
       }
     } catch (err) {
       console.error('Failed to add ingredient:', err);
@@ -631,15 +631,16 @@ export class GroceryList extends HTMLElement {
             deletedItem.qty,
             deletedItem.unit,
           );
-          snackbar.show('Item restored');
+          snackbar.show(`Restored ${deletedItem.name}`);
         } catch (err) {
           console.error('Failed to restore item:', err);
         }
       };
 
-      snackbar.show('Item removed', {
+      snackbar.show(`Removed ${deletedItem.name}`, {
         undo: true,
         onUndo: handleUndo,
+        type: 'removed',
       });
     }
   }

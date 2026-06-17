@@ -40,7 +40,7 @@ export const groceryCache = {
  */
 export async function getOrCreateActiveList() {
   /** @type {GroceryList | undefined} */
-  let list = await db.groceryLists.where('isActive').equals(1).first();
+  let list = await db.groceryLists.filter((/** @type {import("../db.js").GroceryList} */ l) => l.isActive).first();
   if (list) {
     // Update cache
     groceryCache.listId = list.id;
