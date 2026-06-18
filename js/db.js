@@ -15,7 +15,7 @@
  * @property {string} familyId - FK to family.
  * @property {string} name - Human-readable name.
  * @property {string} categoryId - Reference to a category.
- * @property {string} unitId - Reference to a unit of measurement.
+ * @property {string} unitId - Free-text unit string (e.g. "grams", "pcs", custom).
  * @property {number} defaultQty - Default quantity for the item.
  * @property {boolean} isEssential - Whether the item appears in the Essentials quick-add sheet.
  * @property {boolean} isMultiUse - Whether the item is multi-use (e.g. pepper) vs single-use consumable (e.g. milk).
@@ -28,6 +28,8 @@
  * @property {string} id - UUID of the category.
  * @property {string} familyId - FK to family.
  * @property {string} name - Display name.
+ * @property {string} color - Hex color value for accent display.
+ * @property {number} sortOrder - Display order (0-based index) for store layout sorting.
  * @property {string} updatedAt - ISO timestamp.
  * @property {number} isSynced - Dirty flag.
  */

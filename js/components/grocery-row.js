@@ -1,6 +1,7 @@
 // @ts-check
-import { escapeHtml, formatQty, formatQtyForStepper } from '../utils/dom-utils.js';
-import { CATEGORY_COLORS } from '../utils/category-colors.js';
+import { escapeHtml, formatQty } from '../utils/dom-utils.js';
+import { getCategoryColor } from '../utils/category-colors.js';
+import './quantity-stepper.js';
 
 /**
  * Grocery Row Web Component — single item row in the grocery list.
@@ -9,7 +10,7 @@ import { CATEGORY_COLORS } from '../utils/category-colors.js';
  * come from shared CSS files (item-row.css + grocery-row.css).
  * Supports Edit Mode: on long press emits 'item-long-press' to trigger
  * edit mode at the list level. In edit mode, the checkbox is replaced by a
- * stepper (qty +/-) and delete button.
+ * reusable <quantity-stepper> component and delete button.
  * @augments {HTMLElement}
  */
 export class GroceryRow extends HTMLElement {
@@ -80,17 +81,17 @@ export class GroceryRow extends HTMLElement {
     const hasRecipe = recipeIds.length > 0;
 
     // Determine category accent color (left border)
-    const categoryColor = CATEGORY_COLORS[item.categoryId || ''] || 'var(--color-outline-variant, #bfc9c1)';
+    const categoryColor = getCategoryColor(item.categoryId || '');
+    const unitLabel = item.unit || '';
 
     this.innerHTML = `
       <div class="gr-row" style="--accent-color: ${categoryColor}" data-item-id="${item.id}">
         <div class="gr-row__info">
           <div class="gr-row__info-top">
             <span class="gr-row__name">${escapeHtml(item.name)}</span>
-            ${item.categoryId === 'produce' ? '<span class="gr-row__badge">ORGANIC</span>' : ''}
           </div>
           <div class="gr-row__info-bottom">
-            <span class="gr-row__qty">${formatQty(item.qty, item.unit)}</span>
+            <span class="gr-row__qty">${formatQty(item.qty, unitLabel)}</span>
             ${hasRecipe ? `<span class="gr-row__recipe-link">
               <svg viewBox="0 0 24 24"><path d="M8.1 13.34l2.83-2.83L3.91 3.5c-1.56 1.56-1.56 4.09 0 5.66l4.19 4.18zm6.78-1.81c1.53.71 3.68.21 5.27-1.38 1.91-1.91 2.28-4.65.81-6.12-1.46-1.46-4.2-1.1-6.12.81-1.59 1.59-2.09 3.74-1.38 5.27L3.7 19.87l1.41 1.41L12 14.41l6.88 6.88 1.41-1.41L13.41 13l1.47-1.47z"/></svg>
               Recipe</span>` : ''}
@@ -102,17 +103,10 @@ export class GroceryRow extends HTMLElement {
             <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
           </button>
         </div>
-        <!-- Edit mode controls (stepper + delete) -->
+        <!-- Edit mode controls (quantity-stepper + delete) -->
         <div class="gr-row__edit-controls" style="display:none">
-          <div class="gr-row__stepper">
-            <button class="gr-row__stepper-btn gr-row__stepper-minus" aria-label="Decrease quantity">
-              <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
-            </button>
-            <span class="gr-row__stepper-value">${formatQtyForStepper(item.qty)}</span>
-            <button class="gr-row__stepper-btn gr-row__stepper-plus" aria-label="Increase quantity">
-              <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-            </button>
-          </div>
+          <quantity-stepper class="gr-row__stepper" value="${item.qty}" min="1" max="99">
+          </quantity-stepper>
           <button class="gr-row__delete-btn" aria-label="Delete item">
             <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
           </button>
@@ -185,18 +179,13 @@ export class GroceryRow extends HTMLElement {
       });
     }
 
-    const minusBtn = this.querySelector('.gr-row__stepper-minus');
-    const plusBtn = this.querySelector('.gr-row__stepper-plus');
-    if (minusBtn) {
-      minusBtn.addEventListener('click', (e) => {
+    // Listen for stepper changes on the quantity-stepper component
+    const stepper = this.querySelector('.gr-row__stepper');
+    if (stepper) {
+      stepper.addEventListener('stepper-change', (e) => {
         e.stopPropagation();
-        this._handleStepperChange(-1);
-      });
-    }
-    if (plusBtn) {
-      plusBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this._handleStepperChange(1);
+        const detail = /** @type {CustomEvent} */ (e).detail;
+        this._handleStepperChange(detail.value);
       });
     }
 
@@ -263,26 +252,21 @@ export class GroceryRow extends HTMLElement {
   }
 
   /**
-   * Handle stepper quantity change.
-   * Business Logic: Adjusts the item quantity by ±1 (minimum 1).
-   * Dispatches 'item-qty-change' so the parent list can update Dexie.
-   * @param {number} delta - +1 or -1.
+   * Handle quantity-stepper value change.
+   * Business Logic: Called when the <quantity-stepper> component fires a
+   * 'stepper-change' event. Updates the in-memory item data and dispatches
+   * 'item-qty-change' so the parent list can update Dexie.
+   * @param {number} newQty - The new quantity value from the stepper.
    */
-  _handleStepperChange(delta) {
+  _handleStepperChange(newQty) {
     if (!this._item) return;
-    const newQty = Math.max(1, (this._item.qty || 1) + delta);
     this._item.qty = newQty;
-
-    // Update stepper display
-    const stepperValue = this.querySelector('.gr-row__stepper-value');
-    if (stepperValue) {
-      stepperValue.textContent = formatQtyForStepper(newQty);
-    }
 
     // Update the small qty label in the info section
     const qtyEl = this.querySelector('.gr-row__qty');
     if (qtyEl) {
-      qtyEl.textContent = formatQty(newQty, this._item.unit);
+      const unitLabel = this._item.unit || '';
+      qtyEl.textContent = formatQty(newQty, unitLabel);
     }
 
     this.dispatchEvent(new CustomEvent('item-qty-change', {

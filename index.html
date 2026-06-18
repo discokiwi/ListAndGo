@@ -27,6 +27,9 @@
   <link rel="stylesheet" href="css/components/pill.css" />
   <link rel="stylesheet" href="css/components/snackbar.css" />
   <link rel="stylesheet" href="css/components/top-bar.css" />
+  <link rel="stylesheet" href="css/components/settings-drawer.css" />
+  <link rel="stylesheet" href="css/components/confirm-dialog.css" />
+  <link rel="stylesheet" href="css/components/content-dialog.css" />
 
   <link rel="manifest" href="manifest.webmanifest" />
 </head>
@@ -50,11 +53,11 @@
         <span>Plan</span>
       </a>
       <a href="#/recipes" data-route="recipes">
-        <svg width="24" height="24" viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"/></svg>
+        <svg width="24" height="24" viewBox="0 0 24 24"><path d="M8.1 13.34l2.83-2.83L3.91 3.5c-1.56 1.56-1.56 4.09 0 5.66l4.19 4.18zm6.78-1.81c1.53.71 3.68.21 5.27-1.38 1.91-1.91 2.28-4.65.81-6.12-1.46-1.46-4.2-1.1-6.12.81-1.59 1.59-2.09 3.74-1.38 5.27L3.7 19.87l1.41 1.41L12 14.41l6.88 6.88 1.41-1.41L13.41 13l1.47-1.47z"/></svg>
         <span>Recipes</span>
       </a>
       <a href="#/items" data-route="items">
-        <svg width="24" height="24" viewBox="0 0 24 24"><path d="M12 22c4.97 0 9-4.03 9-9-4.97 0-9 4.03-9 9zM5.6 10.25c0 1.38 1.12 2.5 2.5 2.5.53 0 1.01-.16 1.42-.44l-.02.19c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5l-.02-.19c.4.28.89.44 1.42.44 1.38 0 2.5-1.12 2.5-2.5 0-1-.59-1.85-1.43-2.25.84-.4 1.43-1.25 1.43-2.25 0-1.38-1.12-2.5-2.5-2.5-.53 0-1.01.16-1.42.44l.02-.19C14.5 2.12 13.38 1 12 1S9.5 2.12 9.5 3.5l.02.19c-.4-.28-.89-.44-1.42-.44-1.38 0-2.5 1.12-2.5 2.5 0 1 .59 1.85 1.43 2.25-.84.4-1.43 1.25-1.43 2.25zM12 5.5c1.38 0 2.5 1.12 2.5 2.5s-1.12 2.5-2.5 2.5S9.5 9.38 9.5 8s1.12-2.5 2.5-2.5z"/></svg>
+        <svg width="24" height="24" viewBox="0 -960 960 960"><path d="M640-80q-100 0-170-70t-70-170q0-100 70-170t170-70q100 0 170 70t70 170q0 100-70 170T640-80Zm0-80q66 0 113-47t47-113q0-66-47-113t-113-47q-66 0-113 47t-47 113q0 66 47 113t113 47Zm-480 0q-33 0-56.5-23.5T80-240v-304q0-8 1.5-16t4.5-16l80-184h-6q-17 0-28.5-11.5T120-800v-40q0-17 11.5-28.5T160-880h280q17 0 28.5 11.5T480-840v40q0 17-11.5 28.5T440-760h-6l66 152q-19 10-36 21t-32 25l-84-198h-96l-92 216v304h170q5 21 13.5 41.5T364-160H160Zm480-440q-42 0-71-29t-29-71q0-42 29-71t71-29v200q0-42 29-71t71-29q42 0 71 29t29 71H640Z"/></svg>
         <span>Items</span>
       </a>
     </nav>
@@ -244,23 +247,10 @@
       </div>
     </dialog>
 
-    <!-- Confirmation Dialog -->
-    <dialog class="bottom-sheet" id="confirm-dialog">
-      <div class="bottom-sheet__content">
-        <div class="bottom-sheet__handle"></div>
-        <div class="bottom-sheet__header">
-          <h2 class="bottom-sheet__title" id="confirm-title">Confirm</h2>
-        </div>
-        <div class="bottom-sheet__body" id="confirm-body">
-          <p id="confirm-message"></p>
-        </div>
-        <div class="bottom-sheet__actions">
-          <button class="btn btn--secondary" id="confirm-cancel">Cancel</button>
-          <button class="btn btn--primary" id="confirm-ok">OK</button>
-        </div>
-      </div>
-    </dialog>
   </div>
+
+  <!-- Settings Drawer Component (slide-in) -->
+  <settings-panel></settings-panel>
 
   <!-- Global Snackbar Component -->
   <app-snackbar></app-snackbar>

@@ -364,7 +364,7 @@ grocery-row .gr-row__check--checked svg {
   fill: var(--color-on-primary, #ffffff);
 }
 
-/* Edit mode controls (stepper + delete) */
+/* Edit mode controls (quantity-stepper + delete) */
 grocery-row .gr-row__edit-controls {
   display: flex;
   align-items: center;
@@ -372,7 +372,10 @@ grocery-row .gr-row__edit-controls {
   flex-shrink: 0;
 }
 
-grocery-row .gr-row__stepper {
+/* The outer wrapper of the <quantity-stepper> component sits inside edit controls.
+   The component renders .quantity-stepper / .quantity-stepper__btn / .quantity-stepper__value
+   in light DOM, which we scope to the edit controls context. */
+grocery-row .gr-row__stepper .quantity-stepper {
   display: flex;
   align-items: center;
   background: var(--color-surface-container-low, #f3f3f6);
@@ -382,7 +385,7 @@ grocery-row .gr-row__stepper {
   border: 1px solid var(--color-outline-variant, #bfc9c1);
 }
 
-grocery-row .gr-row__stepper-btn {
+grocery-row .gr-row__stepper .quantity-stepper__btn {
   width: 28px;
   height: 28px;
   display: flex;
@@ -396,25 +399,21 @@ grocery-row .gr-row__stepper-btn {
   transition: background-color 0.1s ease;
   -webkit-tap-highlight-color: transparent;
   padding: 0;
+  font-size: 18px;
 }
 
-grocery-row .gr-row__stepper-btn:active {
+grocery-row .gr-row__stepper .quantity-stepper__btn:active {
   background-color: var(--color-secondary-container, #d3e5cb);
 }
 
-grocery-row .gr-row__stepper-btn svg {
-  width: 18px;
-  height: 18px;
-  fill: currentColor;
-}
-
-grocery-row .gr-row__stepper-value {
+grocery-row .gr-row__stepper .quantity-stepper__value {
   font: var(--font-item-name, 600 18px/1.4 'Hanken Grotesk', sans-serif);
   font-weight: 700;
   font-size: 14px;
   min-width: 16px;
   text-align: center;
   color: var(--color-on-surface, #1a1c1e);
+  padding: 0 4px;
 }
 
 grocery-row .gr-row__delete-btn {

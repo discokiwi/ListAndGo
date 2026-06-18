@@ -1,4 +1,5 @@
 // @ts-check
+
 /**
  * Item Editor Web Component — Add/Edit Item Side Drawer.
  * Business Logic: Provides a reusable form for creating a new item or editing
@@ -83,12 +84,13 @@ export class ItemEditor extends HTMLElement {
           </div>
           <div class="ie-field ie-field--half">
             <label class="ie-label" for="ie-unit">Unit</label>
-            <div class="ie-select-wrap">
-              <select class="ie-select" id="ie-unit">
+            <div class="ie-select-wrap" id="ie-unit-select-wrap">
+              <select class="ie-select" id="ie-unit-select">
                 <option value="">Select…</option>
               </select>
               <svg class="ie-select-chevron" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
             </div>
+            <input class="ie-input" type="text" id="ie-unit-custom" placeholder="grams, pcs, ml…" autocomplete="off" value="${this.#escapeHtml(item?.unitId || '')}" style="display:none" />
           </div>
         </div>
 
@@ -194,44 +196,92 @@ export class ItemEditor extends HTMLElement {
   }
 
   /**
-   * Populate the category and unit select dropdowns from the database.
+   * Populate the category select and unit select/text fields from the database.
    * @param {import("../db.js").Item | null} item - Current item for preselection.
    * @returns {Promise<void>}
    */
   async #populateDropdowns(item) {
     try {
       const { db } = await import('../db.js');
+      const { UNIT_SUGGESTIONS } = await import('../utils/unit-suggestions.js');
 
+      // ---- Category dropdown ----
       const catSelect = /** @type {HTMLSelectElement | null} */ (this.querySelector('#ie-category'));
       if (catSelect) {
+        catSelect.innerHTML = '<option value="">Select…</option>';
         const categories = await db.categories.orderBy('name').toArray();
-        const existingItems = await db.items.orderBy('categoryId').toArray();
-        const existingCats = [...new Set(existingItems.map((/** @type {import("../db.js").Item} */ i) => i.categoryId).filter(Boolean))];
-        const allCats = [...new Set([...categories.map((/** @type {import("../db.js").Category} */ c) => c.name), ...existingCats])].sort();
 
-        allCats.forEach((cat) => {
+        categories.forEach((/** @type {import("../db.js").Category} */ cat) => {
           const opt = document.createElement('option');
-          opt.value = cat.toLowerCase();
-          opt.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
-          if (item?.categoryId === opt.value) opt.selected = true;
+          opt.value = cat.id;
+          opt.textContent = cat.name;
+          if (item?.categoryId === cat.id) opt.selected = true;
           catSelect.appendChild(opt);
         });
       }
 
-      const unitSelect = /** @type {HTMLSelectElement | null} */ (this.querySelector('#ie-unit'));
-      if (unitSelect) {
-        const units = await db.units.orderBy('name').toArray();
-        const defaultUnits = ['pcs', 'g', 'kg', 'ml', 'l', 'tbsp', 'tsp', 'cup'];
-        const allUnits = [...new Set([...units.map((/** @type {import("../db.js").Unit} */ u) => u.name), ...defaultUnits])].sort();
+      // ---- Unit select + custom text input ----
+      const unitSelect = /** @type {HTMLSelectElement | null} */ (this.querySelector('#ie-unit-select'));
+      const unitCustom = /** @type {HTMLInputElement | null} */ (this.querySelector('#ie-unit-custom'));
+      const unitSelectWrap = /** @type {HTMLElement | null} */ (this.querySelector('#ie-unit-select-wrap'));
+      if (!unitSelect || !unitCustom || !unitSelectWrap) return;
 
-        allUnits.forEach((unit) => {
-          const opt = document.createElement('option');
-          opt.value = unit;
-          opt.textContent = unit;
-          if (item?.unitId === opt.value) opt.selected = true;
-          unitSelect.appendChild(opt);
-        });
+      // Populate select with common units + custom option
+      unitSelect.innerHTML = '<option value="">Select…</option>';
+      const CUSTOM_VALUE = '__custom__';
+
+      UNIT_SUGGESTIONS.forEach((name) => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        unitSelect.appendChild(opt);
+      });
+
+      // "Other…" option for custom unit entry
+      const otherOpt = document.createElement('option');
+      otherOpt.value = CUSTOM_VALUE;
+      otherOpt.textContent = 'Other…';
+      unitSelect.appendChild(otherOpt);
+
+      // Determine if the item's unit is one of the common suggestions or custom
+      const unitValue = item?.unitId || '';
+      const isCommon = UNIT_SUGGESTIONS.includes(unitValue);
+
+      if (unitValue && isCommon) {
+        // Common unit — show select with it pre-selected
+        unitSelect.value = unitValue;
+        unitSelectWrap.style.display = '';
+        unitCustom.style.display = 'none';
+      } else if (unitValue && !isCommon) {
+        // Custom unit — show text input with value
+        unitSelect.value = CUSTOM_VALUE;
+        unitCustom.value = unitValue;
+        unitSelectWrap.style.display = 'none';
+        unitCustom.style.display = '';
+      } else {
+        // No value — show select
+        unitSelect.value = '';
+        unitSelectWrap.style.display = '';
+        unitCustom.style.display = 'none';
       }
+
+      // Wire the select change to toggle between select and text input
+      // Remove any previous listener by cloning
+      const newSelect = unitSelect.cloneNode(true);
+      unitSelect.replaceWith(newSelect);
+      const freshSelect = /** @type {HTMLSelectElement} */ (newSelect);
+
+      freshSelect.addEventListener('change', () => {
+        if (freshSelect.value === CUSTOM_VALUE) {
+          unitSelectWrap.style.display = 'none';
+          unitCustom.style.display = '';
+          unitCustom.value = '';
+          unitCustom.focus();
+        } else {
+          unitSelectWrap.style.display = '';
+          unitCustom.style.display = 'none';
+        }
+      });
     } catch (err) {
       console.error('Failed to populate dropdowns:', err);
     }
@@ -278,7 +328,8 @@ export class ItemEditor extends HTMLElement {
     const nameInput = /** @type {HTMLInputElement | null} */ (this.querySelector('#ie-name'));
     const categorySelect = /** @type {HTMLSelectElement | null} */ (this.querySelector('#ie-category'));
     const qtyInput = /** @type {HTMLInputElement | null} */ (this.querySelector('#ie-qty'));
-    const unitSelect = /** @type {HTMLSelectElement | null} */ (this.querySelector('#ie-unit'));
+    const unitSelect = /** @type {HTMLSelectElement | null} */ (this.querySelector('#ie-unit-select'));
+    const unitCustom = /** @type {HTMLInputElement | null} */ (this.querySelector('#ie-unit-custom'));
     const multiUseCheck = /** @type {HTMLInputElement | null} */ (this.querySelector('#ie-multi-use'));
     const essentialBtn = this.querySelector('#ie-essential');
 
@@ -291,7 +342,15 @@ export class ItemEditor extends HTMLElement {
     const name = nameInput.value.trim();
     const categoryId = categorySelect?.value || 'uncategorized';
     const defaultQty = qtyInput?.value ? parseInt(qtyInput.value, 10) : 1;
-    const unitId = unitSelect?.value || 'pcs';
+    // Read unit value: from custom text input if visible, otherwise from select
+    let unitId;
+    if (unitCustom?.style.display !== 'none' && unitCustom?.value?.trim()) {
+      unitId = unitCustom.value.trim();
+    } else if (unitSelect?.value && unitSelect.value !== '__custom__') {
+      unitId = unitSelect.value;
+    } else {
+      unitId = 'pcs';
+    }
     const isMultiUse = multiUseCheck?.checked || false;
     const isEssential = essentialBtn?.classList.contains('ie-star-btn--on') || false;
 

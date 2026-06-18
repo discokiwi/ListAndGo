@@ -1,27 +1,45 @@
 // @ts-check
 /**
- * Category Color Map — single source of truth for category accent colors.
- * Business Logic: Maps category IDs to CSS color values used for the
- * 4px left border accent on flat list rows. Used by both grocery-row and
- * items-library components for visual consistency.
- * @type {Record<string, string>}
+ * Category Color Utility — dynamic lookup from Dexie-backed cache.
+ * Business Logic: Provides synchronous access to category colors via the
+ * in-memory cache populated from the `categories` Dexie table. This replaces
+ * the old hardcoded map so users can edit category colors in settings and
+ * see them reflected immediately in the UI.
+ * @module
  */
-export const CATEGORY_COLORS = {
-  produce: 'var(--color-primary, #0f5238)',
-  dairy: '#A8DADC',
-  bakery: 'var(--color-secondary, #53634e)',
-  meat: 'var(--color-tertiary, #713638)',
-  pantry: 'var(--color-outline-variant, #bfc9c1)',
-  condiments: 'var(--color-outline-variant, #bfc9c1)',
-  beverages: 'var(--color-primary-fixed-dim, #95d4b3)',
-  frozen: 'var(--color-secondary-fixed-dim, #baccb3)',
-};
+
+import { categoryCache, refreshCategoryCache } from '../store/categories.store.js';
 
 /**
- * Get the accent color for a given category ID.
- * @param {string} categoryId - The category identifier.
- * @returns {string} CSS color value.
+ * Load the category color cache from Dexie.
+ * Business Logic: Call this once on app init after seeding, and again
+ * whenever categories change (add/edit/delete/rename).
+ * @returns {Promise<void>}
+ */
+export async function loadCategoryColorCache() {
+  await refreshCategoryCache();
+}
+
+/**
+ * Get the accent color for a given category ID from the in-memory cache.
+ * @param {string} categoryId - The category UUID.
+ * @returns {string} CSS color value, or a fallback neutral color.
  */
 export function getCategoryColor(categoryId) {
-  return CATEGORY_COLORS[categoryId] || 'var(--color-outline-variant, #bfc9c1)';
+  if (!categoryId) return '#bfc9c1';
+  const cat = categoryCache.byId.get(categoryId);
+  return cat ? cat.color : '#bfc9c1';
+}
+
+/**
+ * Get a mapping of category IDs to their display names.
+ * @returns {Record<string, string>} Map of category ID -> name.
+ */
+export function getCategoryLabels() {
+  /** @type {Record<string, string>} */
+  const labels = {};
+  for (const [id, cat] of categoryCache.byId) {
+    labels[id] = cat.name;
+  }
+  return labels;
 }

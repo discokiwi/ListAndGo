@@ -1,25 +1,19 @@
 // @ts-check
 /* global Dexie -- loaded via CDN <script> tag in index.html */
 import { escapeHtml } from '../utils/dom-utils.js';
+import { getCategoryName, getAllCategories } from '../store/categories.store.js';
+import { getEssentialItems } from '../store/items.store.js';
 import { groceryCache } from '../store/grocery.store.js';
 import './search-autocomplete.js';
+import './confirm-dialog.js';
+import './content-dialog.js';
 
 /**
  * @typedef {import("./search-autocomplete.js").SearchAutocomplete} SearchAutocomplete
+ * @typedef {import("./content-dialog.js").ContentDialog} ContentDialog
+ * @typedef {import("./grocery-row.js").GroceryRow} GroceryRow
+ * @typedef {import("./confirm-dialog.js").ConfirmDialog} ConfirmDialog
  */
-
-/** @type {Record<string, string>} */
-const CATEGORY_LABELS = {
-  produce: 'PRODUCE',
-  dairy: 'DAIRY',
-  bakery: 'BAKERY',
-  meat: 'MEAT',
-  pantry: 'PANTRY',
-  condiments: 'CONDIMENTS',
-  beverages: 'BEVERAGES',
-  frozen: 'FROZEN',
-  other: 'OTHER',
-};
 
 /**
  * Grocery List Web Component — full grocery list page with category grouping,
@@ -232,7 +226,7 @@ export class GroceryList extends HTMLElement {
   _propagateEditMode(active) {
     const rowElements = this.querySelectorAll('grocery-row');
     for (let i = 0; i < rowElements.length; i++) {
-      const row = /** @type {import("./grocery-row.js").GroceryRow} */ (rowElements[i]);
+      const row = /** @type {GroceryRow} */ (rowElements[i]);
       if (typeof row.editMode !== 'undefined') {
         row.editMode = active;
       }
@@ -294,8 +288,12 @@ export class GroceryList extends HTMLElement {
    * Business Logic: Items are grouped by categoryId. Checked items are separated
    * into a COMPLETED section at the bottom. Each category becomes a <details open>
    * element. Within each group, items are rendered as <grocery-row> elements.
+   * Categories are sorted by the user's store layout order (sortOrder from
+   * categories.store.js), falling back to alphabetical if the fetch fails.
+   * Note: The liveQuery callback calls _render() synchronously, so we catch
+   * errors gracefully and fall back to alphabetical sort.
    */
-  _render() {
+  async _render() {
     const container = this.querySelector('#grocery-list-container');
     if (!container) return;
 
@@ -335,8 +333,25 @@ export class GroceryList extends HTMLElement {
       }
     }
 
-    // Sort categories alphabetically
-    const sortedCategories = Array.from(groups.keys()).sort();
+    // Sort categories by store layout order (sortOrder from categories store)
+    // Business Logic: The user sets the order in Settings → Store Layout.
+    // If categories haven't been loaded yet, fall back to alphabetical sort.
+    let sortedCategories = Array.from(groups.keys());
+    try {
+      const allCats = await getAllCategories();
+      /** @type {Map<string, number>} */
+      const orderMap = new Map();
+      allCats.forEach((cat) => { orderMap.set(cat.id, cat.sortOrder ?? 999); });
+      sortedCategories.sort((a, b) => {
+        const orderA = orderMap.get(a) ?? 999;
+        const orderB = orderMap.get(b) ?? 999;
+        if (orderA !== orderB) return orderA - orderB;
+        return a.localeCompare(b);
+      });
+    } catch {
+      // Fallback to alphabetical if category fetch fails
+      sortedCategories.sort();
+    }
 
     // Build category sections HTML
     const categoryHtml = sortedCategories.map((cat) => {
@@ -416,7 +431,7 @@ export class GroceryList extends HTMLElement {
       const placeholder = container.querySelector(`[data-item-id="${item.id}"]`);
       if (!placeholder) continue;
 
-      const row = /** @type {any} */ (document.createElement('grocery-row'));
+      const row = /** @type {GroceryRow} */ (document.createElement('grocery-row'));
       row.item = item;
       placeholder.replaceWith(row);
     }
@@ -424,126 +439,133 @@ export class GroceryList extends HTMLElement {
 
   /**
    * Format a categoryId into a human-readable label.
-   * @param {string} categoryId - The category ID.
+   * @param {string} categoryId - The category UUID.
    * @returns {string} Formatted category name.
    */
   _formatCategoryName(categoryId) {
-    return CATEGORY_LABELS[categoryId] || categoryId.toUpperCase();
+    return getCategoryName(categoryId).toUpperCase();
   }
 
   /**
    * Open the essentials quick-add bottom sheet.
    * Business Logic: Shows items flagged isEssential in the library.
-   * When "Done" is pressed, all selected essential items are added to the
-   * grocery list with their default QTY.
+   * When "Add to List" is pressed, all selected essential items are added to the
+   * grocery list with their default QTY. Uses the reusable <content-dialog> component
+   * with a slot-based body for the essentials checklist.
    */
   async _openEssentialsSheet() {
     if (!this._activeListId) return;
 
-    let sheet = /** @type {HTMLDialogElement | null} */ (document.getElementById('essentials-sheet'));
+    // Create or reuse the content dialog
+    let sheetDlg = /** @type {ContentDialog | null} */ (
+      document.getElementById('essentials-dialog')
+    );
 
-    if (!sheet) {
-      sheet = this._createEssentialsSheet();
-      document.body.appendChild(sheet);
+    if (!sheetDlg) {
+      sheetDlg = this._createEssentialsSheet();
+      document.body.appendChild(sheetDlg);
     }
 
+    // Refresh the body content with latest essentials from items store
+    const body = /** @type {HTMLElement | null} */ (sheetDlg.querySelector('.essentials-body'));
+    if (!body) return;
+
     try {
-      const { db } = await import('../db.js');
-      /** @type {import("../db.js").Item[]} */
-      const allItems = await db.items.toArray();
-      // @ts-ignore – isEssential may be boolean, number, or string in IndexedDB
-      const essentials = allItems.filter((item) => item.isEssential);
-      const body = /** @type {HTMLElement | null} */ (sheet.querySelector('.essentials-body'));
-      if (!body) return;
+      const essentials = await getEssentialItems();
 
       if (essentials.length === 0) {
         body.innerHTML = '<p class="essentials-empty">No essential items yet. Add some in Items Library.</p>';
       } else {
+        // Stitch design: card-style rows with circular checkbox on the right
         body.innerHTML = essentials.map((item) => `
-          <div class="essentials-item" data-item-id="${item.id}"
+          <label class="essentials-item" data-item-id="${item.id}"
                data-name="${escapeHtml(item.name)}"
                data-category="${escapeHtml(item.categoryId)}"
                data-unit="${escapeHtml(item.unitId)}"
                data-qty="${item.defaultQty}">
-            <label class="essentials-item__label">
+            <div class="essentials-item__info">
+              <span class="essentials-item__name">${escapeHtml(item.name)}</span>
+              <span class="essentials-item__meta">${escapeHtml(getCategoryName(item.categoryId))} • ${item.defaultQty} ${item.unitId}</span>
+            </div>
+            <div class="essentials-item__check-wrapper">
               <input type="checkbox" class="essentials-item__checkbox" checked aria-label="Select ${escapeHtml(item.name)}">
-              <span class="essentials-item__checkmark">
-                <svg width="16" height="16" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+              <span class="essentials-item__check-visual">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
               </span>
-              <span class="essentials-item__info">
-                <span class="essentials-item__name">${escapeHtml(item.name)}</span>
-                <span class="essentials-item__meta">${item.defaultQty} ${item.unitId}</span>
-              </span>
-            </label>
-          </div>
+            </div>
+          </label>
         `).join('');
       }
     } catch (err) {
       console.error('Failed to load essentials:', err);
     }
 
-    if (!sheet.open) {
-      sheet.showModal();
-    }
+    // Show the dialog
+    sheetDlg.show();
   }
 
   /**
-   * Create the essentials bottom sheet dialog element.
-   * @returns {HTMLDialogElement} The created dialog.
+   * Create the essentials bottom sheet using <content-dialog> component.
+   * Matches the Stitch "Weekly Essentials Dialog" design:
+   * - Header with title "Weekly Essentials" + subtitle + close button
+   * - Card-style items with circular checkboxes on the right
+   * - Two-button footer: Cancel (secondary) + Add Selected (primary)
+   * @returns {ContentDialog}
    */
   _createEssentialsSheet() {
-    const dialog = document.createElement('dialog');
-    dialog.id = 'essentials-sheet';
-    dialog.className = 'bottom-sheet';
-    dialog.innerHTML = `
-      <div class="bottom-sheet__content">
-        <div class="bottom-sheet__handle"></div>
-        <div class="bottom-sheet__header">
-          <h2 class="bottom-sheet__title">Every Week (Essentials)</h2>
-          <button class="bottom-sheet__close" id="essentials-close" aria-label="Close">
-            <svg width="20" height="20" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-          </button>
-        </div>
-        <div class="bottom-sheet__body essentials-body">
-          <!-- Rendered dynamically -->
-        </div>
-        <div class="bottom-sheet__actions">
-          <button class="btn btn--primary" id="essentials-done">Add to List</button>
-        </div>
-      </div>
-    `;
+    const dialog = /** @type {ContentDialog} */ (document.createElement('content-dialog'));
+    dialog.id = 'essentials-dialog';
+    dialog.setAttribute('heading', 'Weekly Essentials');
+    dialog.setAttribute('subtitle', 'Quickly add items you buy every week.');
 
-    dialog.querySelector('#essentials-close')?.addEventListener('click', () => dialog.close());
+    // Body content container
+    const body = document.createElement('div');
+    body.className = 'essentials-items essentials-body';
+    dialog.appendChild(body);
 
-    const doneBtn = dialog.querySelector('#essentials-done');
-    if (doneBtn) {
-      doneBtn.addEventListener('click', async () => {
-        const body = /** @type {HTMLElement | null} */ (dialog.querySelector('.essentials-body'));
-        if (!body) { dialog.close(); return; }
+    // Cancel button (slotted into actions)
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'content-dialog__btn content-dialog__btn--secondary';
+    cancelBtn.slot = 'actions';
+    cancelBtn.textContent = 'Cancel';
+    dialog.appendChild(cancelBtn);
 
-        const checkedItems = /** @type {HTMLElement[]} */ (Array.from(body.querySelectorAll('.essentials-item')))
-          .filter((el) => {
-            const checkbox = /** @type {HTMLInputElement | null} */ (el.querySelector('.essentials-item__checkbox'));
-            return checkbox && checkbox.checked;
-          });
+    // Add Selected button (slotted into actions)
+    const addBtn = document.createElement('button');
+    addBtn.className = 'content-dialog__btn content-dialog__btn--primary';
+    addBtn.slot = 'actions';
+    addBtn.textContent = 'Add Selected';
+    dialog.appendChild(addBtn);
 
-        if (checkedItems.length > 0 && this._activeListId) {
-          const { addGroceryItem } = await import('../store/grocery.store.js');
-          for (const itemEl of checkedItems) {
-            const itemId = itemEl.getAttribute('data-item-id') || '';
-            const name = itemEl.getAttribute('data-name') || '';
-            const categoryId = itemEl.getAttribute('data-category') || '';
-            const unit = itemEl.getAttribute('data-unit') || '';
-            const qty = parseFloat(itemEl.getAttribute('data-qty') || '1');
-            await addGroceryItem(
-              /** @type {string} */ (this._activeListId),
-              itemId, name, categoryId, qty, unit,
-            );
-          }
+    // Wire cancel button
+    cancelBtn.addEventListener('click', () => {
+      dialog.hide();
+    });
+
+    // Wire the add button click: collect checked items and add them to grocery list
+    addBtn.addEventListener('click', async () => {
+      const checkedItems = /** @type {HTMLElement[]} */ (Array.from(body.querySelectorAll('.essentials-item')))
+        .filter((el) => {
+          const checkbox = /** @type {HTMLInputElement | null} */ (el.querySelector('.essentials-item__checkbox'));
+          return checkbox && checkbox.checked;
+        });
+
+      if (checkedItems.length > 0 && this._activeListId) {
+        const { addGroceryItem } = await import('../store/grocery.store.js');
+        for (const itemEl of checkedItems) {
+          const itemId = itemEl.getAttribute('data-item-id') || '';
+          const name = itemEl.getAttribute('data-name') || '';
+          const categoryId = itemEl.getAttribute('data-category') || '';
+          const unit = itemEl.getAttribute('data-unit') || '';
+          const qty = parseFloat(itemEl.getAttribute('data-qty') || '1');
+          await addGroceryItem(
+            /** @type {string} */ (this._activeListId),
+            itemId, name, categoryId, qty, unit,
+          );
         }
-        dialog.close();
-      });
-    }
+      }
+      dialog.hide();
+    });
 
     return dialog;
   }
@@ -594,13 +616,16 @@ export class GroceryList extends HTMLElement {
   /**
    * Handle item delete event from a grocery-row.
    * Business Logic: Removes the item from Dexie, then shows a snackbar
-   * with an "Undo" button. On undo, re-adds the item using the item data
-   * captured from the in-memory _items array before deletion.
+   * with an "Undo" button. On undo, re-adds the item using a shallow copy
+   * of the item data captured before the async deletion.
    * @param {{ id: string }} detail
    */
   async _handleItemDelete(detail) {
-    // Capture item data from the in-memory array for potential undo
-    const deletedItem = this._items.find((item) => item.id === detail.id);
+    // Capture a shallow copy before the async delete to protect against
+    // _items being mutated by the liveQuery callback during the delete
+    const sourceItem = this._items.find((item) => item.id === detail.id);
+    /** @type {import("../store/grocery.store.js").GroceryItem | null} */
+    const deletedItem = sourceItem ? { ...sourceItem } : null;
 
     try {
       const { removeItem } = await import('../store/grocery.store.js');
@@ -660,50 +685,40 @@ export class GroceryList extends HTMLElement {
 
   /**
    * Handle the CLEAR ALL button — confirm then delete all items.
+   * Business Logic: Uses the reusable <confirm-dialog> component with a danger
+   * variant. Show the dialog, listen for confirm/cancel events, and clear all
+   * items on confirmation. The dialog is created once and cached.
    */
   async _handleClearAll() {
     if (!this._activeListId) return;
 
-    const confirmDialog = /** @type {HTMLDialogElement | null} */ (document.getElementById('confirm-dialog'));
-    const confirmTitle = document.getElementById('confirm-title');
-    const confirmMsg = document.getElementById('confirm-message');
-    const confirmOk = document.getElementById('confirm-ok');
-    const confirmCancel = document.getElementById('confirm-cancel');
+    // Create or reuse the confirm dialog
+    let confirmDlg = /** @type {any} */ (
+      document.getElementById('clear-all-dialog')
+    );
 
-    if (confirmDialog && confirmTitle && confirmMsg && confirmOk && confirmCancel) {
-      confirmTitle.textContent = 'Clear All Items';
-      confirmMsg.textContent = 'This will remove all items (checked and unchecked) from your list. This cannot be undone.';
-      confirmDialog.showModal();
+    if (!confirmDlg) {
+      confirmDlg = /** @type {any} */ (document.createElement('confirm-dialog'));
+      confirmDlg.id = 'clear-all-dialog';
+      confirmDlg.setAttribute('heading', 'Clear entire list?');
+      confirmDlg.setAttribute('message', 'This will remove all items (checked and unchecked) from your list. This cannot be undone.');
+      confirmDlg.setAttribute('confirm-label', 'Clear List');
+      confirmDlg.setAttribute('confirm-variant', 'danger');
+      confirmDlg.setAttribute('cancel-label', 'Keep List');
+      document.body.appendChild(confirmDlg);
 
-      /**
-       * Handle the OK button click — executes the clear-all action.
-       * @returns {Promise<void>}
-       */
-      const handleOk = async () => {
+      // One-time event listener for confirm
+      confirmDlg.addEventListener('dialog-confirm', async () => {
         try {
           const { clearAllItems } = await import('../store/grocery.store.js');
           await clearAllItems(/** @type {string} */ (this._activeListId));
         } catch (err) {
           console.error('Failed to clear items:', err);
         }
-        confirmDialog.close();
-        confirmOk.removeEventListener('click', handleOk);
-        confirmCancel.removeEventListener('click', handleCancel);
-      };
-
-      /**
-       * Handle the Cancel button click — closes the confirm dialog.
-       * @returns {void}
-       */
-      const handleCancel = () => {
-        confirmDialog.close();
-        confirmOk.removeEventListener('click', handleOk);
-        confirmCancel.removeEventListener('click', handleCancel);
-      };
-
-      confirmOk.addEventListener('click', handleOk);
-      confirmCancel.addEventListener('click', handleCancel);
+      });
     }
+
+    confirmDlg.show();
   }
 }
 

@@ -3,15 +3,22 @@
  * Item store functions for List&GO.
  * Business Logic: Provides CRUD operations on the `items` table with sync fields
  * (familyId, updatedAt, isSynced) and seeds the store with default grocery items
- * on first run. Every write sets isSynced = 0 so the sync engine can push changes.
+ * on first run. The seed flow first seeds categories and units, then looks up their
+ * UUIDs by name so items have proper foreign key references. Every write sets
+ * isSynced = 0 so the sync engine can push changes.
  * @module
  */
 
 import { db } from "../db.js";
+import { seedCategories, getCategoryByName } from "./categories.store.js";
+
+/**
+ * @typedef {import("../db.js").Item} Item
+ */
 
 /**
  * Retrieve all items, sorted by name.
- * @returns {Promise<import("../db.js").Item[]>} Array of items.
+ * @returns {Promise<Item[]>} Array of items.
  */
 export async function getAllItems() {
   return await db.items.orderBy('name').toArray();
@@ -20,7 +27,7 @@ export async function getAllItems() {
 /**
  * Get a single item by its UUID.
  * @param {string} id - UUID of the item.
- * @returns {Promise<import("../db.js").Item | undefined>} The matching item or undefined.
+ * @returns {Promise<Item | undefined>} The matching item or undefined.
  */
 export async function getItemById(id) {
   return await db.items.get(id);
@@ -29,27 +36,27 @@ export async function getItemById(id) {
 /**
  * Search items by name prefix (for autocomplete).
  * @param {string} query - The search string.
- * @returns {Promise<import("../db.js").Item[]>} Matching items.
+ * @returns {Promise<Item[]>} Matching items.
  */
 export async function searchItems(query) {
-  if (!query || query.length < 1) return /** @type {import("../db.js").Item[]} */ ([]);
+  if (!query || query.length < 1) return /** @type {Item[]} */ ([]);
   return await db.items
-    .filter((/** @type {import("../db.js").Item} */ item) => item.name.toLowerCase().includes(query.toLowerCase()))
+    .filter((/** @type {Item} */ item) => item.name.toLowerCase().includes(query.toLowerCase()))
     .limit(20)
     .toArray();
 }
 
 /**
  * Get all essential items (for quick-add sheet).
- * @returns {Promise<import("../db.js").Item[]>} Array of essential items.
+ * @returns {Promise<Item[]>} Array of essential items.
  */
 export async function getEssentialItems() {
-  return await db.items.filter((/** @type {import("../db.js").Item} */ item) => item.isEssential).toArray();
+  return await db.items.filter((/** @type {Item} */ item) => item.isEssential).toArray();
 }
 
 /**
  * Add a new item with sync fields.
- * @param {Omit<import("../db.js").Item, "id" | "updatedAt" | "isSynced">} data - Item data without generated fields.
+ * @param {Omit<Item, "id" | "updatedAt" | "isSynced">} data - Item data without generated fields.
  * @returns {Promise<string>} The generated UUID of the new item.
  */
 export async function addItem(data) {
@@ -66,7 +73,7 @@ export async function addItem(data) {
 
 /**
  * Update an existing item and mark it dirty for sync.
- * @param {import("../db.js").Item} item - Full item object with id.
+ * @param {Item} item - Full item object with id.
  * @returns {Promise<void>}
  */
 export async function updateItem(item) {
@@ -88,59 +95,181 @@ export async function deleteItem(id) {
 }
 
 /**
+ * Map old string category IDs to new category UUIDs.
+ * Also maps old unit UUIDs back to plain string names.
+ * Business Logic: After category seeding, existing items may have old-format
+ * categoryIds like "produce" or "dairy" instead of UUIDs. This migration
+ * remaps them by looking up the category name from a hardcoded mapping.
+ * @returns {Promise<void>}
+ */
+async function migrateOldCategoryIds() {
+  // Map of old string IDs to category names
+  /** @type {Record<string, string>} */
+  const OLD_CATEGORY_MAP = {
+    produce: 'Fruits & Vegetables',
+    dairy: 'Dairy',
+    bakery: 'Bakery',
+    meat: 'Meat',
+    pantry: 'Pantry',
+    condiments: 'Pantry',
+    beverages: 'Drinks',
+    frozen: 'Canned Goods',
+  };
+
+  // Check if any items use old-style category IDs (non-UUID)
+  const items = await db.items.toArray();
+  const oldItems = items.filter((/** @type {Item} */ i) => i.categoryId && i.categoryId.length < 36);
+  if (oldItems.length === 0) return;
+
+  const now = new Date().toISOString();
+
+  for (const item of oldItems) {
+    const oldId = item.categoryId.toLowerCase();
+    const catName = OLD_CATEGORY_MAP[oldId] || null;
+    if (!catName) {
+      // Unknown old ID — just clear it
+      await db.items.update(item.id, { categoryId: '', updatedAt: now, isSynced: 0 });
+      continue;
+    }
+    const cat = await getCategoryByName(catName);
+    if (cat) {
+      await db.items.update(item.id, { categoryId: cat.id, updatedAt: now, isSynced: 0 });
+    }
+  }
+
+  // Also migrate groceryItems which have denormalized categoryId
+  const groceryItems = await db.groceryItems.toArray();
+  const oldGroceryItems = groceryItems.filter((/** @type {import("../db.js").GroceryItem} */ gi) => gi.categoryId && gi.categoryId.length < 36);
+  for (const gi of oldGroceryItems) {
+    const oldId = gi.categoryId.toLowerCase();
+    const catName = OLD_CATEGORY_MAP[oldId] || null;
+    if (!catName) {
+      await db.groceryItems.update(gi.id, { categoryId: '', updatedAt: now, isSynced: 0 });
+      continue;
+    }
+    const cat = await getCategoryByName(catName);
+    if (cat) {
+      await db.groceryItems.update(gi.id, { categoryId: cat.id, updatedAt: now, isSynced: 0 });
+    }
+  }
+
+  // Also migrate unit UUIDs to plain strings for items
+  const itemsWithUnitUuids = items.filter((/** @type {Item} */ i) => i.unitId && i.unitId.length === 36);
+  if (itemsWithUnitUuids.length > 0) {
+    const units = await db.units.toArray();
+    /** @type {Record<string, string>} */
+    const unitMap = {};
+    for (const u of units) {
+      unitMap[u.id] = u.name;
+    }
+    const nowU = new Date().toISOString();
+    for (const item of itemsWithUnitUuids) {
+      const plainName = unitMap[item.unitId] || '';
+      await db.items.update(item.id, { unitId: plainName, updatedAt: nowU, isSynced: 0 });
+    }
+  }
+
+  // Also migrate groceryItem unit UUIDs to plain strings
+  const groceryWithUnitUuids = groceryItems.filter((/** @type {import("../db.js").GroceryItem} */ gi) => gi.unit && gi.unit.length === 36);
+  if (groceryWithUnitUuids.length > 0) {
+    const units = await db.units.toArray();
+    /** @type {Record<string, string>} */
+    const unitMap = {};
+    for (const u of units) {
+      unitMap[u.id] = u.name;
+    }
+    const nowG = new Date().toISOString();
+    for (const gi of groceryWithUnitUuids) {
+      const plainName = unitMap[gi.unit] || '';
+      await db.groceryItems.update(gi.id, { unit: plainName, updatedAt: nowG, isSynced: 0 });
+    }
+  }
+
+  console.log(`Migrated ${oldItems.length} items and ${oldGroceryItems.length} grocery items from old category IDs`);
+  console.log(`Migrated ${itemsWithUnitUuids.length} items and ${groceryWithUnitUuids.length} grocery items from old unit UUIDs`);
+}
+
+/**
  * Seed the items table with a default catalogue if it is empty.
- * Runs once on application start.
+ * Runs once on application start. First seeds categories and units,
+ * then resolves UUIDs to build proper foreign key references.
+ * Also migrates any old-format category IDs to the new UUID format.
  * @returns {Promise<void>}
  */
 export async function seedItems() {
+  // First ensure categories are seeded
+  await seedCategories();
+
+  // Migrate any old-format IDs before checking if items exist
+  await migrateOldCategoryIds();
+
   const count = await db.items.count();
   if (count > 0) return;
 
   const familyId = 'default';
   const now = new Date().toISOString();
-  const isSynced = 0;
 
-  /** @type {import("../db.js").Item[]} */
+  // Resolve category UUIDs by name
+  const catFruits = await getCategoryByName('Fruits & Vegetables');
+  const catDairy = await getCategoryByName('Dairy');
+  const catBakery = await getCategoryByName('Bakery');
+  const catMeat = await getCategoryByName('Meat');
+  const catPantry = await getCategoryByName('Pantry');
+  const catDrinks = await getCategoryByName('Drinks');
+  const catCanned = await getCategoryByName('Canned Goods');
+  const catSnacks = await getCategoryByName('Snacks');
+  const catPersonal = await getCategoryByName('Personal Care');
+  const catPets = await getCategoryByName('Pets');
+  const catSeafood = await getCategoryByName('Seafood');
+
+  // Units are plain strings — no need to resolve UUIDs
+
+  /** @type {Item[]} */
   const defaultItems = [
-    // Produce
-    { id: crypto.randomUUID(), familyId, name: "Apple", categoryId: "produce", unitId: "pcs", defaultQty: 4, isEssential: true, isMultiUse: true, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Banana", categoryId: "produce", unitId: "pcs", defaultQty: 6, isEssential: true, isMultiUse: true, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Carrot", categoryId: "produce", unitId: "kg", defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Lettuce", categoryId: "produce", unitId: "pcs", defaultQty: 1, isEssential: false, isMultiUse: false, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Tomato", categoryId: "produce", unitId: "pcs", defaultQty: 6, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Onion", categoryId: "produce", unitId: "kg", defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Potato", categoryId: "produce", unitId: "kg", defaultQty: 2, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Garlic", categoryId: "produce", unitId: "pcs", defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
+    // Fruits & Vegetables
+    { id: crypto.randomUUID(), familyId, name: "Apple", categoryId: catFruits?.id || '', unitId: 'pcs', defaultQty: 4, isEssential: true, isMultiUse: true, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), familyId, name: "Banana", categoryId: catFruits?.id || '', unitId: 'pcs', defaultQty: 6, isEssential: true, isMultiUse: true, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), familyId, name: "Carrot", categoryId: catFruits?.id || '', unitId: 'kg', defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), familyId, name: "Lettuce", categoryId: catFruits?.id || '', unitId: 'pcs', defaultQty: 1, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), familyId, name: "Tomato", categoryId: catFruits?.id || '', unitId: 'pcs', defaultQty: 6, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), familyId, name: "Onion", categoryId: catFruits?.id || '', unitId: 'kg', defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), familyId, name: "Potato", categoryId: catFruits?.id || '', unitId: 'kg', defaultQty: 2, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), familyId, name: "Garlic", categoryId: catFruits?.id || '', unitId: 'pcs', defaultQty: 3, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
     // Dairy
-    { id: crypto.randomUUID(), familyId, name: "Milk", categoryId: "dairy", unitId: "l", defaultQty: 1, isEssential: true, isMultiUse: false, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Butter", categoryId: "dairy", unitId: "pcs", defaultQty: 1, isEssential: false, isMultiUse: false, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Cheese", categoryId: "dairy", unitId: "g", defaultQty: 200, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Yogurt", categoryId: "dairy", unitId: "pcs", defaultQty: 4, isEssential: false, isMultiUse: false, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Eggs", categoryId: "dairy", unitId: "pcs", defaultQty: 12, isEssential: true, isMultiUse: true, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Milk", categoryId: catDairy?.id || '', unitId: 'Litres', defaultQty: 1, isEssential: true, isMultiUse: false, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), familyId, name: "Butter", categoryId: catDairy?.id || '', unitId: 'pcs', defaultQty: 1, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), familyId, name: "Cheese", categoryId: catDairy?.id || '', unitId: 'grams', defaultQty: 200, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), familyId, name: "Yogurt", categoryId: catDairy?.id || '', unitId: 'pcs', defaultQty: 4, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), familyId, name: "Eggs", categoryId: catDairy?.id || '', unitId: 'pcs', defaultQty: 12, isEssential: true, isMultiUse: true, updatedAt: now, isSynced: 0 },
     // Bakery
-    { id: crypto.randomUUID(), familyId, name: "Bread", categoryId: "bakery", unitId: "pcs", defaultQty: 1, isEssential: true, isMultiUse: false, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Croissant", categoryId: "bakery", unitId: "pcs", defaultQty: 4, isEssential: false, isMultiUse: false, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Bread", categoryId: catBakery?.id || '', unitId: 'pcs', defaultQty: 1, isEssential: true, isMultiUse: false, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), familyId, name: "Croissant", categoryId: catBakery?.id || '', unitId: 'pcs', defaultQty: 4, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0 },
     // Meat
-    { id: crypto.randomUUID(), familyId, name: "Chicken Breast", categoryId: "meat", unitId: "g", defaultQty: 500, isEssential: false, isMultiUse: false, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Ground Beef", categoryId: "meat", unitId: "g", defaultQty: 500, isEssential: false, isMultiUse: false, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Chicken Breast", categoryId: catMeat?.id || '', unitId: 'grams', defaultQty: 500, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), familyId, name: "Ground Beef", categoryId: catMeat?.id || '', unitId: 'grams', defaultQty: 500, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0 },
     // Pantry
-    { id: crypto.randomUUID(), familyId, name: "Rice", categoryId: "pantry", unitId: "kg", defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Pasta", categoryId: "pantry", unitId: "g", defaultQty: 500, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Olive Oil", categoryId: "pantry", unitId: "l", defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
-    // Condiments
-    { id: crypto.randomUUID(), familyId, name: "Salt", categoryId: "condiments", unitId: "pcs", defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Black Pepper", categoryId: "condiments", unitId: "pcs", defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
-    // Beverages
-    { id: crypto.randomUUID(), familyId, name: "Orange Juice", categoryId: "beverages", unitId: "l", defaultQty: 1, isEssential: false, isMultiUse: false, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Coffee", categoryId: "beverages", unitId: "pcs", defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
-    // Frozen
-    { id: crypto.randomUUID(), familyId, name: "Frozen Peas", categoryId: "frozen", unitId: "g", defaultQty: 500, isEssential: false, isMultiUse: true, updatedAt: now, isSynced },
-    { id: crypto.randomUUID(), familyId, name: "Ice Cream", categoryId: "frozen", unitId: "l", defaultQty: 1, isEssential: false, isMultiUse: false, updatedAt: now, isSynced },
+    { id: crypto.randomUUID(), familyId, name: "Rice", categoryId: catPantry?.id || '', unitId: 'kg', defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), familyId, name: "Pasta", categoryId: catPantry?.id || '', unitId: 'grams', defaultQty: 500, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), familyId, name: "Olive Oil", categoryId: catPantry?.id || '', unitId: 'Litres', defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), familyId, name: "Salt", categoryId: catPantry?.id || '', unitId: 'pcs', defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), familyId, name: "Black Pepper", categoryId: catPantry?.id || '', unitId: 'pcs', defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
+    // Drinks
+    { id: crypto.randomUUID(), familyId, name: "Orange Juice", categoryId: catDrinks?.id || '', unitId: 'Litres', defaultQty: 1, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), familyId, name: "Coffee", categoryId: catDrinks?.id || '', unitId: 'pcs', defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
+    // Canned Goods
+    { id: crypto.randomUUID(), familyId, name: "Canned Tomatoes", categoryId: catCanned?.id || '', unitId: 'pcs', defaultQty: 2, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), familyId, name: "Frozen Peas", categoryId: catCanned?.id || '', unitId: 'grams', defaultQty: 500, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
+    // Snacks
+    { id: crypto.randomUUID(), familyId, name: "Potato Chips", categoryId: catSnacks?.id || '', unitId: 'pcs', defaultQty: 1, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0 },
+    // Personal Care
+    { id: crypto.randomUUID(), familyId, name: "Toothpaste", categoryId: catPersonal?.id || '', unitId: 'pcs', defaultQty: 1, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0 },
+    // Pets
+    { id: crypto.randomUUID(), familyId, name: "Dog Food", categoryId: catPets?.id || '', unitId: 'kg', defaultQty: 2, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0 },
+    // Seafood
+    { id: crypto.randomUUID(), familyId, name: "Salmon Fillet", categoryId: catSeafood?.id || '', unitId: 'grams', defaultQty: 300, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0 },
   ];
 
   await db.items.bulkAdd(defaultItems);
   console.log(`Seeded ${defaultItems.length} default items`);
 }
 
-// Initialise seed on module load.
-seedItems().catch((e) => console.error('Failed to seed items:', e));

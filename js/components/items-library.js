@@ -1,5 +1,7 @@
 // @ts-check
 import { getCategoryColor } from '../utils/category-colors.js';
+import { getCategoryName, categoryCache } from '../store/categories.store.js';
+
 /**
  * Items Library Web Component — Categorized inventory of all grocery items.
  * Business Logic: Displays the catalogue of grocery items grouped by category,
@@ -99,7 +101,7 @@ export class ItemsLibrary extends HTMLElement {
     if (this.#searchQuery) {
       filtered = filtered.filter((item) =>
         item.name.toLowerCase().includes(this.#searchQuery) ||
-        (item.categoryId && item.categoryId.toLowerCase().includes(this.#searchQuery))
+        (item.categoryId && getCategoryName(item.categoryId).toLowerCase().includes(this.#searchQuery))
       );
     }
 
@@ -176,13 +178,26 @@ export class ItemsLibrary extends HTMLElement {
       grouped[cat].push(item);
     });
 
+    // Sort categories by store layout order (sortOrder from categories store)
+    // Business Logic: The user sets the order in Settings → Store Layout.
+    const categoryIds = Object.keys(grouped);
+    categoryIds.sort((a, b) => {
+      const catA = categoryCache.byId.get(a);
+      const catB = categoryCache.byId.get(b);
+      const orderA = catA?.sortOrder ?? 999;
+      const orderB = catB?.sortOrder ?? 999;
+      if (orderA !== orderB) return orderA - orderB;
+      return (catA?.name || a).localeCompare(catB?.name || b);
+    });
+
     let html = '';
-    for (const [category, catItems] of Object.entries(grouped)) {
+    for (const category of categoryIds) {
+      const catItems = grouped[category];
       html += `
         <details class="category-section" open>
           <summary>
             <div class="category-section__header">
-              <span class="category-section__label">${category.toUpperCase()} (${catItems.length})</span>
+              <span class="category-section__label">${getCategoryName(category).toUpperCase()} (${catItems.length})</span>
               <span class="category-section__divider"></span>
               <span class="category-section__chevron">
                 <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>

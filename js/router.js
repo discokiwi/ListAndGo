@@ -16,7 +16,7 @@ const ROUTE_MAP = {
   'plan': 'meal-planner',
   'recipes': 'recipe-library',
   'items': 'items-library',
-  'settings': 'settings-panel',
+  // 'settings' removed — now rendered as a slide-in drawer overlay
 };
 
 /**
@@ -38,7 +38,6 @@ const componentCache = {
   'plan': null,
   'recipes': null,
   'items': null,
-  'settings': null,
 };
 
 /**

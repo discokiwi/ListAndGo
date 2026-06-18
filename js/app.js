@@ -1,13 +1,14 @@
 // @ts-nocheck -- Dexie is global via CDN, TS can't resolve
 /**
  * Application entry point for List&GO PWA.
- * Business Logic: Initializes the Dexie database, seeds default data,
- * registers the router for SPA navigation, and registers the Service Worker
- * for offline support.
+ * Business Logic: Initializes the Dexie database, seeds default data (categories,
+ * units, items) in the correct dependency order, registers the router for SPA
+ * navigation, and registers the Service Worker for offline support. Listens for
+ * 'categories-changed' events to refresh the UI after settings changes.
  * @module
  */
 
-import { initRouter, goTo } from './router.js';
+import { initRouter } from './router.js';
 
 // Import all Web Components so their customElements.define() calls execute.
 // The router creates these elements by tag name, so they must be registered.
@@ -21,7 +22,11 @@ import './components/items-library.js';
 import './components/meal-planner.js';
 import './components/recipe-library.js';
 import './components/settings-panel.js';
+import './components/toggle-switch.js';
+import './components/quantity-stepper.js';
 import './components/search-autocomplete.js';
+import './components/confirm-dialog.js';
+import './components/content-dialog.js';
 
 /**
  * Register the Service Worker for offline-first support.
@@ -39,8 +44,10 @@ async function registerServiceWorker() {
 }
 
 /**
- * Initialize the Dexie database.
- * Currently imported via global script tag from CDN.
+ * Initialize the Dexie database and seed all default data.
+ * Business Logic: Seeds must run in order because items reference category
+ * and unit UUIDs. Categories are seeded first, then units, then items.
+ * The category color cache is loaded after seeding.
  * @returns {Promise<void>}
  */
 async function initDatabase() {
@@ -50,11 +57,20 @@ async function initDatabase() {
     await new Promise((resolve) => setTimeout(resolve, 500));
     return initDatabase();
   }
+
   // The db module is self-initializing
   await import('./db.js');
-  // Seed items if needed
-  await import('./store/items.store.js');
-  console.log('Database initialized');
+
+  // Seed in dependency order
+  const { seedCategories } = await import('./store/categories.store.js');
+  const { seedItems } = await import('./store/items.store.js');
+  const { loadCategoryColorCache } = await import('./utils/category-colors.js');
+
+  await seedCategories();
+  await seedItems();
+  await loadCategoryColorCache();
+
+  console.log('Database initialized and seeded');
 }
 
 /**
@@ -71,9 +87,23 @@ async function initApp() {
   // Start the SPA router
   initRouter();
 
-  // Wire the top bar settings button to navigate to settings route
+  // Wire the top bar settings button to open the settings drawer
+  // The settings-panel component self-subscribes to the 'open-settings' event.
+  // This fallback ensures the drawer component is present.
+  const settingsDrawer = document.querySelector('settings-panel');
   document.addEventListener('open-settings', () => {
-    goTo('settings');
+    if (settingsDrawer && typeof settingsDrawer.open === 'function') {
+      settingsDrawer.open();
+    }
+  });
+
+  // Listen for category changes to refresh UI components
+  document.addEventListener('categories-changed', async () => {
+    const { loadCategoryColorCache } = await import('./utils/category-colors.js');
+    await loadCategoryColorCache();
+
+    // Dispatch a general update event for any component that needs to re-render
+    document.dispatchEvent(new CustomEvent('items-updated'));
   });
 
   // Register Service Worker (non-blocking)

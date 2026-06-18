@@ -6,8 +6,17 @@
  * (within a search bar) and dialog use (within an ingredient picker).
  * Emits 'item-selected' when the user picks a result, and 'create-custom'
  * when the user wants to add a new item not found in search.
+ * @module
+ */
+import { getCategoryName } from '../store/categories.store.js';
+import { escapeHtml } from '../utils/dom-utils.js';
+
+/**
+ * Search Autocomplete Web Component — reusable search field with dropdown.
+ * Business Logic: Provides a debounced search input that queries the items
+ * library and shows a dropdown of matching results.
  * @class
- * @augments {HTMLElement}
+ * @augments HTMLElement
  */
 export class SearchAutocomplete extends HTMLElement {
   /** @type {HTMLInputElement | null} */
@@ -25,16 +34,6 @@ export class SearchAutocomplete extends HTMLElement {
    */
   searchFn = null;
 
-  /**
-   * Function to load recent/initial items when input is focused (optional).
-   * @type {((query: string) => Promise<import("../db.js").Item[]>) | null}
-   */
-  recentFn = null;
-
-  /** @type {string} */
-  _placeholder = 'Search...';
-  /** @type {number} */
-  _debounceMs = 150;
 
   /** Construct the component. */
   constructor() {
@@ -148,17 +147,19 @@ export class SearchAutocomplete extends HTMLElement {
           <div class="search-autocomplete__empty">No items found</div>
         `;
       } else {
-        this._dropdown.innerHTML = results.map((item) => `
+        this._dropdown.innerHTML = results.map((item) => {
+          const catName = getCategoryName(item.categoryId);
+          return `
           <button class="search-autocomplete__item"
                   data-item-id="${item.id}"
-                  data-name="${this._escapeHtml(item.name)}"
-                  data-category="${this._escapeHtml(item.categoryId)}"
-                  data-unit="${this._escapeHtml(item.unitId)}"
+                   data-name="${escapeHtml(item.name)}"
+                   data-category="${escapeHtml(item.categoryId)}"
+                   data-unit="${escapeHtml(item.unitId)}"
                   data-qty="${item.defaultQty}">
-            <span class="search-autocomplete__item-name">${this._escapeHtml(item.name)}</span>
-            <span class="search-autocomplete__item-meta">${item.categoryId} · ${item.defaultQty} ${item.unitId}</span>
+            <span class="search-autocomplete__item-name">${escapeHtml(item.name)}</span>
+            <span class="search-autocomplete__item-meta">${catName} · ${item.defaultQty} ${item.unitId}</span>
           </button>
-        `).join('');
+        `}).join('');
       }
 
       this._dropdown.style.display = 'block';
@@ -239,16 +240,6 @@ export class SearchAutocomplete extends HTMLElement {
     }
   }
 
-  /**
-   * Escape HTML special characters.
-   * @param {string} str
-   * @returns {string}
-   */
-  _escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
 }
 
 customElements.define('search-autocomplete', SearchAutocomplete);
