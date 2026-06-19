@@ -1,5 +1,6 @@
 // @ts-check
 import { escapeHtml } from '../utils/dom-utils.js';
+import { getCategoryName } from '../store/categories.store.js';
 
 /**
  * Ingredient Picker Web Component — autocomplete search bottom sheet.
@@ -158,7 +159,7 @@ export class IngredientPicker extends HTMLElement {
               data-unit="${escapeHtml(item.unitId)}"
               data-qty="${item.defaultQty}">
         <span class="picker-result__name">${escapeHtml(item.name)}</span>
-        <span class="picker-result__meta">${item.categoryId} · ${item.defaultQty} ${item.unitId}</span>
+        <span class="picker-result__meta">${getCategoryName(item.categoryId)} · ${item.defaultQty} ${item.unitId}</span>
       </button>
     `).join('');
 

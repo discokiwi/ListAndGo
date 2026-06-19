@@ -27,6 +27,8 @@ import './components/quantity-stepper.js';
 import './components/search-autocomplete.js';
 import './components/confirm-dialog.js';
 import './components/content-dialog.js';
+import './components/recipe-detail.js';
+import './components/recipe-editor.js';
 
 /**
  * Register the Service Worker for offline-first support.
@@ -63,11 +65,15 @@ async function initDatabase() {
 
   // Seed in dependency order
   const { seedCategories } = await import('./store/categories.store.js');
+  const { seedRecipeCategories } = await import('./store/recipe-categories.store.js');
   const { seedItems } = await import('./store/items.store.js');
+  const { seedRecipes } = await import('./store/recipes.store.js');
   const { loadCategoryColorCache } = await import('./utils/category-colors.js');
 
   await seedCategories();
+  await seedRecipeCategories();
   await seedItems();
+  await seedRecipes();
   await loadCategoryColorCache();
 
   console.log('Database initialized and seeded');

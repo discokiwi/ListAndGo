@@ -1,0 +1,237 @@
+/* =============================================
+   List&GO — Recipe Card & Library List
+   Design: Stitch "Recipes - Mobile Library with Wrapped Filters"
+   ============================================= */
+
+/* ---- Filter Chips Row ---- */
+.recipe-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-base);
+  margin-bottom: var(--spacing-gutter);
+  padding: 0;
+}
+
+.recipe-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-outline-variant);
+  font: var(--font-badge-caps);
+  letter-spacing: var(--ls-badge-caps);
+  color: var(--color-on-surface-variant);
+  background: var(--color-surface-pure);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  white-space: nowrap;
+
+  & svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+  }
+
+  &:hover {
+    background: var(--color-surface-container-low);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.recipe-filter-chip--active {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border-color: var(--color-primary);
+}
+
+/* ---- Recipe Card ---- */
+.recipe-card {
+  background: var(--color-surface-pure);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-gutter);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  overflow: hidden;
+
+  &:active {
+    transform: scale(0.99);
+  }
+}
+
+.recipe-card__body {
+  flex: 1;
+  min-width: 0;
+  padding-right: var(--spacing-base);
+}
+
+.recipe-card__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-base);
+  margin-bottom: 4px;
+}
+
+.recipe-card__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  color: var(--color-primary);
+  border-radius: var(--radius-full);
+  font: var(--font-badge-caps);
+  letter-spacing: var(--ls-badge-caps);
+  text-transform: uppercase;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.recipe-card__time {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--color-text-dimmed);
+  font: var(--font-unit-label);
+}
+
+.recipe-card__time svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+.recipe-card__title {
+  font: var(--font-item-name);
+  color: var(--color-on-surface);
+  margin: 0 0 2px 0;
+  line-height: 1.3;
+}
+
+.recipe-card__description {
+  font: var(--font-unit-label);
+  color: var(--color-on-surface-variant);
+  opacity: 0.8;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+}
+
+/* Add to Plan button — circular thumb-touch target */
+.recipe-card__add-btn {
+  width: var(--spacing-thumb-touch);
+  height: var(--spacing-thumb-touch);
+  min-width: var(--spacing-thumb-touch);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--color-primary-container) 10%, transparent);
+  color: var(--color-primary);
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+
+  & svg,
+  & .material-symbols-outlined {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+    font-size: 22px;
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-primary-container) 25%, transparent);
+  }
+
+  &:active {
+    transform: scale(0.9);
+  }
+}
+
+.recipe-card__add-btn--added {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+
+  &:hover {
+    background: var(--color-primary-container);
+    color: var(--color-on-primary-fixed-variant);
+  }
+}
+
+/* ---- Empty State ---- */
+.recipe-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--spacing-gutter) * 3) var(--spacing-gutter);
+  text-align: center;
+  color: var(--color-text-dimmed);
+  font: var(--font-body-reg);
+}
+
+.recipe-empty__icon {
+  width: 48px;
+  height: 48px;
+  fill: var(--color-outline-variant);
+  margin-bottom: var(--spacing-gutter);
+}
+
+/* ---- Card List Container ---- */
+.recipe-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-list-item-gap, 12px);
+  padding-bottom: 80px; /* space for FAB and bottom nav */
+}
+
+/* ---- Add Recipe FAB ---- */
+.recipe-fab {
+  position: fixed;
+  bottom: calc(72px + var(--spacing-gutter)); /* above bottom nav */
+  right: var(--spacing-gutter);
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  z-index: 40;
+
+  & svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}

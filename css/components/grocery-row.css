@@ -235,8 +235,8 @@ grocery-row .gr-row {
   padding-right: var(--spacing-gutter, 16px);
   background: var(--color-surface-pure, #ffffff);
   border-bottom: 1px solid var(--color-outline-variant, #bfc9c1);
-  border-left: 4px solid var(--accent-color, var(--color-outline-variant, #bfc9c1));
-  border-radius: var(--radius-md, 0.75rem);
+   border-left: 4px solid var(--accent-color, var(--color-outline-variant, #bfc9c1));
+   border-radius: var(--radius-default, 0.5rem);
   transition: opacity 0.2s ease, background 0.2s ease;
   position: relative;
   z-index: 1;

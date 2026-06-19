@@ -9,6 +9,7 @@
  */
 
 import { addCategory, updateCategory, deleteCategory, getAllCategories, updateCategoryOrder } from '../store/categories.store.js';
+import { getAllRecipeCategories, addRecipeCategory, updateRecipeCategory, deleteRecipeCategory } from '../store/recipe-categories.store.js';
 
 /**
  * The 14 category accent colors from design tokens.
@@ -63,6 +64,8 @@ export class SettingsDrawer extends HTMLElement {
   #categories = [];
   /** @type {import("../db.js").Category[]} */
   #storeCategories = [];
+  /** @type {import("../db.js").RecipeCategory[]} */
+  #recipeCategories = [];
 
   /** Construct the component. */
   constructor() {
@@ -172,9 +175,12 @@ export class SettingsDrawer extends HTMLElement {
     try {
       this.#categories = await getAllCategories();
       this.#storeCategories = [...this.#categories];
+      this.#recipeCategories = await getAllRecipeCategories();
       this.#populateCategoriesList();
       this.#populateStoreList();
+      this.#populateRecipeCategoriesList();
       this.#wireItemsTabInteractions();
+      this.#wireRecipeTabInteractions();
     } catch (err) {
       console.error('Failed to load settings data:', err);
     }
@@ -284,6 +290,18 @@ export class SettingsDrawer extends HTMLElement {
                 </div>
               </div>
             </section>
+            <section>
+              <h3 class="settings-section__heading">Recipe Categories</h3>
+              <div class="settings-categories-card" id="settings-recipe-categories-card">
+                <div id="settings-recipe-categories-list"><!-- Populated by JS --></div>
+                <div class="settings-add-row" id="settings-recipe-category-add-row">
+                  <input class="settings-add-row__input" id="settings-add-recipe-category-input" type="text" placeholder="Add Recipe Category" autocomplete="off" />
+                  <button class="settings-add-row__btn--icon-only" id="settings-add-recipe-category-btn" aria-label="Add recipe category">
+                    <svg width="18" height="18" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                  </button>
+                </div>
+              </div>
+            </section>
           </div>
 
           <div class="settings-tabpanel settings-tabpanel--hidden" data-panel="items">
@@ -343,11 +361,13 @@ export class SettingsDrawer extends HTMLElement {
     try {
       const { db } = await import('../db.js');
       const { seedCategories } = await import('../store/categories.store.js');
+      const { seedRecipeCategories } = await import('../store/recipe-categories.store.js');
       const { seedItems } = await import('../store/items.store.js');
       const { loadCategoryColorCache } = await import('../utils/category-colors.js');
 
       await db.items.clear();
       await db.categories.clear();
+      await db.recipeCategories.clear();
       await db.units?.clear();
       await db.recipes.clear();
       await db.recipeIngredients.clear();
@@ -358,10 +378,12 @@ export class SettingsDrawer extends HTMLElement {
       await db.settings.clear();
 
       await seedCategories();
+      await seedRecipeCategories();
       await seedItems();
       await loadCategoryColorCache();
       await this.#loadData();
       document.dispatchEvent(new CustomEvent('categories-changed'));
+      document.dispatchEvent(new CustomEvent('recipe-categories-changed'));
 
       const snackbar = /** @type {any} */ (document.querySelector('app-snackbar'));
       if (snackbar && typeof snackbar.show === 'function') snackbar.show('Data reset to defaults');
@@ -392,6 +414,74 @@ export class SettingsDrawer extends HTMLElement {
         </button>
       </div>
     `).join('');
+  }
+
+  /** @returns {void} */
+  #populateRecipeCategoriesList() {
+    const list = this.querySelector('#settings-recipe-categories-list');
+    if (!list) return;
+    list.innerHTML = this.#recipeCategories.map((cat) => `
+      <div class="settings-category-row" data-category-id="${cat.id}">
+        <span class="settings-category-row__name" data-action="edit-recipe-category-name" data-category-id="${cat.id}">${cat.name}</span>
+        <button class="settings-category-row__delete" data-action="delete-recipe-category" data-category-id="${cat.id}" aria-label="Delete recipe category">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+        </button>
+      </div>
+    `).join('');
+  }
+
+  /** @returns {void} */
+  #wireRecipeTabInteractions() {
+    const addCatBtn = this.querySelector('#settings-add-recipe-category-btn');
+    const addCatInput = /** @type {HTMLInputElement | null} */ (this.querySelector('#settings-add-recipe-category-input'));
+    if (!addCatBtn || !addCatInput) return;
+
+    addCatBtn.addEventListener('click', async () => {
+      const name = addCatInput.value.trim();
+      if (!name) return;
+      try {
+        await addRecipeCategory(name);
+        addCatInput.value = '';
+        this.#recipeCategories = await getAllRecipeCategories();
+        this.#populateRecipeCategoriesList();
+        this.#wireRecipeTabInteractions();
+      } catch (err) { console.error('Failed to add recipe category:', err); }
+    });
+
+    addCatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') (/** @type {HTMLButtonElement} */ (addCatBtn)).click();
+    });
+
+    // Delegate inline edit (click on name to rename)
+    this.querySelector('#settings-recipe-categories-list')?.addEventListener('click', async (e) => {
+      const target = /** @type {HTMLElement} */ (e.target);
+      const nameEl = target.closest('[data-action="edit-recipe-category-name"]');
+      if (nameEl) {
+        const id = nameEl.getAttribute('data-category-id') || '';
+        const currentName = nameEl.textContent || '';
+        const newName = prompt('Rename category:', currentName);
+        if (newName && newName.trim() && newName.trim() !== currentName) {
+          try {
+            await updateRecipeCategory(id, newName.trim());
+            this.#recipeCategories = await getAllRecipeCategories();
+            this.#populateRecipeCategoriesList();
+            this.#wireRecipeTabInteractions();
+          } catch (err) { console.error('Failed to update recipe category:', err); }
+        }
+      }
+
+      const deleteBtn = target.closest('[data-action="delete-recipe-category"]');
+      if (deleteBtn) {
+        const id = deleteBtn.getAttribute('data-category-id') || '';
+        if (!confirm('Delete this recipe category?')) return;
+        try {
+          await deleteRecipeCategory(id);
+          this.#recipeCategories = await getAllRecipeCategories();
+          this.#populateRecipeCategoriesList();
+          this.#wireRecipeTabInteractions();
+        } catch (err) { console.error('Failed to delete recipe category:', err); }
+      }
+    });
   }
 
   /** @returns {void} */

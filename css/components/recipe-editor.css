@@ -1,0 +1,283 @@
+/* =============================================
+   List&GO — Recipe Editor Content Styles
+   (Drawer chrome is in recipe-details-edit-drawer.css)
+   Design: Stitch "Recipe Editor - Manage & Edit"
+   ============================================= */
+
+/* ---- Editor Form Fields ---- */
+.recipe-editor__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-gutter);
+}
+
+.recipe-editor__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.recipe-editor__label {
+  font: var(--font-unit-label);
+  color: var(--color-on-surface-variant);
+}
+
+.recipe-editor__input {
+  width: 100%;
+  padding: var(--spacing-base);
+  background: var(--color-surface-container-low);
+  border: 1px solid color-mix(in srgb, var(--color-outline-variant) 30%, transparent);
+  border-radius: var(--radius-md);
+  font: var(--font-item-name);
+  color: var(--color-on-surface);
+  transition: border-color 0.2s ease;
+
+  &::placeholder {
+    color: var(--color-text-dimmed);
+    opacity: 0.5;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+}
+
+.recipe-editor__input--title {
+  font: var(--font-display-lg);
+}
+
+.recipe-editor__textarea {
+  width: 100%;
+  padding: var(--spacing-base);
+  background: var(--color-surface-container-low);
+  border: 1px solid color-mix(in srgb, var(--color-outline-variant) 30%, transparent);
+  border-radius: var(--radius-md);
+  font: var(--font-body-reg);
+  color: var(--color-on-surface-variant);
+  height: 80px;
+  resize: vertical;
+  transition: border-color 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+}
+
+/* ---- Info Grid (2 columns) ---- */
+.recipe-editor__info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-gutter);
+}
+
+.recipe-editor__info-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--spacing-base);
+  background: var(--color-surface-container-low);
+  border-radius: var(--radius-md);
+}
+
+.recipe-editor__info-box input {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font: var(--font-item-name);
+  color: var(--color-on-surface);
+
+  &:focus {
+    outline: none;
+  }
+
+  &::placeholder {
+    color: var(--color-text-dimmed);
+    opacity: 0.5;
+  }
+}
+
+.recipe-editor__info-box select {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font: var(--font-item-name);
+  color: var(--color-on-surface);
+  width: 100%;
+  cursor: pointer;
+
+  &:focus {
+    outline: none;
+  }
+}
+
+/* ---- Ingredient Row (editable, design: bg-surface-container-low rounded) ---- */
+.recipe-editor__ingredients-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-base);
+}
+
+.recipe-editor__ingredients-title {
+  font: var(--font-headline-md);
+  color: var(--color-on-surface);
+  margin: 0;
+}
+
+.recipe-editor__count-badge {
+  font: var(--font-unit-label);
+  background: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  line-height: 1;
+}
+
+.recipe-editor__ingredient-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-base);
+  padding: var(--spacing-base);
+  background: var(--color-surface-container-low);
+  border-radius: var(--radius-md);
+  min-height: 48px;
+}
+
+.recipe-editor__ingredient-name {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  font: var(--font-item-name);
+  color: var(--color-on-surface);
+  padding: 0;
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.recipe-editor__ingredient-qty {
+  width: 70px;
+  background: var(--color-surface-muted);
+  border: none;
+  border-radius: var(--radius-default);
+  padding: 4px 8px;
+  font: var(--font-unit-label);
+  color: var(--color-on-surface-variant);
+  text-align: center;
+
+  &:focus {
+    outline: 1px solid var(--color-primary);
+  }
+}
+
+.recipe-editor__ingredient-unit {
+  font: var(--font-unit-label);
+  color: var(--color-text-dimmed);
+  white-space: nowrap;
+  min-width: 36px;
+}
+
+.recipe-editor__ingredient-delete {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--color-on-surface-variant);
+  cursor: pointer;
+  border-radius: var(--radius-full);
+  transition: color 0.15s ease, background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+
+  & svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
+
+  &:hover {
+    color: var(--color-error);
+    background: var(--color-error-container);
+  }
+}
+
+/* ---- Add Ingredient Button (dashed border) ---- */
+.recipe-editor__add-ingredient {
+  width: 100%;
+  padding: var(--spacing-base);
+  border: 2px dashed var(--color-outline-variant);
+  border-radius: var(--radius-xl);
+  background: transparent;
+  color: var(--color-on-surface-variant);
+  font: var(--font-item-name);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-base);
+  transition: background 0.15s ease, border-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  & svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
+
+  &:hover {
+    background: var(--color-surface-muted);
+    border-color: var(--color-outline);
+  }
+}
+
+/* ---- Ingredient Search Results (within editor) ---- */
+.recipe-editor__search-results {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  z-index: 10;
+  background: var(--color-surface-pure);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+
+.recipe-editor__search-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--spacing-base);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: var(--font-body-reg);
+  color: var(--color-on-surface);
+  text-align: left;
+  transition: background 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background: var(--color-surface-container);
+  }
+
+  &:not(:last-child) {
+    border-bottom: 1px solid var(--color-outline-variant);
+  }
+}
+
+.recipe-editor__search-item-meta {
+  font: var(--font-unit-label);
+  color: var(--color-text-dimmed);
+}

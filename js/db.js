@@ -35,6 +35,15 @@
  */
 
 /**
+ * @typedef {object} RecipeCategory
+ * @property {string} id - UUID of the recipe category.
+ * @property {string} familyId - FK to family.
+ * @property {string} name - Display name (e.g. "Pasta", "Salad").
+ * @property {string} updatedAt - ISO timestamp.
+ * @property {number} isSynced - Dirty flag.
+ */
+
+/**
  * @typedef {object} Unit
  * @property {string} id - UUID of the unit.
  * @property {string} familyId - FK to family.
@@ -48,7 +57,7 @@
  * @property {string} id - UUID of the recipe.
  * @property {string} familyId - FK to family.
  * @property {string} title - Recipe title.
- * @property {string} categoryId - Category reference.
+ * @property {string} recipeCategoryId - Reference to a recipe category.
  * @property {number} prepTime - Minutes required.
  * @property {number} servingsBase - Base portion (default 4).
  * @property {string} instructionsUrl - Optional external link.
@@ -132,6 +141,7 @@
  * @augments Dexie
  * @property {Dexie.Table<Item, string>} items - The items collection.
  * @property {Dexie.Table<Category, string>} categories - The categories collection.
+ * @property {Dexie.Table<RecipeCategory, string>} recipeCategories - The recipe categories collection.
  * @property {Dexie.Table<Unit, string>} units - The units collection.
  * @property {Dexie.Table<Recipe, string>} recipes - The recipes collection.
  * @property {Dexie.Table<RecipeIngredient, string>} recipeIngredients - The recipe ingredients collection.
@@ -147,6 +157,9 @@ export class ListAndGoDB extends Dexie {
 
   /** @returns {Dexie.Table<Category, string>} The categories collection. */
   get categories() { return this.table('categories'); }
+
+  /** @returns {Dexie.Table<RecipeCategory, string>} The recipe categories collection. */
+  get recipeCategories() { return this.table('recipeCategories'); }
 
   /** @returns {Dexie.Table<Unit, string>} The units collection. */
   get units() { return this.table('units'); }
@@ -180,6 +193,19 @@ export class ListAndGoDB extends Dexie {
       categories: 'id, familyId, name, updatedAt, isSynced',
       units: 'id, familyId, name, updatedAt, isSynced',
       recipes: 'id, familyId, title, categoryId, prepTime, servingsBase, updatedAt, isSynced',
+      recipeIngredients: 'id, familyId, recipeId, itemId, unitId, updatedAt, isSynced',
+      groceryLists: 'id, familyId, name, isActive, isArchived, createdAt, updatedAt, isSynced',
+      groceryItems: 'id, familyId, [listId+itemId], listId, itemId, name, categoryId, isChecked, updatedAt, isSynced',
+      mealPlans: 'id, familyId, date, recipeId, isCooked, updatedAt, isSynced',
+      storeLayouts: 'id, familyId, name, isActive, updatedAt, isSynced',
+      settings: 'key, value',
+    });
+    this.version(2).stores({
+      items: 'id, familyId, name, categoryId, isEssential, isMultiUse, updatedAt, isSynced',
+      categories: 'id, familyId, name, updatedAt, isSynced',
+      recipeCategories: 'id, familyId, name, updatedAt, isSynced',
+      units: 'id, familyId, name, updatedAt, isSynced',
+      recipes: 'id, familyId, title, recipeCategoryId, prepTime, servingsBase, updatedAt, isSynced',
       recipeIngredients: 'id, familyId, recipeId, itemId, unitId, updatedAt, isSynced',
       groceryLists: 'id, familyId, name, isActive, isArchived, createdAt, updatedAt, isSynced',
       groceryItems: 'id, familyId, [listId+itemId], listId, itemId, name, categoryId, isChecked, updatedAt, isSynced',
