@@ -10,6 +10,7 @@
  * @class
  */
 import { escapeHtml } from '../utils/dom-utils.js';
+import './search-autocomplete.js';
 
 /**
  * Recipe Editor Web Component.
@@ -27,6 +28,8 @@ export class RecipeEditor extends HTMLElement {
   _backdrop = null;
   /** @type {Array<{itemId: string, name: string, qty: number, unitId: string}>} */
   _ingredients = [];
+  /** @type {string} */
+  _pendingCreateQuery = '';
 
   /** Construct the component. */
   constructor() {
@@ -87,6 +90,18 @@ export class RecipeEditor extends HTMLElement {
       if (deleteBtn) {
         const index = parseInt(deleteBtn.getAttribute('data-index') || '-1', 10);
         if (index >= 0) this._removeIngredient(index);
+      }
+    });
+
+    // Listen for item-saved (when creating a new item from ingredient search)
+    document.addEventListener('item-saved', (e) => {
+      const detail = /** @type {CustomEvent} */ (e).detail;
+      if (detail && detail.itemId && this._pendingCreateQuery) {
+        // The drawer is open and we were waiting for a new item to be created
+        this._pendingCreateQuery = ''; // Reset before async lookup
+
+        // Look up the saved item and add it as an ingredient
+        this._addSavedItemAsIngredient(detail.itemId);
       }
     });
   }
@@ -300,17 +315,12 @@ export class RecipeEditor extends HTMLElement {
           <h3 class="recipe-editor__ingredients-title">Ingredients</h3>
           <span class="recipe-editor__count-badge" id="re-ingredient-count">${this._ingredients.length} Items</span>
         </div>
+
+        <!-- Ingredient Search Bar (between header and list) -->
+        <div class="recipe-editor__ingredient-search" id="re-ingredient-search"></div>
+
         <div id="re-ingredients-list">
           ${ingredientRows}
-        </div>
-
-        <!-- Add Ingredient Button with Search -->
-        <div style="position:relative">
-          <button class="recipe-editor__add-ingredient" id="re-add-ingredient">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-            Add Ingredient
-          </button>
-          <div class="recipe-editor__search-results" id="re-search-results" style="display:none"></div>
         </div>
       </div>
     `;
@@ -318,11 +328,8 @@ export class RecipeEditor extends HTMLElement {
     // Populate category dropdown
     this._populateCategories(recipe);
 
-    // Wire add ingredient button
-    const addBtn = body.querySelector('#re-add-ingredient');
-    if (addBtn) {
-      addBtn.addEventListener('click', () => this._onAddIngredient());
-    }
+    // Wire the permanent search-autocomplete
+    this._setupIngredientSearch();
 
     // Wire ingredient qty inputs
     body.querySelectorAll('[data-ingredient-qty]').forEach((input) => {
@@ -362,103 +369,81 @@ export class RecipeEditor extends HTMLElement {
   }
 
   /**
-   * Handle "Add Ingredient" button click — show search.
+   * Set up the permanent ingredient search bar using search-autocomplete.
+   * Business Logic: The search-autocomplete is always visible between the
+   * ingredients list and the form bottom. Selecting an existing item or
+   * creating a new one adds it to the ingredients list — same pattern as
+   * the grocery list searchbar.
    * @returns {void}
    */
-  async _onAddIngredient() {
-    const resultsContainer = document.getElementById('re-search-results');
-    if (!resultsContainer) return;
+  _setupIngredientSearch() {
+    const searchContainer = document.getElementById('re-ingredient-search');
+    if (!searchContainer) return;
 
-    // Toggle search visibility
-    if (resultsContainer.style.display === 'block') {
-      resultsContainer.style.display = 'none';
-      return;
-    }
+    // Clear any previous search-autocomplete
+    searchContainer.innerHTML = '';
 
-    // Load recent items as quick-add options
-    try {
-      const { searchItems } = await import('../store/items.store.js');
+    const autoComplete = document.createElement('search-autocomplete');
+    autoComplete.setAttribute('placeholder', 'Add ingredient...');
+    autoComplete.className = 'search-bar__input';
+    autoComplete.style.border = 'none';
+    autoComplete.style.padding = '0';
+    autoComplete.style.background = 'none';
 
-      resultsContainer.style.display = 'block';
-      resultsContainer.innerHTML = '<div style="padding:8px;border-bottom:1px solid var(--color-outline-variant)"><input class="recipe-editor__input" id="re-ingredient-search" type="search" placeholder="Search ingredients..." autocomplete="off" style="font-size:14px" /></div><div style="padding:8px;color:var(--color-text-dimmed);font:var(--font-unit-label);text-align:center">Type to search…</div>';
+    // Listen for item selection
+    autoComplete.addEventListener('item-selected', (e) => {
+      const detail = /** @type {CustomEvent} */ (e).detail;
+      this._addIngredient({
+        itemId: detail.itemId,
+        name: detail.name,
+        qty: detail.qty || 1,
+        unitId: detail.unit || 'pcs',
+      });
+      autoComplete.clear();
+    });
 
-      const searchInput = resultsContainer.querySelector('#re-ingredient-search');
-      if (searchInput) {
-        searchInput.focus();
+    // Listen for "Create new item"
+    autoComplete.addEventListener('create-custom', (e) => {
+      const detail = /** @type {CustomEvent} */ (e).detail;
+      this._pendingCreateQuery = detail.query || '';
+      this._openItemEditorForCreate(this._pendingCreateQuery);
+    });
 
-        let debounceTimer;
-        searchInput.addEventListener('input', () => {
-          clearTimeout(debounceTimer);
-          const query = searchInput.value.trim();
-          if (!query) {
-            resultsContainer.innerHTML = '<div style="padding:8px;border-bottom:1px solid var(--color-outline-variant)"><input class="recipe-editor__input" id="re-ingredient-search" type="search" placeholder="Search ingredients..." autocomplete="off" style="font-size:14px" /></div><div style="padding:8px;color:var(--color-text-dimmed);font:var(--font-unit-label);text-align:center">Type to search…</div>';
-            return;
-          }
-          debounceTimer = setTimeout(async () => {
-            const items = await searchItems(query);
-            this._renderSearchResults(items, resultsContainer);
-          }, 200);
-        });
-      }
-    } catch (err) {
-      console.error('Failed to load ingredient search:', err);
-    }
+    searchContainer.appendChild(autoComplete);
   }
 
   /**
-   * Render search results in the dropdown.
-   * @param {Array} items - The matched items.
-   * @param {HTMLElement} container - The results container.
-   * @returns {void}
+   * Open the item editor to create a new item on the fly, with pre-filled name.
+   * Business Logic: Dynamically imports the item-editor component, finds or
+   * creates the element inside the #item-editor-sheet body, and opens it in
+   * add mode with the search query pre-filled. After the user saves, the
+   * item-saved listener in connectedCallback() auto-adds the new item as
+   * a recipe ingredient — same pattern as the grocery list searchbar.
+   * @param {string} query - The search query to pre-fill.
+   * @returns {Promise<void>}
    */
-  _renderSearchResults(items, container) {
-    const searchInput = container.querySelector('#re-ingredient-search');
-    const searchHtml = searchInput ? searchInput.outerHTML : '';
+  async _openItemEditorForCreate(query) {
+    try {
+      const sheet = /** @type {HTMLElement | null} */ (document.getElementById('item-editor-sheet'));
+      if (!sheet) return;
 
-    if (items.length === 0) {
-      container.innerHTML = `${searchHtml}<div style="padding:8px;color:var(--color-text-dimmed);font:var(--font-unit-label)">No items found. <button class="recipe-editor__search-item" id="re-create-item" style="display:inline;color:var(--color-primary);background:transparent;border:none;cursor:pointer;padding:0;font:var(--font-unit-label);text-decoration:underline">+ Create new</button></div>`;
-      const createBtn = container.querySelector('#re-create-item');
-      if (createBtn) {
-        createBtn.addEventListener('click', () => {
-          container.style.display = 'none';
-          this._openItemEditor();
-        });
+      // Ensure item-editor component is loaded
+      await import('./item-editor.js');
+
+      // Find or create <item-editor> inside the sheet body
+      const body = sheet.querySelector('#item-editor-body');
+      if (!body) return;
+
+      // @ts-ignore — ItemEditor type unavailable at runtime
+      let editor = /** @type {any} */ (body.querySelector('item-editor'));
+      if (!editor) {
+        editor = document.createElement('item-editor');
+        body.appendChild(editor);
       }
-      return;
-    }
 
-    container.innerHTML = `
-      ${searchHtml}
-      ${items.map((item) => `
-        <button class="recipe-editor__search-item" data-item-id="${item.id}" data-name="${escapeHtml(item.name)}" data-unit="${escapeHtml(item.unitId)}" data-qty="${item.defaultQty}">
-          <span>${escapeHtml(item.name)}</span>
-          <span class="recipe-editor__search-item-meta">${item.unitId}</span>
-        </button>
-      `).join('')}
-      <button class="recipe-editor__search-item" id="re-create-item" style="color:var(--color-primary);border-top:1px solid var(--color-outline-variant)">
-        <span>+ Create new item…</span>
-      </button>
-    `;
-
-    // Wire result clicks
-    container.querySelectorAll('.recipe-editor__search-item[data-item-id]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const itemId = btn.getAttribute('data-item-id') || '';
-        const name = btn.getAttribute('data-name') || '';
-        const unitId = btn.getAttribute('data-unit') || 'pcs';
-        const qty = parseFloat(btn.getAttribute('data-qty') || '1');
-        this._addIngredient({ itemId, name, qty, unitId });
-        container.style.display = 'none';
-      });
-    });
-
-    // Wire create new
-    const createBtn = container.querySelector('#re-create-item');
-    if (createBtn) {
-      createBtn.addEventListener('click', () => {
-        container.style.display = 'none';
-        this._openItemEditor();
-      });
+      editor.openAdd(query);
+    } catch (err) {
+      console.error('Failed to open item editor from ingredient search:', err);
     }
   }
 
@@ -518,19 +503,25 @@ export class RecipeEditor extends HTMLElement {
   }
 
   /**
-   * Open the item editor to create a new item on the fly.
-   * @returns {void}
+   * After a new item is saved via the item editor, add it as an ingredient
+   * to the recipe.
+   * @param {string} itemId - The saved item's UUID.
+   * @returns {Promise<void>}
    */
-  _openItemEditor() {
-    const itemEditor = document.querySelector('item-editor');
-    if (itemEditor && typeof itemEditor.openAdd === 'function') {
-      itemEditor.openAdd();
-    } else {
-      // Fallback: dispatch event that the items-library handles
-      document.dispatchEvent(new CustomEvent('open-item-editor', {
-        bubbles: true,
-        detail: { mode: 'add' },
-      }));
+  async _addSavedItemAsIngredient(itemId) {
+    try {
+      const { getItemById } = await import('../store/items.store.js');
+      const item = await getItemById(itemId);
+      if (!item) return;
+
+      this._addIngredient({
+        itemId: item.id,
+        name: item.name,
+        qty: item.defaultQty || 1,
+        unitId: item.unitId || 'pcs',
+      });
+    } catch (err) {
+      console.error('Failed to add saved item as ingredient:', err);
     }
   }
 

@@ -55,12 +55,19 @@ export class ItemEditor extends HTMLElement {
   }
 
   /**
+   * Prefill the item name when opening in add mode.
+   * @type {string}
+   */
+  #prefillName = '';
+
+  /**
    * Render the form fields inside the component.
    * @returns {void}
    */
   renderForm() {
     const item = this.#currentItem;
     const title = this.#mode === 'add' ? 'New Item' : 'Edit Item';
+    const nameValue = this.#mode === 'add' && this.#prefillName ? this.#prefillName : (item?.name || '');
 
     this.innerHTML = `
       <form class="ie-form" id="ie-form">
@@ -68,7 +75,7 @@ export class ItemEditor extends HTMLElement {
         <div class="ie-field">
           <label class="ie-label" for="ie-name">Item Name</label>
           <input class="ie-input" type="text" id="ie-name" placeholder="e.g. Whole Milk"
-            value="${this.#escapeHtml(item?.name || '')}" autocomplete="off" />
+            value="${this.#escapeHtml(nameValue)}" autocomplete="off" />
         </div>
 
         <!-- Category + Unit Row -->
@@ -357,8 +364,13 @@ export class ItemEditor extends HTMLElement {
     try {
       const { addItem, updateItem } = await import('../store/items.store.js');
 
+      /** @type {string} */
+      let savedItemId = '';
+      /** @type {string} */
+      let savedItemName = name;
+
       if (this.#mode === 'add') {
-        await addItem({
+        savedItemId = await addItem({
           familyId: 'default',
           name,
           categoryId,
@@ -368,6 +380,8 @@ export class ItemEditor extends HTMLElement {
           isMultiUse,
         });
       } else if (this.#currentItem) {
+        savedItemId = this.#currentItem.id;
+        savedItemName = this.#currentItem.name;
         this.#currentItem.name = name;
         this.#currentItem.categoryId = categoryId;
         this.#currentItem.unitId = unitId;
@@ -381,8 +395,12 @@ export class ItemEditor extends HTMLElement {
       sheet.style.display = 'none';
       (/** @type {HTMLButtonElement} */ (saveBtn)).disabled = false;
 
-      // Dispatch event so the items library can re-render
-      this.dispatchEvent(new CustomEvent('item-saved', { bubbles: true }));
+      // Dispatch event so the items library can re-render — include saved item data
+      // for consumers that need to auto-add the new item to grocery list / recipe
+      this.dispatchEvent(new CustomEvent('item-saved', {
+        bubbles: true,
+        detail: { itemId: savedItemId, name: savedItemName },
+      }));
     } catch (err) {
       console.error('Failed to save item:', err);
       (/** @type {HTMLButtonElement} */ (saveBtn)).disabled = false;
@@ -438,11 +456,14 @@ export class ItemEditor extends HTMLElement {
 
   /**
    * Open the editor for adding a new item.
+   * Optionally pre-fill the item name from a search query.
+   * @param {string} [prefillName] - Optional name to pre-fill in the item name field.
    * @returns {void}
    */
-  openAdd() {
+  openAdd(prefillName = '') {
     this.#mode = 'add';
     this.#currentItem = null;
+    this.#prefillName = prefillName || '';
     this.renderForm();
     this.#wireListeners();
 

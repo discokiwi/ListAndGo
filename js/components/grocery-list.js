@@ -178,8 +178,95 @@ export class GroceryList extends HTMLElement {
         this._addSelectedIngredient(detail);
       });
 
+      // Listen for "Create new item" — open the item editor with the search query pre-filled
+      autoComplete.addEventListener('create-custom', (e) => {
+        const detail = /** @type {CustomEvent} */ (e).detail;
+        const query = detail.query || '';
+        this._handleCreateAndAdd(query);
+      });
+
       existingInput.replaceWith(autoComplete);
       this._searchComponent = autoComplete;
+    }
+
+    // Listen for item-saved events — used by create-and-add flow
+    document.addEventListener('item-saved', (e) => {
+      const detail = /** @type {CustomEvent} */ (e).detail;
+      if (detail && detail.itemId && this._activeListId) {
+        // Look up the saved item to get full details (category, unit, etc.)
+        this._addSavedItemToGroceryList(detail.itemId);
+      }
+    });
+  }
+
+  /**
+   * Handle "Create new item" from search — open item editor with pre-filled name.
+   * Business Logic: Dynamically imports and instantiates the item-editor component
+   * inside the #item-editor-sheet side drawer, then opens it with the query pre-filled.
+   * After saving, the item-saved listener will auto-add to the grocery list.
+   * @param {string} query - The search query to pre-fill.
+   * @returns {Promise<void>}
+   */
+  async _handleCreateAndAdd(query) {
+    try {
+      const sheet = /** @type {HTMLElement | null} */ (document.getElementById('item-editor-sheet'));
+      if (!sheet) return;
+
+      // Ensure item-editor component is loaded
+      await import('./item-editor.js');
+
+      // Find or create <item-editor> inside the sheet body
+      const body = sheet.querySelector('#item-editor-body');
+      if (!body) return;
+
+      // @ts-ignore — ItemEditor type unavailable at runtime
+      let editor = /** @type {any} */ (body.querySelector('item-editor'));
+      if (!editor) {
+        editor = document.createElement('item-editor');
+        body.appendChild(editor);
+      }
+
+      editor.openAdd(query);
+    } catch (err) {
+      console.error('Failed to open item editor from search:', err);
+    }
+  }
+
+  /**
+   * After a new item is saved via the item editor, add it to the active grocery list.
+   * Fetches the full item from the store to get category/unit data.
+   * @param {string} itemId - The saved item's UUID.
+   * @returns {Promise<void>}
+   */
+  async _addSavedItemToGroceryList(itemId) {
+    if (!this._activeListId) return;
+
+    try {
+      const { getItemById } = await import('../store/items.store.js');
+      const item = await getItemById(itemId);
+      if (!item) return;
+
+      const { addGroceryItem } = await import('../store/grocery.store.js');
+      await addGroceryItem(
+        this._activeListId,
+        item.id,
+        item.name,
+        item.categoryId || 'other',
+        item.defaultQty || 1,
+        item.unitId || 'pcs',
+      );
+
+      const snackbar = this._getSnackbar();
+      if (snackbar) {
+        snackbar.show(`Added ${item.name} to Grocery List`);
+      }
+
+      // Clear the search component
+      if (this._searchComponent) {
+        this._searchComponent.clear();
+      }
+    } catch (err) {
+      console.error('Failed to add saved item to grocery list:', err);
     }
   }
 

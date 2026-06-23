@@ -139,10 +139,15 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-base);
-  padding: var(--spacing-base);
+  padding: 6px var(--spacing-base);
   background: var(--color-surface-container-low);
   border-radius: var(--radius-md);
-  min-height: 48px;
+  min-height: 40px;
+  margin-bottom: 6px;
+}
+
+.recipe-editor__ingredient-row:last-child {
+  margin-bottom: 0;
 }
 
 .recipe-editor__ingredient-name {
@@ -162,7 +167,7 @@
 .recipe-editor__ingredient-qty {
   width: 70px;
   background: var(--color-surface-muted);
-  border: none;
+  border: 1px solid color-mix(in srgb, var(--color-outline-variant) 30%, transparent);
   border-radius: var(--radius-default);
   padding: 4px 8px;
   font: var(--font-unit-label);
@@ -170,7 +175,8 @@
   text-align: center;
 
   &:focus {
-    outline: 1px solid var(--color-primary);
+    outline: none;
+    border-color: var(--color-primary);
   }
 }
 
@@ -208,37 +214,47 @@
   }
 }
 
-/* ---- Add Ingredient Button (dashed border) ---- */
-.recipe-editor__add-ingredient {
+/* ---- Ingredient Search Bar (permanent, replaces +Add button) ---- */
+.recipe-editor__ingredient-search {
+  position: relative;
+  width: 100%;
+}
+
+.recipe-editor__ingredient-search .search-autocomplete {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.recipe-editor__ingredient-search .search-autocomplete__input {
   width: 100%;
   padding: var(--spacing-base);
-  border: 2px dashed var(--color-outline-variant);
-  border-radius: var(--radius-xl);
-  background: transparent;
-  color: var(--color-on-surface-variant);
+  background: var(--color-surface-container-low);
+  border: 1px solid color-mix(in srgb, var(--color-outline-variant) 30%, transparent);
+  border-radius: var(--radius-md);
   font: var(--font-item-name);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-base);
-  transition: background 0.15s ease, border-color 0.15s ease;
+  color: var(--color-on-surface);
+  transition: border-color 0.2s ease;
   -webkit-tap-highlight-color: transparent;
 
-  & svg {
-    width: 20px;
-    height: 20px;
-    fill: currentColor;
+  &::placeholder {
+    color: var(--color-text-dimmed);
+    opacity: 0.5;
   }
 
-  &:hover {
-    background: var(--color-surface-muted);
-    border-color: var(--color-outline);
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  /* Hide the native search cancel button (x) */
+  &::-webkit-search-cancel-button {
+    display: none;
+    -webkit-appearance: none;
   }
 }
 
-/* ---- Ingredient Search Results (within editor) ---- */
-.recipe-editor__search-results {
+.recipe-editor__ingredient-search .search-autocomplete__dropdown {
   position: absolute;
   left: 0;
   right: 0;
@@ -251,33 +267,4 @@
   max-height: 200px;
   overflow-y: auto;
   margin-top: 4px;
-}
-
-.recipe-editor__search-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: var(--spacing-base);
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font: var(--font-body-reg);
-  color: var(--color-on-surface);
-  text-align: left;
-  transition: background 0.1s ease;
-  -webkit-tap-highlight-color: transparent;
-
-  &:hover {
-    background: var(--color-surface-container);
-  }
-
-  &:not(:last-child) {
-    border-bottom: 1px solid var(--color-outline-variant);
-  }
-}
-
-.recipe-editor__search-item-meta {
-  font: var(--font-unit-label);
-  color: var(--color-text-dimmed);
 }

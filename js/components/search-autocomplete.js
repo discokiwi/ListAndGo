@@ -6,6 +6,8 @@
  * (within a search bar) and dialog use (within an ingredient picker).
  * Emits 'item-selected' when the user picks a result, and 'create-custom'
  * when the user wants to add a new item not found in search.
+ * The "Create new item" option always appears as the first suggestion when
+ * the user has typed a query, regardless of whether there are matching results.
  * @module
  */
 import { getCategoryName } from '../store/categories.store.js';
@@ -129,7 +131,25 @@ export class SearchAutocomplete extends HTMLElement {
   }
 
   /**
+   * Build the "Create new item" button HTML.
+   * Business Logic: Always shown as the first suggestion so users can add
+   * items not yet in the library. Styled with + prefix and accent color.
+   * @param {string} query - The current search query.
+   * @returns {string} HTML for the create button.
+   */
+  _buildCreateItemHtml(query) {
+    return `
+      <button class="search-autocomplete__custom" data-create-item="${escapeHtml(query)}">
+        <span class="search-autocomplete__custom-icon">+</span>
+        <span class="search-autocomplete__custom-label">Create new item "${escapeHtml(query)}"</span>
+      </button>
+    `;
+  }
+
+  /**
    * Perform the search query and render results.
+   * Business Logic: Always renders the "Create new item" button as the first
+   * item when there is a non-empty query, followed by any matching results.
    * @param {string} query - The search string.
    */
   async _performSearch(query) {
@@ -142,12 +162,13 @@ export class SearchAutocomplete extends HTMLElement {
       const fn = this.searchFn || (await this._getDefaultSearchFn());
       const results = await fn(query);
 
+      // Always show "Create new item" as the first item when query is non-empty
+      const createBtnHtml = this._buildCreateItemHtml(query);
+
       if (results.length === 0) {
-        this._dropdown.innerHTML = `
-          <div class="search-autocomplete__empty">No items found</div>
-        `;
+        this._dropdown.innerHTML = createBtnHtml;
       } else {
-        this._dropdown.innerHTML = results.map((item) => {
+        const resultsHtml = results.map((item) => {
           const catName = getCategoryName(item.categoryId);
           return `
           <button class="search-autocomplete__item"
@@ -156,10 +177,14 @@ export class SearchAutocomplete extends HTMLElement {
                    data-category="${escapeHtml(item.categoryId)}"
                    data-unit="${escapeHtml(item.unitId)}"
                   data-qty="${item.defaultQty}">
-            <span class="search-autocomplete__item-name">${escapeHtml(item.name)}</span>
-            <span class="search-autocomplete__item-meta">${catName} · ${item.defaultQty} ${item.unitId}</span>
+            <div class="search-autocomplete__item-content">
+              <span class="search-autocomplete__item-name">${escapeHtml(item.name)}</span>
+              <span class="search-autocomplete__item-meta">${catName} · ${item.defaultQty} ${item.unitId}</span>
+            </div>
           </button>
         `}).join('');
+
+        this._dropdown.innerHTML = createBtnHtml + resultsHtml;
       }
 
       this._dropdown.style.display = 'block';
@@ -211,11 +236,13 @@ export class SearchAutocomplete extends HTMLElement {
     }
 
     if (customEl) {
+      const query = this._input?.value?.trim() || '';
       this._hideDropdown();
+      // Don't clear input — let consumer decide when to clear
       this.dispatchEvent(new CustomEvent('create-custom', {
         bubbles: true,
         composed: true,
-        detail: {},
+        detail: { query },
       }));
     }
   }
