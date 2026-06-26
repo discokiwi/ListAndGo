@@ -130,57 +130,27 @@ export class IngredientPicker extends HTMLElement {
   }
 
   /**
-   * Build the "Create new item" button HTML.
-   * Business Logic: Always shown as the first suggestion when there is a search query.
-   * Styled with + prefix and accent color to match the search-autocomplete component.
-   * @param {string} query - The current search query.
-   * @returns {string} HTML for the create button.
-   */
-  _buildCreateItemHtml(query) {
-    return `
-      <button class="picker-add-custom picker-add-custom--first" data-custom="true">
-        <span class="picker-add-custom__icon">+</span>
-        <span class="picker-add-custom__label">Create new item "${escapeHtml(query)}"</span>
-      </button>
-    `;
-  }
-
-  /**
    * Render search results into the results container.
-   * Business Logic: Always shows "Create new item" as the first suggestion when
-   * there is a non-empty query, followed by matching results.
    * @param {import("../db.js").Item[]} items - Items to display.
-   * @param {string} query - The search query.
+   * @param {string} _query - The search query (unused but kept for context).
    * @param {boolean} isRecent - Whether these are recent/essential items.
    */
-  _renderResults(items, query, isRecent = false) {
+  _renderResults(items, _query, isRecent = false) {
     if (!this._resultsContainer) return;
 
-    const header = isRecent
-      ? '<div class="picker-header">Quick add — Essentials</div>'
-      : '';
-
-    // Always show "Create new item" as first item when there's a search query
-    const createBtnHtml = query ? this._buildCreateItemHtml(query) : '';
-
-    if (items.length === 0 && !query) {
-      // Only when there's truly nothing (no search, no items)
+    if (items.length === 0) {
       this._resultsContainer.innerHTML = `
         <div class="picker-empty">
-          <p>No items in library yet. Add ingredients in the Items tab first.</p>
+          <p>No results found. Try a different search.</p>
+          <button class="picker-add-custom" data-custom="true">+ Add custom item</button>
         </div>
       `;
       return;
     }
 
-    if (items.length === 0 && query) {
-      // No results but have a query — show just the create button
-      this._resultsContainer.innerHTML = `
-        ${header}
-        ${createBtnHtml}
-      `;
-      return;
-    }
+    const header = isRecent
+      ? '<div class="picker-header">Quick add — Essentials</div>'
+      : '';
 
     const itemsHtml = items.map((item) => `
       <button class="picker-result" data-item-id="${item.id}"
@@ -195,10 +165,10 @@ export class IngredientPicker extends HTMLElement {
 
     this._resultsContainer.innerHTML = `
       ${header}
-      ${createBtnHtml}
       <div class="picker-results-list">
         ${itemsHtml}
       </div>
+      <button class="picker-add-custom" data-custom="true">+ Can't find it? Add custom item</button>
     `;
   }
 
