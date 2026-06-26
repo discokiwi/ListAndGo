@@ -233,3 +233,115 @@
   text-align: center;
   padding: calc(var(--spacing-base) * 4) 0;
 }
+
+/* =============================================
+   Recipe Ingredient Modal — confirmation dialog
+   for selecting which ingredients to add.
+   ============================================= */
+
+.recipe-ingredient-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-base);
+}
+
+.recipe-ingredient-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.recipe-ingredient-section__label {
+  font: var(--font-badge-caps);
+  font-size: 12px;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: var(--ls-badge-caps);
+  padding: 4px 0;
+}
+
+.recipe-ingredient-section__label--multi {
+  color: var(--color-text-dimmed);
+}
+
+/* Ingredient item rows — same card-style as essentials items */
+.ingredient-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--color-surface-soft);
+  border-radius: var(--radius-default);
+  border: 1px solid var(--color-outline-variant);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ingredient-item:active {
+  transform: scale(0.98);
+}
+
+.ingredient-item__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ingredient-item__name {
+  font: var(--font-item-name);
+  color: var(--color-on-surface);
+}
+
+.ingredient-item__meta {
+  font: var(--font-unit-label);
+  color: var(--color-text-dimmed);
+  font-size: 11px;
+}
+
+.ingredient-item__checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.ingredient-item__check-visual {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-outline);
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ingredient-item__check-visual svg {
+  display: none;
+  width: 14px;
+  height: 14px;
+  fill: var(--color-on-primary);
+}
+
+.ingredient-item__checkbox:checked + .ingredient-item__check-visual {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.ingredient-item__checkbox:checked + .ingredient-item__check-visual svg {
+  display: block;
+}
+
+.ingredient-item__check-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}

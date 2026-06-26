@@ -11,10 +11,10 @@
  * @type {string[]}
  */
 export const UNIT_SUGGESTIONS = [
-  'grams',
-  'ml',
-  'pcs',
+  'stuks',
+  'pak',
+  'gram',
   'kg',
-  'Litres',
-  'tbsp',
+  'ml',
+  'liter',
 ];

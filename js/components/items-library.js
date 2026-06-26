@@ -1,6 +1,7 @@
 // @ts-check
-import { getCategoryColor } from '../utils/category-colors.js';
-import { getCategoryName, categoryCache } from '../store/categories.store.js';
+import { escapeHtml } from '../utils/dom-utils.js';
+import { getCategoryColor, getCategoryName, sortCategoriesByOrder } from '../store/categories.store.js';
+import { STRINGS, t } from '../strings/i18n.js';
 
 /**
  * Items Library Web Component — Categorized inventory of all grocery items.
@@ -38,16 +39,49 @@ export class ItemsLibrary extends HTMLElement {
       this.appendChild(content);
     }
 
+    // Render dynamic template text
+    this.#renderTemplateText();
+
     // Wire up UI event listeners
     this.#wireListeners();
 
     await this.render();
     // Re-render on item changes.
-    // Listen on document because the item-editor lives inside a <dialog>
-    // which is a sibling of <main>, not an ancestor — so bubbled events
-    // from the editor never reach this component.
     document.addEventListener('item-saved', this.#onItemSaved);
     document.addEventListener('item-deleted', this.#onItemDeleted);
+
+    // Listen for language changes
+    document.addEventListener('language-changed', () => {
+      this.#renderTemplateText();
+      this.render();
+    });
+  }
+
+  /**
+   * Render dynamic text from STRINGS into the template.
+   * @returns {void}
+   */
+  #renderTemplateText() {
+    const essentialsBtn = this.querySelector('#items-essentials-btn');
+    if (essentialsBtn) {
+      const labelSpan = essentialsBtn.querySelector('#items-essentials-label');
+      if (labelSpan) labelSpan.textContent = STRINGS.itemsLibrary.essentials;
+    }
+
+    const searchInput = /** @type {HTMLInputElement | null} */ (this.querySelector('#items-search-input'));
+    if (searchInput) {
+      searchInput.placeholder = STRINGS.itemsLibrary.searchPlaceholder;
+    }
+
+    const toast = this.querySelector('#items-toast');
+    if (toast) {
+      toast.textContent = STRINGS.itemsLibrary.toast;
+    }
+
+    const fabBtn = this.querySelector('#add-item-btn');
+    if (fabBtn) {
+      fabBtn.setAttribute('aria-label', STRINGS.general.new);
+    }
   }
 
   /**
@@ -72,14 +106,12 @@ export class ItemsLibrary extends HTMLElement {
       });
     }
 
-    // Essentials toggle button — same design as grocery list's EVERY WEEK button
+    // Essentials toggle button
     const essentialsBtn = this.querySelector('#items-essentials-btn');
     if (essentialsBtn) {
       essentialsBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        // Toggle essentials filter on/off
         this.#currentFilter = this.#currentFilter === 'essential' ? 'all' : 'essential';
-        // Use pill--filled for active state, pill--outlined for inactive
         essentialsBtn.classList.toggle('pill--filled', this.#currentFilter === 'essential');
         essentialsBtn.classList.toggle('pill--outlined', this.#currentFilter === 'all');
         this.#applyFilters();
@@ -127,7 +159,7 @@ export class ItemsLibrary extends HTMLElement {
       this.#allItems = await getAllItems();
 
       if (this.#allItems.length === 0) {
-        container.innerHTML = `<div class="items-empty"><p>No items yet. Tap "+ New" to add your first item.</p></div>`;
+        container.innerHTML = `<div class="items-empty"><p>${STRINGS.itemsLibrary.emptyState}</p></div>`;
         return;
       }
 
@@ -138,14 +170,12 @@ export class ItemsLibrary extends HTMLElement {
       this.#applyFilters();
     } catch (err) {
       console.error('Failed to render items:', err);
-      container.innerHTML = `<div class="items-empty"><p>Could not load items. Is the database ready?</p></div>`;
+      container.innerHTML = `<div class="items-empty"><p>${STRINGS.itemsLibrary.loadError}</p></div>`;
     }
   }
 
   /**
    * Update the essentials toggle pill to match the current filter state.
-   * Uses pill--filled (active) vs pill--outlined (inactive) styles,
-   * matching the grocery list's EVERY WEEK button pattern.
    * @returns {void}
    */
   #updateFilterPills() {
@@ -165,7 +195,7 @@ export class ItemsLibrary extends HTMLElement {
    */
   #renderItems(items, container) {
     if (items.length === 0) {
-      container.innerHTML = `<div class="items-empty"><p>No items match your search or filter.</p></div>`;
+      container.innerHTML = `<div class="items-empty"><p>${STRINGS.itemsLibrary.noMatch}</p></div>`;
       return;
     }
 
@@ -179,16 +209,7 @@ export class ItemsLibrary extends HTMLElement {
     });
 
     // Sort categories by store layout order (sortOrder from categories store)
-    // Business Logic: The user sets the order in Settings → Store Layout.
-    const categoryIds = Object.keys(grouped);
-    categoryIds.sort((a, b) => {
-      const catA = categoryCache.byId.get(a);
-      const catB = categoryCache.byId.get(b);
-      const orderA = catA?.sortOrder ?? 999;
-      const orderB = catB?.sortOrder ?? 999;
-      if (orderA !== orderB) return orderA - orderB;
-      return (catA?.name || a).localeCompare(catB?.name || b);
-    });
+    const categoryIds = sortCategoriesByOrder(Object.keys(grouped));
 
     let html = '';
     for (const category of categoryIds) {
@@ -239,7 +260,6 @@ export class ItemsLibrary extends HTMLElement {
 
   /**
    * Render a single item row using flat list style with category accent border.
-   * Essential items show a decorative star icon (non-interactive).
    * @param {import("../db.js").Item} item - The item data to render.
    * @returns {string} HTML string for the row.
    */
@@ -247,7 +267,7 @@ export class ItemsLibrary extends HTMLElement {
     const accentColor = getCategoryColor(item.categoryId || '');
     const qtyText = item.defaultQty ? `${item.defaultQty} ${item.unitId || ''}`.trim() : '';
     const isMultiUse = item.isMultiUse;
-    const usageType = isMultiUse ? 'Multi-use' : '';
+    const usageType = isMultiUse ? STRINGS.itemsLibrary.multiUse : '';
     const usageIconPath = isMultiUse
       ? '<svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>'
       : '';
@@ -260,15 +280,15 @@ export class ItemsLibrary extends HTMLElement {
       <div class="item-row" style="--accent-color: ${accentColor}" data-item-id="${item.id}">
         <div class="item-row__info">
           <div class="item-row__name-row">
-            <span class="item-row__name">${this.#escapeHtml(item.name)}</span>
+            <span class="item-row__name">${escapeHtml(item.name)}</span>
             ${starHtml}
           </div>
           <div class="item-row__meta">
-            ${qtyText ? `<span class="item-row__qty">${this.#escapeHtml(qtyText)}</span>` : ''}
+            ${qtyText ? `<span class="item-row__qty">${escapeHtml(qtyText)}</span>` : ''}
             ${usageType ? `<span class="item-row__usage">${usageIconPath} <span>${usageType}</span></span>` : ''}
           </div>
         </div>
-        <button class="item-row__add-btn" data-action="add-to-list" data-item-id="${item.id}" aria-label="Add ${item.name} to list">
+        <button class="item-row__add-btn" data-action="add-to-list" data-item-id="${item.id}" aria-label="${t(STRINGS.itemsLibrary.addToList, { name: item.name })}">
           <svg viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2S15.9 22 17 22s2-.9 2-2-.9-2-2-2zm-8.9-5h7.45c.75 0 1.41-.41 1.75-1.03L21 4.96 19.25 4l-3.7 7H8.53L4.27 2H1v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5.48 17 7 17h12v-2H7l1.1-2z"/></svg>
         </button>
       </div>
@@ -277,10 +297,6 @@ export class ItemsLibrary extends HTMLElement {
 
   /**
    * Add an item to the active grocery list with its default quantity and show a toast.
-   * Business Logic: When the user taps "Add to List" on an item in the library,
-   * the item is added to the active grocery list using its defaultQty and unitId.
-   * If the item already exists on the list, the quantity is incremented (handled
-   * by addGroceryItem's merge logic).
    * @param {string} itemId - UUID of the item.
    * @returns {Promise<void>}
    */
@@ -307,7 +323,7 @@ export class ItemsLibrary extends HTMLElement {
         document.querySelector('app-snackbar')
       );
       if (snackbar) {
-        snackbar.show(`Added ${item.name} to Grocery List`);
+        snackbar.show(t(STRINGS.itemsLibrary.addedToGroceryList, { name: item.name }));
       }
     } catch (err) {
       console.error('Failed to add item to list:', err);
@@ -350,7 +366,6 @@ export class ItemsLibrary extends HTMLElement {
 
   /**
    * Handle item-saved event: re-render the items list.
-   * Bound as a method so it works as a document event listener.
    * @returns {Promise<void>}
    */
   #onItemSaved = async () => {
@@ -359,7 +374,6 @@ export class ItemsLibrary extends HTMLElement {
 
   /**
    * Handle item-deleted event: re-render the items list.
-   * Bound as a method so it works as a document event listener.
    * @returns {Promise<void>}
    */
   #onItemDeleted = async () => {
@@ -368,7 +382,6 @@ export class ItemsLibrary extends HTMLElement {
 
   /**
    * Called when the element is removed from the DOM.
-   * Removes document-level listeners to prevent stale references.
    * @returns {void}
    */
   disconnectedCallback() {
@@ -376,16 +389,6 @@ export class ItemsLibrary extends HTMLElement {
     document.removeEventListener('item-deleted', this.#onItemDeleted);
   }
 
-  /**
-   * Escape HTML special characters to prevent XSS.
-   * @param {string} str - The string to escape.
-   * @returns {string} Escaped HTML string.
-   */
-  #escapeHtml(str) {
-    const div = document.createElement('div');
-    div.appendChild(document.createTextNode(str));
-    return div.innerHTML;
-  }
 }
 
 customElements.define('items-library', ItemsLibrary);

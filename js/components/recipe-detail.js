@@ -9,7 +9,9 @@
  * @class
  */
 import { escapeHtml, formatQty } from '../utils/dom-utils.js';
+import { registerOverlay } from '../overlay-manager.js';
 import { getRecipeCategoryName } from '../store/recipe-categories.store.js';
+import { STRINGS, t } from '../strings/i18n.js';
 
 /**
  * Recipe Detail Web Component.
@@ -23,6 +25,8 @@ export class RecipeDetail extends HTMLElement {
   _servings = 4;
   /** @type {number} */
   _baseServings = 4;
+  /** @type {(() => void) | null} */
+  _closeToken = null;
   /** @type {HTMLDivElement | null} */
   _drawer = null;
   /** @type {HTMLDivElement | null} */
@@ -67,10 +71,10 @@ export class RecipeDetail extends HTMLElement {
       this.close();
     });
 
-    // Close on escape key
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this._drawer?.classList.contains('rd-drawer__container--open')) {
-        this.close();
+    // Listen for language changes to re-render if open
+    document.addEventListener('language-changed', () => {
+      if (this._currentRecipeId) {
+        this._loadRecipe(this._currentRecipeId);
       }
     });
   }
@@ -95,13 +99,13 @@ export class RecipeDetail extends HTMLElement {
     drawer.className = 'rd-drawer__container';
     drawer.innerHTML = `
       <header class="rd-drawer__top-bar">
-        <button class="rd-drawer__close-btn" id="recipe-detail-close-btn" aria-label="Close">
+        <button class="rd-drawer__close-btn" id="recipe-detail-close-btn" aria-label="${STRINGS.contentDialog.closeAria}">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
         </button>
-        <h1 class="rd-drawer__top-bar-title rd-drawer__top-bar-title--default">Recipe Details</h1>
+        <h1 class="rd-drawer__top-bar-title rd-drawer__top-bar-title--default">${STRINGS.recipeDetail.title}</h1>
         <button class="rd-drawer__edit-btn" id="recipe-detail-edit-btn">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-          Edit
+          ${STRINGS.recipeDetail.edit}
         </button>
       </header>
       <div class="rd-drawer__body" id="recipe-detail-body"></div>
@@ -122,10 +126,9 @@ export class RecipeDetail extends HTMLElement {
   async open(recipeId) {
     this._currentRecipeId = recipeId;
 
-    // Wire edit button
+    // Wire edit button — recreate to avoid duplicate listeners
     const editBtn = document.getElementById('recipe-detail-edit-btn');
     if (editBtn) {
-      // Remove old listener to avoid duplicates
       const newBtn = editBtn.cloneNode(true);
       editBtn.parentNode?.replaceChild(newBtn, editBtn);
       newBtn.addEventListener('click', () => {
@@ -146,13 +149,26 @@ export class RecipeDetail extends HTMLElement {
 
     // Prevent body scroll
     document.body.style.overflow = 'hidden';
+
+    // Register with overlay manager for back-button handling
+    this._closeToken = registerOverlay({
+      /** Close the drawer when the overlay manager requests it (e.g. back button). */
+      close: () => this.close(),
+      name: 'recipe-detail',
+    });
   }
 
   /**
-   * Close the detail drawer.
+   * Close the detail drawer and unregister from the overlay manager.
+   * Business Logic: Called either directly (via close button) or by the
+   * overlay manager when the back button is pressed. Unregisters first
+   * so the overlay stack stays in sync.
    * @returns {void}
    */
   close() {
+    // Unregister from overlay manager
+    this._closeToken?.();
+    this._closeToken = null;
     this._backdrop?.classList.remove('rd-drawer__backdrop--open');
     this._drawer?.classList.remove('rd-drawer__container--open');
 
@@ -174,7 +190,7 @@ export class RecipeDetail extends HTMLElement {
 
       const result = await getRecipeWithIngredients(recipeId);
       if (!result) {
-        body.innerHTML = '<div class="recipe-detail__empty"><p>Recipe not found.</p></div>';
+        body.innerHTML = `<div class="recipe-detail__empty"><p>${STRINGS.recipeDetail.notFound}</p></div>`;
         return;
       }
 
@@ -204,29 +220,29 @@ export class RecipeDetail extends HTMLElement {
           <div class="recipe-detail__info-item">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8.1 13.34l2.83-2.83L3.91 3.5c-1.56 1.56-1.56 4.09 0 5.66l4.19 4.18zm6.78-1.81c1.53.71 3.68.21 5.27-1.38 1.91-1.91 2.28-4.65.81-6.12-1.46-1.46-4.2-1.1-6.12.81-1.59 1.59-2.09 3.74-1.38 5.27L3.7 19.87l1.41 1.41L12 14.41l6.88 6.88 1.41-1.41L13.41 13l1.47-1.47z"/></svg>
             <div>
-              <p class="recipe-detail__info-label">Category</p>
+              <p class="recipe-detail__info-label">${STRINGS.recipeDetail.category}</p>
               <p class="recipe-detail__info-value">${escapeHtml(categoryName)}</p>
             </div>
           </div>
           <div class="recipe-detail__info-item">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
             <div>
-              <p class="recipe-detail__info-label">Prep Time</p>
+              <p class="recipe-detail__info-label">${STRINGS.recipeDetail.prepTime}</p>
               <p class="recipe-detail__info-value">${prepTime} min</p>
             </div>
           </div>
           <div class="recipe-detail__info-item">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
             <div>
-              <p class="recipe-detail__info-label">Serves</p>
-              <p class="recipe-detail__servings-value">${this._servings} persons</p>
+              <p class="recipe-detail__info-label">${STRINGS.recipeDetail.serves}</p>
+              <p class="recipe-detail__servings-value">${t(STRINGS.recipeDetail.persons, { count: this._servings })}</p>
             </div>
           </div>
           ${sourceUrl ? `
           <div class="recipe-detail__info-item">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
             <div>
-              <p class="recipe-detail__info-label">Source</p>
+              <p class="recipe-detail__info-label">${STRINGS.recipeDetail.source}</p>
               <a class="recipe-detail__info-link" href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener">${escapeHtml(sourceDisplay)}</a>
             </div>
           </div>
@@ -234,8 +250,8 @@ export class RecipeDetail extends HTMLElement {
         </div>
 
         <div class="recipe-detail__section-header">
-          <h3 class="recipe-detail__section-title">Ingredients</h3>
-          <span class="recipe-detail__count-badge">${ingredientCount} Items</span>
+          <h3 class="recipe-detail__section-title">${STRINGS.recipeDetail.ingredients}</h3>
+          <span class="recipe-detail__count-badge">${t(STRINGS.recipeDetail.items, { count: ingredientCount })}</span>
         </div>
         <div class="recipe-detail__ingredients" id="detail-ingredients-list">
           ${enriched.map((ing) => {
@@ -255,7 +271,7 @@ export class RecipeDetail extends HTMLElement {
       
     } catch (err) {
       console.error('Failed to load recipe detail:', err);
-      body.innerHTML = '<div class="recipe-detail__empty"><p>Failed to load recipe details.</p></div>';
+      body.innerHTML = `<div class="recipe-detail__empty"><p>${STRINGS.recipeDetail.loadError}</p></div>`;
     }
   }
 

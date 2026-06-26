@@ -21,18 +21,18 @@ export function escapeHtml(str) {
 
 /**
  * Format quantity + unit for display in the UI.
- * Business Logic: Maps internal unit IDs to short display labels.
+ * Business Logic: Maps stored unit IDs to short display labels.
  * Round quantities omit decimal places for cleaner display.
  * @param {number} qty - The quantity value.
- * @param {string} unit - The unit ID (e.g. "pcs", "g", "ml").
+ * @param {string} unit - The unit ID (e.g. "pcs", "grams", "ml").
  * @returns {string} Formatted string like "2 pcs" or "1.5 L".
  */
 export function formatQty(qty, unit) {
   const unitMap = /** @type {Record<string, string>} */ ({
     'pcs': 'pcs',
-    'g': 'g',
+    'grams': 'g',
     'kg': 'kg',
-    'l': 'L',
+    'Litres': 'L',
     'ml': 'ml',
     'tbsp': 'tbsp',
     'tsp': 'tsp',
@@ -66,4 +66,52 @@ export function htmlToFragment(html) {
   const tmpl = document.createElement('template');
   tmpl.innerHTML = html;
   return tmpl.content;
+}
+
+/**
+ * Open the item editor in add mode with an optional pre-filled name.
+ * Business Logic: Shared by grocery-list and recipe-editor components.
+ * Dynamically imports the item-editor component, finds or creates an
+ * <item-editor> element inside the #item-editor-sheet body, and opens
+ * it in add mode with the given query pre-filled. After the user saves,
+ * the item-saved listener in the calling component can auto-add the item.
+ * @param {string} [prefillName] - Optional name to pre-fill in the item name field.
+ * @returns {Promise<void>}
+ */
+export async function openItemEditorForCreate(prefillName) {
+  try {
+    const sheet = /** @type {HTMLElement | null} */ (document.getElementById('item-editor-sheet'));
+    if (!sheet) return;
+
+    // Ensure item-editor component is loaded
+    await import('../components/item-editor.js');
+
+    // Find or create <item-editor> inside the sheet body
+    const body = sheet.querySelector('#item-editor-body');
+    if (!body) return;
+
+    // @ts-ignore — ItemEditor type unavailable at runtime
+    let editor = /** @type {any} */ (body.querySelector('item-editor'));
+    if (!editor) {
+      editor = document.createElement('item-editor');
+      body.appendChild(editor);
+    }
+
+    editor.openAdd(prefillName || '');
+  } catch (err) {
+    console.error('Failed to open item editor:', err);
+  }
+}
+
+/**
+ * Get the <app-snackbar> element for showing notifications.
+ * Business Logic: Centralises the document.querySelector('app-snackbar')
+ * pattern that is repeated across multiple components, reducing duplication
+ * and ensuring consistent null-handling.
+ * @returns {import("../components/app-snackbar.js").AppSnackbar | null}
+ */
+export function getSnackbar() {
+  return /** @type {import("../components/app-snackbar.js").AppSnackbar | null} */ (
+    document.querySelector('app-snackbar')
+  );
 }

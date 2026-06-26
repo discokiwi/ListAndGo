@@ -3,7 +3,7 @@
  * Categories store for List&GO.
  * Business Logic: Provides CRUD operations on the `categories` Dexie table
  * with sync fields (familyId, updatedAt, isSynced). Seeded on first run with
- * 13 default categories matching SPEC requirements. Exposes an in-memory cache
+ * 11 default categories. Exposes an in-memory cache
  * so UI components can look up category names and colors synchronously.
  * @module
  */
@@ -27,23 +27,21 @@ export const categoryCache = {
 };
 
 /**
- * The 13 default categories with their assigned colors from the palette.
+ * The 11 default categories with their assigned colors from the palette.
  * @type {{ name: string, color: string }[]}
  */
 const DEFAULT_CATEGORIES = [
-  { name: 'Fruits & Vegetables', color: '#2D6A4F' },
-  { name: 'Meat', color: '#BC4749' },
-  { name: 'Dairy', color: '#4895EF' },
-  { name: 'Bakery', color: '#D4A373' },
-  { name: 'Seafood', color: '#4CC9F0' },
-  { name: 'Alcohol', color: '#8338EC' },
+  { name: 'Groenten & Fruit', color: '#2D6A4F' },
+  { name: 'Beenhouwerij', color: '#BC4749' },
+  { name: 'Zuivel', color: '#4895EF' },
+  { name: 'Brood / Ontbijt', color: '#D4A373' },
   { name: 'Snacks', color: '#FB8B24' },
-  { name: 'Drinks', color: '#F72585' },
-  { name: 'Canned Goods', color: '#7209B7' },
+  { name: 'Droge Voeding', color: '#FFBE0B' },
+  { name: 'Conserveren', color: '#7209B7' },
+  { name: 'Diepvries', color: '#4CC9F0' },
+  { name: 'Drank', color: '#F72585' },
   { name: 'Non-food', color: '#7F5539' },
-  { name: 'Pets', color: '#3F37C9' },
-  { name: 'Personal Care', color: '#B5179E' },
-  { name: 'Pantry', color: '#FFBE0B' },
+  { name: 'Wijn', color: '#8338EC' },
 ];
 
 /**
@@ -243,4 +241,37 @@ export function getCategoryName(categoryId) {
 export function getCategoryColor(categoryId) {
   const cat = categoryCache.byId.get(categoryId);
   return cat ? cat.color : '#bfc9c1';
+}
+
+/**
+ * Get a mapping of category IDs to their display names.
+ * @returns {Record<string, string>} Map of category ID -> name.
+ */
+export function getCategoryLabels() {
+  /** @type {Record<string, string>} */
+  const labels = {};
+  for (const [id, cat] of categoryCache.byId) {
+    labels[id] = cat.name;
+  }
+  return labels;
+}
+
+/**
+ * Sort an array of category IDs by their store layout sortOrder.
+ * Business Logic: The user sets the category order in Settings → Store Layout.
+ * Categories without a sortOrder value fall back to 999 (end of list).
+ * Ties are broken by alphabetical name comparison.
+ * Used by both grocery-list and items-library to ensure consistent ordering.
+ * @param {string[]} categoryIds - Array of category UUIDs to sort.
+ * @returns {string[]} Sorted array of category IDs.
+ */
+export function sortCategoriesByOrder(categoryIds) {
+  return [...categoryIds].sort((a, b) => {
+    const catA = categoryCache.byId.get(a);
+    const catB = categoryCache.byId.get(b);
+    const orderA = catA?.sortOrder ?? 999;
+    const orderB = catB?.sortOrder ?? 999;
+    if (orderA !== orderB) return orderA - orderB;
+    return (catA?.name || a).localeCompare(catB?.name || b);
+  });
 }

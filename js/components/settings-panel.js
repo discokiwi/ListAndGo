@@ -8,8 +8,10 @@
  * @module
  */
 
+import { registerOverlay } from '../overlay-manager.js';
 import { addCategory, updateCategory, deleteCategory, getAllCategories, updateCategoryOrder } from '../store/categories.store.js';
 import { getAllRecipeCategories, addRecipeCategory, updateRecipeCategory, deleteRecipeCategory } from '../store/recipe-categories.store.js';
+import { STRINGS, t, setLanguage, getCurrentLanguage } from '../strings/i18n.js';
 
 /**
  * The 14 category accent colors from design tokens.
@@ -48,6 +50,9 @@ export class SettingsDrawer extends HTMLElement {
   /** @type {boolean} */
   #isOpen = false;
 
+  /** @type {(() => void) | null} */
+  #closeToken = null;
+
   /** @type {HTMLDivElement | null} */
   #drawer = null;
 
@@ -73,7 +78,10 @@ export class SettingsDrawer extends HTMLElement {
   }
 
   /**
-   * Open the settings drawer.
+   * Open the settings drawer and register with the overlay manager.
+   * Business Logic: Opens the drawer, loads data, and registers a close
+   * callback with the overlay manager so the device back button dismisses
+   * the drawer instead of navigating away.
    * @returns {void}
    */
   open() {
@@ -81,6 +89,13 @@ export class SettingsDrawer extends HTMLElement {
     this.#updateDisplay();
     document.body.classList.add('settings-drawer-open');
     this.#loadData();
+
+    // Register with overlay manager for back-button handling
+    this.#closeToken = registerOverlay({
+      /** Close the drawer when the overlay manager requests it (e.g. back button). */
+      close: () => this.close(),
+      name: 'settings-panel',
+    });
   }
 
   /**
@@ -88,21 +103,12 @@ export class SettingsDrawer extends HTMLElement {
    * @returns {void}
    */
   close() {
+    // Unregister from overlay manager
+    this.#closeToken?.();
+    this.#closeToken = null;
     this.#isOpen = false;
     this.#updateDisplay();
     document.body.classList.remove('settings-drawer-open');
-  }
-
-  /**
-   * Toggle the drawer open/closed.
-   * @returns {void}
-   */
-  toggle() {
-    if (this.#isOpen) {
-      this.close();
-    } else {
-      this.open();
-    }
   }
 
   /** @returns {void} */
@@ -139,16 +145,6 @@ export class SettingsDrawer extends HTMLElement {
         panel.classList.add('settings-tabpanel--hidden');
       }
     });
-  }
-
-  /**
-   * @param {KeyboardEvent} e
-   * @returns {void}
-   */
-  #handleKeydown(e) {
-    if (e.key === 'Escape' && this.#isOpen) {
-      this.close();
-    }
   }
 
   /**
@@ -194,22 +190,22 @@ export class SettingsDrawer extends HTMLElement {
       <div class="settings-drawer__backdrop" id="drawer-backdrop"></div>
       <aside class="settings-drawer" id="settings-drawer-panel">
         <header class="settings-drawer__header">
-          <button class="settings-drawer__close" id="drawer-close" aria-label="Close settings">
+          <button class="settings-drawer__close" id="drawer-close" aria-label="${STRINGS.settings.close}">
             <svg width="24" height="24" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
           </button>
-          <h2 class="settings-drawer__title">Settings</h2>
+          <h2 class="settings-drawer__title">${STRINGS.settings.title}</h2>
           <div class="settings-drawer__header-spacer"></div>
         </header>
         <nav class="settings-tabs">
-          <button class="settings-tabs__btn settings-tabs__btn--active" data-tab="account">ACCOUNT</button>
-          <button class="settings-tabs__btn" data-tab="store">STORE</button>
-          <button class="settings-tabs__btn" data-tab="recipe">RECIPE</button>
-          <button class="settings-tabs__btn" data-tab="items">ITEMS</button>
+          <button class="settings-tabs__btn settings-tabs__btn--active" data-tab="account">${STRINGS.settings.tabs.account}</button>
+          <button class="settings-tabs__btn" data-tab="store">${STRINGS.settings.tabs.store}</button>
+          <button class="settings-tabs__btn" data-tab="recipe">${STRINGS.settings.tabs.recipe}</button>
+          <button class="settings-tabs__btn" data-tab="items">${STRINGS.settings.tabs.items}</button>
         </nav>
         <div class="settings-drawer__body">
           <div class="settings-tabpanel" data-panel="account">
             <section>
-              <h3 class="settings-section__heading">Account Management</h3>
+              <h3 class="settings-section__heading">${STRINGS.settings.account.heading}</h3>
               <div class="settings-section__card">
                 <div class="settings-row settings-row--profile">
                   <div class="settings-profile">
@@ -223,45 +219,58 @@ export class SettingsDrawer extends HTMLElement {
                   </div>
                 </div>
                 <div class="settings-btn-group">
-                  <button class="btn btn--primary">UPDATE</button>
-                  <button class="btn btn--danger">DELETE</button>
+                  <button class="btn btn--primary">${STRINGS.settings.account.update}</button>
+                  <button class="btn btn--danger">${STRINGS.settings.account.delete}</button>
                 </div>
               </div>
             </section>
             <section>
-              <h3 class="settings-section__heading">Family & Household</h3>
+              <h3 class="settings-section__heading">${STRINGS.settings.account.familyHeading}</h3>
               <div class="settings-section__card">
                 <div class="settings-family-row">
                   <div class="settings-family-info">
                     <svg class="settings-family-icon" width="24" height="24" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                     <div class="settings-family-detail">
                       <span class="settings-family-name">Mark Jenkins</span>
-                      <span class="settings-family-role">Administrator</span>
+                      <span class="settings-family-role">${STRINGS.settings.account.admin}</span>
                     </div>
                   </div>
-                  <button class="settings-family-more" aria-label="More options"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg></button>
+                  <button class="settings-family-more" aria-label="${STRINGS.settings.account.moreOptions}"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg></button>
                 </div>
                 <div class="settings-family-row">
                   <div class="settings-family-info">
                     <svg class="settings-family-icon" width="24" height="24" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                     <div class="settings-family-detail">
                       <span class="settings-family-name">Olivia Jenkins</span>
-                      <span class="settings-family-role">Member</span>
+                      <span class="settings-family-role">${STRINGS.settings.account.member}</span>
                     </div>
                   </div>
-                  <button class="settings-family-more" aria-label="More options"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg></button>
+                  <button class="settings-family-more" aria-label="${STRINGS.settings.account.moreOptions}"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg></button>
                 </div>
-                <button class="settings-invite-btn"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg> INVITE MEMBER</button>
+                <button class="settings-invite-btn"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg> ${STRINGS.settings.account.invite}</button>
+              </div>
+            </section>
+            <!-- Language switch section -->
+            <section>
+              <h3 class="settings-section__heading">${STRINGS.settings.account.language}</h3>
+              <div class="settings-section__card">
+                <div class="settings-row">
+                  <span class="settings-row__label">${STRINGS.settings.account.language}</span>
+                  <div class="settings-lang-toggle">
+                    <button class="settings-lang-btn" data-lang="nl">Nederlands</button>
+                    <button class="settings-lang-btn" data-lang="en">English</button>
+                  </div>
+                </div>
               </div>
             </section>
             <section>
-              <h3 class="settings-section__heading">Reset</h3>
+              <h3 class="settings-section__heading">${STRINGS.settings.account.resetHeading}</h3>
               <div class="settings-section__card">
                 <div class="settings-row">
-                  <span class="settings-row__label">Reset all data to factory defaults</span>
+                  <span class="settings-row__label">${STRINGS.settings.account.resetDescription}</span>
                 </div>
                 <div class="settings-btn-group">
-                  <button class="btn btn--danger" id="reset-defaults-btn">RESET TO DEFAULTS</button>
+                  <button class="btn btn--danger" id="reset-defaults-btn">${STRINGS.settings.account.resetBtn}</button>
                 </div>
               </div>
             </section>
@@ -269,10 +278,10 @@ export class SettingsDrawer extends HTMLElement {
 
           <div class="settings-tabpanel settings-tabpanel--hidden" data-panel="store">
             <section>
-              <h3 class="settings-section__heading">Store Layout</h3>
+              <h3 class="settings-section__heading">${STRINGS.settings.store.heading}</h3>
               <div class="settings-section__card">
                 <div class="settings-layout-info">
-                  <span class="settings-layout-info__label">Category Order</span>
+                  <span class="settings-layout-info__label">${STRINGS.settings.store.categoryOrder}</span>
                   <svg class="settings-layout-info__icon" width="16" height="16" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
                 </div>
                 <div id="settings-store-categories-list"><!-- Populated by JS --></div>
@@ -282,21 +291,21 @@ export class SettingsDrawer extends HTMLElement {
 
           <div class="settings-tabpanel settings-tabpanel--hidden" data-panel="recipe">
             <section>
-              <h3 class="settings-section__heading">Recipe Defaults</h3>
+              <h3 class="settings-section__heading">${STRINGS.settings.recipe.heading}</h3>
               <div class="settings-section__card">
                 <div class="settings-row">
-                  <span class="settings-row__label">Default number of persons</span>
+                  <span class="settings-row__label">${STRINGS.settings.recipe.defaultPersons}</span>
                   <quantity-stepper value="2" min="1" max="20"></quantity-stepper>
                 </div>
               </div>
             </section>
             <section>
-              <h3 class="settings-section__heading">Recipe Categories</h3>
+              <h3 class="settings-section__heading">${STRINGS.settings.recipe.categoriesHeading}</h3>
               <div class="settings-categories-card" id="settings-recipe-categories-card">
                 <div id="settings-recipe-categories-list"><!-- Populated by JS --></div>
                 <div class="settings-add-row" id="settings-recipe-category-add-row">
-                  <input class="settings-add-row__input" id="settings-add-recipe-category-input" type="text" placeholder="Add Recipe Category" autocomplete="off" />
-                  <button class="settings-add-row__btn--icon-only" id="settings-add-recipe-category-btn" aria-label="Add recipe category">
+                  <input class="settings-add-row__input" id="settings-add-recipe-category-input" type="text" placeholder="${STRINGS.settings.recipe.addPlaceholder}" autocomplete="off" />
+                  <button class="settings-add-row__btn--icon-only" id="settings-add-recipe-category-btn" aria-label="${STRINGS.settings.recipe.addAria}">
                     <svg width="18" height="18" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
                   </button>
                 </div>
@@ -307,12 +316,12 @@ export class SettingsDrawer extends HTMLElement {
           <div class="settings-tabpanel settings-tabpanel--hidden" data-panel="items">
             <!-- Item Categories Section only — units removed -->
             <section>
-              <h3 class="settings-section__heading">Item Categories</h3>
+              <h3 class="settings-section__heading">${STRINGS.settings.items.categoriesHeading}</h3>
               <div class="settings-categories-card" id="settings-categories-card">
                 <div id="settings-categories-list"><!-- Populated by JS --></div>
                 <div class="settings-add-row" id="settings-category-add-row">
-                  <input class="settings-add-row__input" id="settings-add-category-input" type="text" placeholder="Add Category" autocomplete="off" />
-                  <button class="settings-add-row__btn--icon-only" id="settings-add-category-btn" aria-label="Add category">
+                  <input class="settings-add-row__input" id="settings-add-category-input" type="text" placeholder="${STRINGS.settings.items.addPlaceholder}" autocomplete="off" />
+                  <button class="settings-add-row__btn--icon-only" id="settings-add-category-btn" aria-label="${STRINGS.settings.items.addAria}">
                     <svg width="18" height="18" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
                   </button>
                 </div>
@@ -321,7 +330,7 @@ export class SettingsDrawer extends HTMLElement {
           </div>
         </div>
         <footer class="settings-drawer__footer">
-          <button class="settings-drawer__save-btn" id="drawer-save-btn">Save All Changes</button>
+          <button class="settings-drawer__save-btn" id="drawer-save-btn">${STRINGS.settings.saveAll}</button>
         </footer>
       </aside>
     `;
@@ -347,23 +356,46 @@ export class SettingsDrawer extends HTMLElement {
 
     this.querySelector('#reset-defaults-btn')?.addEventListener('click', () => this.#handleResetDefaults());
 
-    document.addEventListener('keydown', (e) => this.#handleKeydown(e));
+    // Wire language toggle buttons
+    this.querySelectorAll('.settings-lang-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const lang = btn.getAttribute('data-lang');
+        if (lang) setLanguage(lang);
+      });
+    });
+
+    // Set active language button
+    const currentLang = getCurrentLanguage();
+    this.querySelectorAll('.settings-lang-btn').forEach((btn) => {
+      const lang = btn.getAttribute('data-lang');
+      if (lang === currentLang) {
+        btn.setAttribute('data-selected', 'true');
+        btn.classList.add('settings-lang-btn--active');
+      }
+    });
+
     if (this.#drawer) {
       this.#drawer.addEventListener('touchstart', (e) => this.#handleTouchStart(e), false);
       this.#drawer.addEventListener('touchend', (e) => this.#handleTouchEnd(e), false);
     }
     document.addEventListener('open-settings', () => { this.open(); });
+
+    // Listen for language changes to re-render
+    document.addEventListener('language-changed', () => {
+      this.innerHTML = '';
+      this.connectedCallback();
+    });
   }
 
   /** @returns {Promise<void>} */
   async #handleResetDefaults() {
-    if (!confirm('Reset all data to factory defaults? This cannot be undone.')) return;
+    if (!confirm(STRINGS.settings.resetConfirm)) return;
     try {
       const { db } = await import('../db.js');
       const { seedCategories } = await import('../store/categories.store.js');
       const { seedRecipeCategories } = await import('../store/recipe-categories.store.js');
       const { seedItems } = await import('../store/items.store.js');
-      const { loadCategoryColorCache } = await import('../utils/category-colors.js');
+      const { refreshCategoryCache } = await import('../store/categories.store.js');
 
       await db.items.clear();
       await db.categories.clear();
@@ -380,13 +412,13 @@ export class SettingsDrawer extends HTMLElement {
       await seedCategories();
       await seedRecipeCategories();
       await seedItems();
-      await loadCategoryColorCache();
+      await refreshCategoryCache();
       await this.#loadData();
       document.dispatchEvent(new CustomEvent('categories-changed'));
       document.dispatchEvent(new CustomEvent('recipe-categories-changed'));
 
       const snackbar = /** @type {any} */ (document.querySelector('app-snackbar'));
-      if (snackbar && typeof snackbar.show === 'function') snackbar.show('Data reset to defaults');
+      if (snackbar && typeof snackbar.show === 'function') snackbar.show(STRINGS.settings.resetSnackbar);
     } catch (err) {
       console.error('Failed to reset defaults:', err);
     }
@@ -399,17 +431,17 @@ export class SettingsDrawer extends HTMLElement {
     list.innerHTML = this.#categories.map((cat) => `
       <div class="settings-category-row" style="border-left-color: ${cat.color}" data-category-id="${cat.id}">
         <span class="settings-category-color-wrap">
-          <button class="settings-category-row__dot" data-action="edit-category-color" data-category-id="${cat.id}" style="background: ${cat.color}" aria-label="Change color for ${cat.name}"></button>
+          <button class="settings-category-row__dot" data-action="edit-category-color" data-category-id="${cat.id}" style="background: ${cat.color}" aria-label="${t(STRINGS.settings.items.colorPickerAria, { name: cat.name })}"></button>
           <div class="settings-color-picker settings-color-picker--cat" id="color-picker-${cat.id}">
             <div class="settings-color-picker__grid">
               ${CATEGORY_COLORS_14.map((c) => `
-                <button class="settings-color-picker__swatch" data-color="${c.value}" style="background: ${c.value}" aria-label="${c.name}"></button>
+                <button class="settings-color-picker__swatch" data-color="${c.value}" style="background: ${c.value}" aria-label="${STRINGS.colorNames[c.value] || c.name}"></button>
               `).join('')}
             </div>
           </div>
         </span>
         <span class="settings-category-row__name" data-action="edit-category-name" data-category-id="${cat.id}">${cat.name}</span>
-        <button class="settings-category-row__delete" data-action="delete-category" data-category-id="${cat.id}" aria-label="Delete category">
+        <button class="settings-category-row__delete" data-action="delete-category" data-category-id="${cat.id}" aria-label="${STRINGS.settings.items.deleteAria}">
           <svg width="18" height="18" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
         </button>
       </div>
@@ -423,7 +455,7 @@ export class SettingsDrawer extends HTMLElement {
     list.innerHTML = this.#recipeCategories.map((cat) => `
       <div class="settings-category-row" data-category-id="${cat.id}">
         <span class="settings-category-row__name" data-action="edit-recipe-category-name" data-category-id="${cat.id}">${cat.name}</span>
-        <button class="settings-category-row__delete" data-action="delete-recipe-category" data-category-id="${cat.id}" aria-label="Delete recipe category">
+        <button class="settings-category-row__delete" data-action="delete-recipe-category" data-category-id="${cat.id}" aria-label="${STRINGS.settings.items.deleteRecipeAria}">
           <svg width="18" height="18" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
         </button>
       </div>
@@ -459,7 +491,7 @@ export class SettingsDrawer extends HTMLElement {
       if (nameEl) {
         const id = nameEl.getAttribute('data-category-id') || '';
         const currentName = nameEl.textContent || '';
-        const newName = prompt('Rename category:', currentName);
+        const newName = prompt(STRINGS.settings.recipe.renamePrompt, currentName);
         if (newName && newName.trim() && newName.trim() !== currentName) {
           try {
             await updateRecipeCategory(id, newName.trim());
@@ -473,7 +505,7 @@ export class SettingsDrawer extends HTMLElement {
       const deleteBtn = target.closest('[data-action="delete-recipe-category"]');
       if (deleteBtn) {
         const id = deleteBtn.getAttribute('data-category-id') || '';
-        if (!confirm('Delete this recipe category?')) return;
+        if (!confirm(STRINGS.settings.recipe.deleteConfirm)) return;
         try {
           await deleteRecipeCategory(id);
           this.#recipeCategories = await getAllRecipeCategories();
@@ -616,16 +648,16 @@ export class SettingsDrawer extends HTMLElement {
       const isLast = index === this.#storeCategories.length - 1;
       return `
         <div class="settings-layout-row" data-category-id="${cat.id}" draggable="true">
-          <span class="settings-layout-row__drag" aria-label="Drag to reorder">
+          <span class="settings-layout-row__drag" aria-label="${STRINGS.settings.store.dragToReorder}">
             <svg width="16" height="16" viewBox="0 0 24 24"><path d="M3 15h18v-2H3v2zm0 4h18v-2H3v2zm0-8h18V9H3v2zm0-6v2h18V5H3z"/></svg>
           </span>
           <span class="settings-layout-row__color" style="background: ${cat.color}"></span>
           <span class="settings-layout-row__name">${this.#escapeHtml(cat.name)}</span>
           <span class="settings-layout-row__arrows">
-            <button class="settings-layout-row__arrow" data-action="store-move-up" data-category-id="${cat.id}" ${isFirst ? 'disabled' : ''} aria-label="Move ${cat.name} up">
+            <button class="settings-layout-row__arrow" data-action="store-move-up" data-category-id="${cat.id}" ${isFirst ? 'disabled' : ''} aria-label="${t(STRINGS.settings.store.moveUp, { name: cat.name })}">
               <svg width="18" height="18" viewBox="0 0 24 24"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
             </button>
-            <button class="settings-layout-row__arrow" data-action="store-move-down" data-category-id="${cat.id}" ${isLast ? 'disabled' : ''} aria-label="Move ${cat.name} down">
+            <button class="settings-layout-row__arrow" data-action="store-move-down" data-category-id="${cat.id}" ${isLast ? 'disabled' : ''} aria-label="${t(STRINGS.settings.store.moveDown, { name: cat.name })}">
               <svg width="18" height="18" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
             </button>
           </span>

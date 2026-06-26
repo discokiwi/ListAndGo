@@ -24,6 +24,15 @@
  *   // Listen for confirmed (primary action was clicked):
  *   dlg.addEventListener('dialog-confirmed', (e) => { /* user confirmed * / });
  */
+import { registerOverlay } from '../overlay-manager.js';
+
+/**
+ * Content Dialog Web Component — bottom-sheet with header, scrollable body, and action footer.
+ * Provides a reusable bottom-sheet pattern using the native <dialog> element.
+ * Registers itself with the overlay manager for back-button interception.
+ * @class
+ * @augments HTMLElement
+ */
 export class ContentDialog extends HTMLElement {
   /** @type {HTMLDialogElement | null} */
   _dialog = null;
@@ -33,6 +42,8 @@ export class ContentDialog extends HTMLElement {
   _bodySlot = null;
   /** @type {HTMLElement | null} */
   _actionsSlot = null;
+  /** @type {(() => void) | null} */
+  _closeToken = null;
 
   /** Observed attributes for reactive updates. */
   static get observedAttributes() {
@@ -77,9 +88,17 @@ export class ContentDialog extends HTMLElement {
       }
     });
 
-    // Close on Escape
+    // Close on Escape (native dialog cancel event) — also unregister overlay
     this._dialog?.addEventListener('cancel', () => {
       this.dispatchEvent(new CustomEvent('dialog-close', { bubbles: true }));
+      this._closeToken?.();
+      this._closeToken = null;
+    });
+
+    // Listen for native close event (programmatic close) to clean up overlay
+    this._dialog?.addEventListener('close', () => {
+      this._closeToken?.();
+      this._closeToken = null;
     });
   }
 
@@ -117,19 +136,34 @@ export class ContentDialog extends HTMLElement {
   }
 
   /**
-   * Open the dialog modally.
+   * Open the dialog modally and register with the overlay manager.
+   * Business Logic: The native <dialog> element handles its own Escape key and
+   * backdrop click, but we need to register with the overlay manager so the
+   * device back button also closes the dialog.
    * @returns {void}
    */
   show() {
     this._dialog?.showModal();
+
+    // Register with overlay manager for back-button handling
+    this._closeToken = registerOverlay({
+      /** Close the dialog when the overlay manager requests it (e.g. back button). */
+      close: () => this.hide(),
+      name: 'content-dialog',
+    });
   }
 
   /**
-   * Close the dialog.
+   * Close the dialog and unregister from the overlay manager.
+   * Business Logic: Closing a dialog may happen programmatically or via the
+   * overlay manager's close callback. Unregisters from the overlay stack so
+   * the back button doesn't target a no-longer-visible dialog.
    * @returns {void}
    */
   hide() {
     this._dialog?.close();
+    this._closeToken?.();
+    this._closeToken = null;
   }
 
   /**

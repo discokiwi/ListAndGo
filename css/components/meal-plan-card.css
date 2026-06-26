@@ -1,0 +1,397 @@
+/* =============================================
+   List&GO — Meal Plan Card Styles
+   Design: Stitch "Meal Plan - Card-Styled Interactive Queue"
+   ============================================= */
+
+/* ---- Plan Header Bar ---- */
+.plan-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-base);
+
+  & .page__header {
+    padding: 0;
+  }
+
+  & .search-bar__pills {
+    display: flex;
+    gap: var(--spacing-base);
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* ---- Card List Container ---- */
+.meal-plan-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-list-item-gap, 12px);
+  padding-bottom: 80px; /* space for bottom nav */
+}
+
+/* ---- Plan Variant of Recipe Card ---- */
+.recipe-card--plan {
+  cursor: default; /* no tap-through to detail on plan screen */
+  align-items: stretch;
+}
+
+.recipe-card--plan .recipe-card__body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* ---- Servings Badge ---- */
+.plan-servings {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--color-text-dimmed);
+  font: var(--font-unit-label);
+
+  & svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+  }
+}
+
+/* ---- Action Buttons Row ---- */
+.recipe-card__actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: var(--spacing-base);
+}
+
+/* "Add to Grocery List" icon-only circular button — toggle */
+.plan-add-grocery-btn {
+  width: var(--spacing-thumb-touch);
+  height: var(--spacing-thumb-touch);
+  min-width: var(--spacing-thumb-touch);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--color-primary-container) 10%, transparent);
+  color: var(--color-primary);
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+
+  & svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-primary-container) 25%, transparent);
+  }
+
+  &:active {
+    transform: scale(0.9);
+  }
+}
+
+.plan-add-grocery-btn--added {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+
+  &:hover {
+    background: var(--color-primary-container);
+    color: var(--color-on-primary-fixed-variant);
+  }
+}
+
+/* Disabled state for cooked cards — visible but not clickable */
+.plan-add-grocery-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-primary-container) 10%, transparent);
+  }
+
+  &:active {
+    transform: none;
+  }
+}
+
+/* ---- Check-off Button ---- */
+.plan-check-btn {
+  width: var(--spacing-thumb-touch);
+  height: var(--spacing-thumb-touch);
+  min-width: var(--spacing-thumb-touch);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--color-primary-container) 10%, transparent);
+  color: var(--color-primary);
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+
+  & svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-primary-container) 25%, transparent);
+  }
+
+  &:active {
+    transform: scale(0.9);
+  }
+}
+
+.plan-check-btn--cooked {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+
+  &:hover {
+    background: var(--color-primary-container);
+    color: var(--color-on-primary-fixed-variant);
+  }
+}
+
+/* ---- Cooked (Greyed Out) Card ---- */
+.recipe-card--cooked {
+  opacity: 0.5;
+  filter: grayscale(0.5);
+  pointer-events: auto;
+
+  & .recipe-card__add-btn,
+  & .plan-check-btn {
+    pointer-events: auto;
+  }
+}
+
+/* ---- Divider Between Uncooked & Cooked ---- */
+.plan-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-base);
+  margin: var(--spacing-base) 0;
+  color: var(--color-text-dimmed);
+  font: var(--font-badge-caps);
+  letter-spacing: var(--ls-badge-caps);
+  text-transform: uppercase;
+  opacity: 0.7;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--color-outline-variant);
+  }
+}
+
+/* ---- Empty State ---- */
+.plan-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--spacing-gutter) * 4) var(--spacing-gutter);
+  text-align: center;
+  color: var(--color-text-dimmed);
+  font: var(--font-body-reg);
+}
+
+.plan-empty__icon {
+  width: 48px;
+  height: 48px;
+  fill: var(--color-outline-variant);
+  margin-bottom: var(--spacing-gutter);
+}
+
+/* =============================================
+   Edit Mode Overlay & Styles
+   Follows same pattern as grocery list edit mode
+   ============================================= */
+
+/* ---- Edit Mode Overlay ---- */
+.meal-plan-edit-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: none;
+  background: rgba(249, 249, 252, 0.4);
+  pointer-events: auto;
+}
+
+.meal-plan-edit-overlay--visible {
+  display: block;
+}
+
+/* ---- Blur targets for edit mode ---- */
+body.edit-mode .plan-header,
+body.edit-mode .plan-empty,
+body.edit-mode .plan-divider {
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+/* Prevent the meal plan card list itself from being blurred */
+body.edit-mode #meal-plan-card-list {
+  filter: none;
+  pointer-events: auto;
+}
+
+/* Ensure uncooked recipe cards remain interactive in edit mode */
+body.edit-mode .recipe-card--plan:not(.recipe-card--cooked) {
+  filter: none;
+  pointer-events: auto;
+  position: relative;
+  z-index: 50;
+}
+
+/* Cooked cards should stay blurred in edit mode */
+body.edit-mode .recipe-card--cooked {
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+/* ---- Edit Mode Card Variant ---- */
+.recipe-card--plan-edit {
+  background: color-mix(in srgb, var(--color-error-container) 8%, transparent);
+  cursor: default;
+
+  /* Hide meta row (badge, time, servings) */
+  & .recipe-card__meta {
+    display: none;
+  }
+
+  /* Hide description */
+  & .recipe-card__description {
+    display: none;
+  }
+
+  /* Hide default action buttons */
+  & .recipe-card__actions {
+    display: none;
+  }
+}
+
+/* ---- Edit Mode Actions (delete button only) ---- */
+.recipe-card--plan-edit .recipe-card__body {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.recipe-card--plan-edit .recipe-card__edit-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: var(--spacing-base);
+}
+
+/* ---- Delete Button in Edit Mode (matches grocery list edit mode style) ---- */
+.plan-delete-btn {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  color: var(--color-error);
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+  padding: 0;
+
+  & svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
+
+  &:active {
+    background-color: var(--color-error-container);
+    transform: scale(0.9);
+  }
+}
+
+/* ---- Servings Stepper in Edit Mode ---- */
+.plan-edit-servings {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.plan-edit-servings .quantity-stepper {
+  display: flex;
+  align-items: center;
+  background: var(--color-surface-container-low);
+  border-radius: var(--radius-full);
+  padding: 2px;
+  gap: 4px;
+  border: 1px solid var(--color-outline-variant);
+}
+
+.plan-edit-servings .quantity-stepper__btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--color-on-surface);
+  transition: background-color 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0;
+  font-size: 18px;
+}
+
+.plan-edit-servings .quantity-stepper__btn:active {
+  background-color: var(--color-secondary-container);
+}
+
+.plan-edit-servings .quantity-stepper__value {
+  font: var(--font-item-name);
+  font-weight: 700;
+  font-size: 14px;
+  min-width: 16px;
+  text-align: center;
+  color: var(--color-on-surface);
+  padding: 0 4px;
+}
+
+/* ---- Persons Icon Before Stepper in Edit Mode ---- */
+.plan-edit-servings__icon {
+  display: flex;
+  align-items: center;
+  color: var(--color-text-dimmed);
+  flex-shrink: 0;
+
+  & svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+  }
+}

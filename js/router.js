@@ -7,6 +7,8 @@
  * @module
  */
 
+import { isAnyOverlayOpen } from './overlay-manager.js';
+
 /**
  * Route map: hash → component tag name.
  * @type {{ [key: string]: string }}
@@ -97,6 +99,30 @@ function resolveComponent(route) {
 }
 
 /**
+ * Swap the visible component in the router view, hiding all others.
+ * Business Logic: Shared by both the View Transitions API path and the
+ * fallback path to eliminate duplicated DOM manipulation code.
+ * @param {HTMLElement} view - The router view container.
+ * @param {HTMLElement} component - The component to show.
+ * @returns {void}
+ */
+function swapViewComponent(view, component) {
+  // Hide all children except the target component
+  let child = view.firstElementChild;
+  while (child) {
+    if (child !== component) {
+      /** @type {HTMLElement} */ (child).style.display = 'none';
+    }
+    child = child.nextElementSibling;
+  }
+  // Append if first visit, or show if returning
+  if (!component.parentNode) {
+    view.appendChild(component);
+  }
+  component.style.display = '';
+}
+
+/**
  * Navigate to a route, swapping the `<main>` content.
  * Uses View Transitions API when available, with a graceful fallback.
  * Business Logic: Hides/shows cached component instances rather than
@@ -108,6 +134,9 @@ function resolveComponent(route) {
  * @returns {void}
  */
 function navigate() {
+  // Guard: do not navigate if any overlay is open
+  if (isAnyOverlayOpen()) return;
+
   /** @type {string} */
   const route = getRoute();
 
@@ -125,33 +154,10 @@ function navigate() {
   // Swap content using View Transitions API (graceful fallback)
   if ('startViewTransition' in document) {
     document.startViewTransition(() => {
-      // Hide all children except the target component
-      let child = view.firstElementChild;
-      while (child) {
-        if (child !== component) {
-          /** @type {HTMLElement} */ (child).style.display = 'none';
-        }
-        child = child.nextElementSibling;
-      }
-      // Append if first visit, or show if returning
-      if (!component.parentNode) {
-        view.appendChild(component);
-      }
-      component.style.display = '';
+      swapViewComponent(view, component);
     });
   } else {
-    // No transition support — hide others, show target
-    let child = view.firstElementChild;
-    while (child) {
-      if (child !== component) {
-        /** @type {HTMLElement} */ (child).style.display = 'none';
-      }
-      child = child.nextElementSibling;
-    }
-    if (!component.parentNode) {
-      view.appendChild(component);
-    }
-    component.style.display = '';
+    swapViewComponent(view, component);
   }
 }
 
@@ -174,6 +180,9 @@ export function initRouter() {
  * @returns {void}
  */
 export function goTo(route) {
+  // Guard: do not navigate if any overlay is open
+  if (isAnyOverlayOpen()) return;
+
   if (route in ROUTE_MAP) {
     location.hash = `#/${route}`;
   } else {

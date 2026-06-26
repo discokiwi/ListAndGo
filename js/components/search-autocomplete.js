@@ -30,13 +30,6 @@ export class SearchAutocomplete extends HTMLElement {
   /** @type {string} */
   _lastQuery = '';
 
-  /**
-   * Search function injected by the parent component.
-   * @type {((query: string) => Promise<import("../db.js").Item[]>) | null}
-   */
-  searchFn = null;
-
-
   /** Construct the component. */
   constructor() {
     super();
@@ -159,8 +152,8 @@ export class SearchAutocomplete extends HTMLElement {
     if (!this._dropdown) return;
 
     try {
-      const fn = this.searchFn || (await this._getDefaultSearchFn());
-      const results = await fn(query);
+      const { searchItems } = await import('../store/items.store.js');
+      const results = await searchItems(query);
 
       // Always show "Create new item" as the first item when query is non-empty
       const createBtnHtml = this._buildCreateItemHtml(query);
@@ -191,15 +184,6 @@ export class SearchAutocomplete extends HTMLElement {
     } catch (err) {
       console.error('Search failed:', err);
     }
-  }
-
-  /**
-   * Get the default search function from the items store.
-   * @returns {Promise<(query: string) => Promise<import("../db.js").Item[]>>}
-   */
-  async _getDefaultSearchFn() {
-    const { searchItems } = await import('../store/items.store.js');
-    return searchItems;
   }
 
   /** Hide the dropdown. */

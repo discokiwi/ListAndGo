@@ -9,6 +9,8 @@
  */
 
 import { initRouter } from './router.js';
+import { initOverlayManager } from './overlay-manager.js';
+import { STRINGS } from './strings/i18n.js';
 
 // Import all Web Components so their customElements.define() calls execute.
 // The router creates these elements by tag name, so they must be registered.
@@ -80,6 +82,36 @@ async function initDatabase() {
 }
 
 /**
+ * Update the bottom nav labels from the current language bundle.
+ * Business Logic: Called on startup and on every 'language-changed' event.
+ * Updates the <span> children inside each nav <a> tag.
+ * @returns {void}
+ */
+function updateNavLabels() {
+  const nav = document.getElementById('app-nav');
+  if (!nav) return;
+  const listsLabel = nav.querySelector('#nav-lists-label');
+  const planLabel = nav.querySelector('#nav-plan-label');
+  const recipesLabel = nav.querySelector('#nav-recipes-label');
+  const itemsLabel = nav.querySelector('#nav-items-label');
+  if (listsLabel) listsLabel.textContent = STRINGS.nav.lists;
+  if (planLabel) planLabel.textContent = STRINGS.nav.plan;
+  if (recipesLabel) recipesLabel.textContent = STRINGS.nav.recipes;
+  if (itemsLabel) itemsLabel.textContent = STRINGS.nav.items;
+}
+
+/**
+ * Update page title from the current language bundle.
+ * @returns {void}
+ */
+function updatePageTitle() {
+  const titleEl = document.getElementById('page-title');
+  if (titleEl) titleEl.textContent = STRINGS.app.title;
+  const metaDesc = document.querySelector('meta[name="description"]');
+  if (metaDesc) metaDesc.setAttribute('content', STRINGS.app.description);
+}
+
+/**
  * Main app initialization.
  * @returns {Promise<void>}
  */
@@ -90,12 +122,23 @@ async function initApp() {
     console.error('Database init error:', err);
   }
 
+  // Initialize the overlay manager (blocks navigation while modals/drawers are open)
+  initOverlayManager();
+
+  // Apply initial language labels
+  updatePageTitle();
+  updateNavLabels();
+
+  // React to language changes
+  document.addEventListener('language-changed', () => {
+    updatePageTitle();
+    updateNavLabels();
+  });
+
   // Start the SPA router
   initRouter();
 
   // Wire the top bar settings button to open the settings drawer
-  // The settings-panel component self-subscribes to the 'open-settings' event.
-  // This fallback ensures the drawer component is present.
   const settingsDrawer = document.querySelector('settings-panel');
   document.addEventListener('open-settings', () => {
     if (settingsDrawer && typeof settingsDrawer.open === 'function') {

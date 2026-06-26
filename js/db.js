@@ -200,18 +200,10 @@ export class ListAndGoDB extends Dexie {
       storeLayouts: 'id, familyId, name, isActive, updatedAt, isSynced',
       settings: 'key, value',
     });
+    // Version 2: Add recipeCategories table, rename recipes.categoryId → recipeCategoryId
     this.version(2).stores({
-      items: 'id, familyId, name, categoryId, isEssential, isMultiUse, updatedAt, isSynced',
-      categories: 'id, familyId, name, updatedAt, isSynced',
       recipeCategories: 'id, familyId, name, updatedAt, isSynced',
-      units: 'id, familyId, name, updatedAt, isSynced',
       recipes: 'id, familyId, title, recipeCategoryId, prepTime, servingsBase, updatedAt, isSynced',
-      recipeIngredients: 'id, familyId, recipeId, itemId, unitId, updatedAt, isSynced',
-      groceryLists: 'id, familyId, name, isActive, isArchived, createdAt, updatedAt, isSynced',
-      groceryItems: 'id, familyId, [listId+itemId], listId, itemId, name, categoryId, isChecked, updatedAt, isSynced',
-      mealPlans: 'id, familyId, date, recipeId, isCooked, updatedAt, isSynced',
-      storeLayouts: 'id, familyId, name, isActive, updatedAt, isSynced',
-      settings: 'key, value',
     });
   }
 }

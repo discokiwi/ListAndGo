@@ -1,5 +1,8 @@
 // @ts-check
 
+import { registerOverlay } from '../overlay-manager.js';
+import { STRINGS, t } from '../strings/i18n.js';
+
 /**
  * Item Editor Web Component — Add/Edit Item Side Drawer.
  * Business Logic: Provides a reusable form for creating a new item or editing
@@ -16,6 +19,8 @@ export class ItemEditor extends HTMLElement {
 
   /** @type {string} */
   #mode = 'add'; // 'add' | 'edit'
+  /** @type {(() => void) | null} */
+  #closeToken = null;
 
   /** Construct the component. */
   constructor() {
@@ -44,13 +49,13 @@ export class ItemEditor extends HTMLElement {
       this.#handleSave();
     });
     sheet.querySelector('#item-editor-cancel')?.addEventListener('click', () => {
-      sheet.style.display = 'none';
+      this.#hide();
     });
     sheet.querySelector('#item-editor-close')?.addEventListener('click', () => {
-      sheet.style.display = 'none';
+      this.#hide();
     });
     sheet.querySelector('#item-editor-overlay')?.addEventListener('click', () => {
-      sheet.style.display = 'none';
+      this.#hide();
     });
   }
 
@@ -66,50 +71,50 @@ export class ItemEditor extends HTMLElement {
    */
   renderForm() {
     const item = this.#currentItem;
-    const title = this.#mode === 'add' ? 'New Item' : 'Edit Item';
+    const title = this.#mode === 'add' ? t(STRINGS.itemEditor.addTitle) : t(STRINGS.itemEditor.editTitle);
     const nameValue = this.#mode === 'add' && this.#prefillName ? this.#prefillName : (item?.name || '');
 
     this.innerHTML = `
       <form class="ie-form" id="ie-form">
         <!-- Item Name -->
         <div class="ie-field">
-          <label class="ie-label" for="ie-name">Item Name</label>
-          <input class="ie-input" type="text" id="ie-name" placeholder="e.g. Whole Milk"
+          <label class="ie-label" for="ie-name">${t(STRINGS.itemEditor.form.name)}</label>
+          <input class="ie-input" type="text" id="ie-name" placeholder="${t(STRINGS.itemEditor.form.namePlaceholder)}"
             value="${this.#escapeHtml(nameValue)}" autocomplete="off" />
         </div>
 
         <!-- Category + Unit Row -->
         <div class="ie-row">
           <div class="ie-field ie-field--half">
-            <label class="ie-label" for="ie-category">Category</label>
+            <label class="ie-label" for="ie-category">${t(STRINGS.itemEditor.form.category)}</label>
             <div class="ie-select-wrap">
               <select class="ie-select" id="ie-category">
-                <option value="">Select…</option>
+                <option value="">${t(STRINGS.itemEditor.form.categorySelect)}</option>
               </select>
               <svg class="ie-select-chevron" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
             </div>
           </div>
           <div class="ie-field ie-field--half">
-            <label class="ie-label" for="ie-unit">Unit</label>
+            <label class="ie-label" for="ie-unit">${t(STRINGS.itemEditor.form.unit)}</label>
             <div class="ie-select-wrap" id="ie-unit-select-wrap">
               <select class="ie-select" id="ie-unit-select">
-                <option value="">Select…</option>
+                <option value="">${t(STRINGS.itemEditor.form.categorySelect)}</option>
               </select>
               <svg class="ie-select-chevron" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
             </div>
-            <input class="ie-input" type="text" id="ie-unit-custom" placeholder="grams, pcs, ml…" autocomplete="off" value="${this.#escapeHtml(item?.unitId || '')}" style="display:none" />
+            <input class="ie-input" type="text" id="ie-unit-custom" placeholder="${t(STRINGS.itemEditor.form.unitPlaceholder)}" autocomplete="off" value="${this.#escapeHtml(item?.unitId || '')}" style="display:none" />
           </div>
         </div>
 
         <!-- Quantity Stepper -->
         <div class="ie-field">
-          <label class="ie-label" for="ie-qty">Default Quantity</label>
+          <label class="ie-label" for="ie-qty">${t(STRINGS.itemEditor.form.defaultQty)}</label>
           <div class="ie-stepper">
-            <button class="ie-stepper-btn" type="button" id="ie-qty-minus" aria-label="Decrease quantity">
+            <button class="ie-stepper-btn" type="button" id="ie-qty-minus" aria-label="${t(STRINGS.itemEditor.decreaseQtyAria)}">
               <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
             </button>
             <input class="ie-stepper-input" type="number" id="ie-qty" value="${item?.defaultQty ?? 1}" min="1" step="1" />
-            <button class="ie-stepper-btn" type="button" id="ie-qty-plus" aria-label="Increase quantity">
+            <button class="ie-stepper-btn" type="button" id="ie-qty-plus" aria-label="${t(STRINGS.itemEditor.increaseQtyAria)}">
               <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
             </button>
           </div>
@@ -120,8 +125,8 @@ export class ItemEditor extends HTMLElement {
           <!-- Multi-use Toggle (switch style) -->
           <label class="ie-toggle-row">
             <div class="ie-toggle-info">
-              <span class="ie-toggle-label">Multi-use</span>
-              <span class="ie-toggle-sub">Lasts beyond one meal</span>
+              <span class="ie-toggle-label">${t(STRINGS.itemEditor.form.isMultiUse)}</span>
+              <span class="ie-toggle-sub">${t(STRINGS.itemEditor.form.isMultiUseHelp)}</span>
             </div>
             <div class="ie-switch">
               <input type="checkbox" id="ie-multi-use" ${item?.isMultiUse ? 'checked' : ''} class="ie-switch-input" />
@@ -132,10 +137,10 @@ export class ItemEditor extends HTMLElement {
           <!-- Weekly Essential Toggle (star button) -->
           <label class="ie-toggle-row">
             <div class="ie-toggle-info">
-              <span class="ie-toggle-label">Weekly Essential</span>
-              <span class="ie-toggle-sub">Auto-add to new lists</span>
+              <span class="ie-toggle-label">${t(STRINGS.itemEditor.form.isEssential)}</span>
+              <span class="ie-toggle-sub">${t(STRINGS.itemEditor.form.isEssentialHelp)}</span>
             </div>
-            <button class="ie-star-btn ${item?.isEssential ? 'ie-star-btn--on' : ''}" type="button" id="ie-essential" aria-label="Toggle essential">
+            <button class="ie-star-btn ${item?.isEssential ? 'ie-star-btn--on' : ''}" type="button" id="ie-essential" aria-label="${t(STRINGS.itemEditor.toggleEssentialAria)}">
               <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
             </button>
           </label>
@@ -146,7 +151,7 @@ export class ItemEditor extends HTMLElement {
           <div class="ie-duplicate">
             <button class="ie-duplicate-btn" type="button" id="ie-duplicate-btn">
               <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-              Duplicate Item
+              ${t(STRINGS.itemEditor.duplicate)}
             </button>
           </div>
         ` : ''}
@@ -162,11 +167,17 @@ export class ItemEditor extends HTMLElement {
     // Wire essential star toggle
     this.#wireEssentialToggle();
 
-    // Update drawer title
+    // Update drawer title and button texts
     const sheet = this.#getSheet();
     if (sheet) {
       const titleEl = sheet.querySelector('#item-editor-title');
       if (titleEl) titleEl.textContent = title;
+      const saveBtn = sheet.querySelector('#item-editor-save');
+      if (saveBtn) saveBtn.textContent = t(STRINGS.itemEditor.save);
+      const cancelBtn = sheet.querySelector('#item-editor-cancel');
+      if (cancelBtn) cancelBtn.textContent = t(STRINGS.itemEditor.cancel);
+      const deleteBtn = sheet.querySelector('#item-editor-delete-btn');
+      if (deleteBtn) deleteBtn.setAttribute('aria-label', t(STRINGS.itemEditor.delete));
     }
   }
 
@@ -215,7 +226,7 @@ export class ItemEditor extends HTMLElement {
       // ---- Category dropdown ----
       const catSelect = /** @type {HTMLSelectElement | null} */ (this.querySelector('#ie-category'));
       if (catSelect) {
-        catSelect.innerHTML = '<option value="">Select…</option>';
+        catSelect.innerHTML = `<option value="">${t(STRINGS.itemEditor.form.categorySelect)}</option>`;
         const categories = await db.categories.orderBy('name').toArray();
 
         categories.forEach((/** @type {import("../db.js").Category} */ cat) => {
@@ -225,6 +236,12 @@ export class ItemEditor extends HTMLElement {
           if (item?.categoryId === cat.id) opt.selected = true;
           catSelect.appendChild(opt);
         });
+
+        // In add mode, default to "Droge Voeding"
+        if (!item) {
+          const defaultCat = categories.find((/** @type {import("../db.js").Category} */ c) => c.name === 'Droge Voeding');
+          if (defaultCat) catSelect.value = defaultCat.id;
+        }
       }
 
       // ---- Unit select + custom text input ----
@@ -234,7 +251,7 @@ export class ItemEditor extends HTMLElement {
       if (!unitSelect || !unitCustom || !unitSelectWrap) return;
 
       // Populate select with common units + custom option
-      unitSelect.innerHTML = '<option value="">Select…</option>';
+      unitSelect.innerHTML = `<option value="">${t(STRINGS.itemEditor.form.categorySelect)}</option>`;
       const CUSTOM_VALUE = '__custom__';
 
       UNIT_SUGGESTIONS.forEach((name) => {
@@ -247,7 +264,7 @@ export class ItemEditor extends HTMLElement {
       // "Other…" option for custom unit entry
       const otherOpt = document.createElement('option');
       otherOpt.value = CUSTOM_VALUE;
-      otherOpt.textContent = 'Other…';
+      otherOpt.textContent = t(STRINGS.itemEditor.form.otherUnit);
       unitSelect.appendChild(otherOpt);
 
       // Determine if the item's unit is one of the common suggestions or custom
@@ -266,17 +283,23 @@ export class ItemEditor extends HTMLElement {
         unitSelectWrap.style.display = 'none';
         unitCustom.style.display = '';
       } else {
-        // No value — show select
-        unitSelect.value = '';
+        // No value (add mode) — default to "stuks" (set after clone below)
+        unitSelect.value = 'stuks';
         unitSelectWrap.style.display = '';
         unitCustom.style.display = 'none';
       }
 
       // Wire the select change to toggle between select and text input
       // Remove any previous listener by cloning
+      const previousValue = unitSelect.value;
       const newSelect = unitSelect.cloneNode(true);
       unitSelect.replaceWith(newSelect);
       const freshSelect = /** @type {HTMLSelectElement} */ (newSelect);
+
+      // Restore the selected value after clone (cloneNode loses selectedIndex)
+      if (previousValue) {
+        freshSelect.value = previousValue;
+      }
 
       freshSelect.addEventListener('change', () => {
         if (freshSelect.value === CUSTOM_VALUE) {
@@ -356,7 +379,7 @@ export class ItemEditor extends HTMLElement {
     } else if (unitSelect?.value && unitSelect.value !== '__custom__') {
       unitId = unitSelect.value;
     } else {
-      unitId = 'pcs';
+      unitId = 'stuks';
     }
     const isMultiUse = multiUseCheck?.checked || false;
     const isEssential = essentialBtn?.classList.contains('ie-star-btn--on') || false;
@@ -392,7 +415,7 @@ export class ItemEditor extends HTMLElement {
       }
 
       // Close the drawer
-      sheet.style.display = 'none';
+      this.#hide();
       (/** @type {HTMLButtonElement} */ (saveBtn)).disabled = false;
 
       // Dispatch event so the items library can re-render — include saved item data
@@ -418,8 +441,7 @@ export class ItemEditor extends HTMLElement {
       const { deleteItem } = await import('../store/items.store.js');
       await deleteItem(this.#currentItem.id);
 
-      const sheet = this.#getSheet();
-      if (sheet) sheet.style.display = 'none';
+      this.#hide();
 
       this.dispatchEvent(new CustomEvent('item-deleted', { bubbles: true }));
     } catch (err) {
@@ -475,6 +497,27 @@ export class ItemEditor extends HTMLElement {
     if (deleteBtn) (/** @type {HTMLElement} */ (deleteBtn)).style.display = 'none';
 
     sheet.style.display = 'flex';
+
+    // Register with overlay manager for back-button handling
+    this.#closeToken = registerOverlay({
+      /** Close the drawer when the overlay manager requests it (e.g. back button). */
+      close: () => this.#hide(),
+      name: 'item-editor',
+    });
+  }
+
+  /**
+   * Close/hide the item editor drawer.
+   * Business Logic: Unregisters from the overlay manager first so the back button
+   * doesn't try to close the drawer again.
+   * @returns {void}
+   */
+  #hide() {
+    // Unregister from overlay manager
+    this.#closeToken?.();
+    this.#closeToken = null;
+    const sheet = this.#getSheet();
+    if (sheet) sheet.style.display = 'none';
   }
 
   /**
@@ -496,6 +539,13 @@ export class ItemEditor extends HTMLElement {
     if (deleteBtn) (/** @type {HTMLElement} */ (deleteBtn)).style.display = 'flex';
 
     sheet.style.display = 'flex';
+
+    // Register with overlay manager for back-button handling
+    this.#closeToken = registerOverlay({
+      /** Close the drawer when the overlay manager requests it (e.g. back button). */
+      close: () => this.#hide(),
+      name: 'item-editor',
+    });
   }
 
   /**

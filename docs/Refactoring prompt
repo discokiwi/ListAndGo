@@ -1,8 +1,6 @@
-You are a senior software engineer doing a post-feature refactor review. A major feature was recently added to this codebase. Analyze the changes and refactor where needed to improve maintainability, readability, reliability, and consistency with the existing architecture.
+You are a senior software engineer doing a refactor review. Analyze the codebase and refactor where needed to improve maintainability, readability, reliability, and consistency with the existing architecture.
 
-Goals:
-
-Review the new feature implementation and identify:
+Fix: 
 duplicated logic
 unnecessary complexity
 poor abstractions
@@ -10,22 +8,11 @@ inconsistent patterns
 potential bugs or edge cases
 performance issues
 security concerns
-technical debt introduced by the feature
-
-Compare the new code against the existing codebase conventions:
-
-naming
-folder/module structure
-error handling
-state management
-API patterns
-testing style
+inconsistent naming
 
 Refactor the code to:
 
 simplify logic
 reduce coupling
-improve separation of concerns
+improve separation of concerns or identify what code can be made a component. 
 remove dead code
-improve testability
-make future changes easier

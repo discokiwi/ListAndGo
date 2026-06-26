@@ -266,11 +266,15 @@ export class RecipeLibrary extends HTMLElement {
                   <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
                   ${prepTime}m
                 </span>
-                ${isFavourite ? '<span class="recipe-card__badge" style="background:color-mix(in srgb, var(--color-error) 10%, transparent);color:var(--color-error)">★ Fav</span>' : ''}
               </div>
               <h3 class="recipe-card__title">${title}</h3>
               <p class="recipe-card__description">${notes.length > 80 ? notes.slice(0, 80) + '…' : notes} · ${ingredientCount} ingredients</p>
             </div>
+            <button class="recipe-card__fav-btn${isFavourite ? ' recipe-card__fav-btn--active' : ''}" data-fav-toggle="${recipe.id}" aria-label="${isFavourite ? 'Remove from favourites' : 'Add to favourites'}">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              </svg>
+            </button>
             <button class="recipe-card__add-btn" data-add-to-plan="${recipe.id}" aria-label="Add to Plan">
               <span class="material-symbols-outlined recipe-card__add-icon">calendar_add_on</span>
             </button>
@@ -283,8 +287,9 @@ export class RecipeLibrary extends HTMLElement {
     const cards = this._container.querySelectorAll('.recipe-card');
     cards.forEach((card) => {
       card.addEventListener('click', (e) => {
-        // Don't open detail if clicking "Add to Plan" button
+        // Don't open detail if clicking "Add to Plan" or favourite button
         if (e.target.closest('.recipe-card__add-btn')) return;
+        if (e.target.closest('.recipe-card__fav-btn')) return;
         const recipeId = card.getAttribute('data-recipe-id');
         if (recipeId) this._openDetail(recipeId);
       });
@@ -297,6 +302,16 @@ export class RecipeLibrary extends HTMLElement {
         e.stopPropagation();
         const recipeId = btn.getAttribute('data-add-to-plan');
         if (recipeId) this._handleAddToPlan(btn, recipeId);
+      });
+    });
+
+    // Wire Favourite toggle buttons
+    const favBtns = this._container.querySelectorAll('[data-fav-toggle]');
+    favBtns.forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const recipeId = btn.getAttribute('data-fav-toggle');
+        if (recipeId) this._handleFavToggle(btn, recipeId);
       });
     });
   }
@@ -331,11 +346,29 @@ export class RecipeLibrary extends HTMLElement {
 
   /**
    * Handle the "Add to Plan" button click with visual feedback.
+   * Business Logic: Adds the recipe to the meal plan database via the store,
+   * dispatches an event so the meal planner tab can re-render, and provides
+   * optimistic visual feedback on the button.
    * @param {HTMLElement} btn - The clicked button element.
    * @param {string} _recipeId - The recipe UUID.
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  _handleAddToPlan(btn, _recipeId) {
+  async _handleAddToPlan(btn, _recipeId) {
+    // Add to meal plan database
+    try {
+      const { addMealPlan } = await import('../store/mealplan.store.js');
+      await addMealPlan(_recipeId);
+
+      // Dispatch event so the meal planner tab re-renders
+      document.dispatchEvent(new CustomEvent('meal-plan-changed', {
+        bubbles: true,
+        composed: true,
+      }));
+    } catch (err) {
+      console.error('Failed to add recipe to plan:', err);
+      return;
+    }
+
     // Visual feedback
     btn.classList.add('recipe-card__add-btn--added');
     const icon = /** @type {HTMLElement | null} */ (btn.querySelector('.recipe-card__add-icon'));
@@ -351,13 +384,46 @@ export class RecipeLibrary extends HTMLElement {
         icon.style.fontVariationSettings = "'FILL' 1";
       }
     }, 2000);
+  }
 
-    // Dispatch event for the meal planner integration
-    this.dispatchEvent(new CustomEvent('add-recipe-to-plan', {
-      bubbles: true,
-      composed: true,
-      detail: { recipeId: _recipeId },
-    }));
+  /**
+   * Handle Favourite toggle button click.
+   * Business Logic: Toggles the isFavourite flag on a recipe in the store.
+   * Updates the button visual state immediately (optimistic UI) and refreshes
+   * the list if currently on the 'favourites' filter so removed items disappear.
+   * @param {HTMLElement} btn - The heart button element.
+   * @param {string} recipeId - The recipe UUID.
+   * @returns {Promise<void>}
+   */
+  async _handleFavToggle(btn, recipeId) {
+    const isCurrentlyActive = btn.classList.contains('recipe-card__fav-btn--active');
+    const newFav = !isCurrentlyActive;
+
+    // Optimistic UI update
+    btn.classList.toggle('recipe-card__fav-btn--active', newFav);
+    btn.setAttribute('aria-label', newFav ? 'Remove from favourites' : 'Add to favourites');
+
+    try {
+      const { updateRecipe } = await import('../store/recipes.store.js');
+      await updateRecipe(recipeId, { isFavourite: newFav });
+
+      // Dispatch a custom event so other parts of the app can react
+      this.dispatchEvent(new CustomEvent('recipe-favourited', {
+        bubbles: true,
+        composed: true,
+        detail: { recipeId, isFavourite: newFav },
+      }));
+
+      // If on the 'favourites' filter and the recipe was unfavourited, reload
+      if (this._activeFilter === 'favourites' && !newFav) {
+        this._loadRecipes();
+      }
+    } catch (err) {
+      // Revert optimistic update on failure
+      btn.classList.toggle('recipe-card__fav-btn--active', isCurrentlyActive);
+      btn.setAttribute('aria-label', isCurrentlyActive ? 'Remove from favourites' : 'Add to favourites');
+      console.error('Failed to toggle favourite:', err);
+    }
   }
 }
 

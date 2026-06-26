@@ -1,6 +1,6 @@
 // @ts-check
 import { escapeHtml, formatQty } from '../utils/dom-utils.js';
-import { getCategoryColor } from '../utils/category-colors.js';
+import { getCategoryColor } from '../store/categories.store.js';
 import './quantity-stepper.js';
 
 /**
@@ -8,6 +8,8 @@ import './quantity-stepper.js';
  * Business Logic: Displays one grocery item with quantity, name, optional
  * recipe link badge, and a circular check toggle. Uses light DOM so styles
  * come from shared CSS files (item-row.css + grocery-row.css).
+ * The recipe badge shows the name of the first recipe that sourced this item,
+ * resolved via a Dexie query on sourceRecipeIds.
  * Supports Edit Mode: on long press emits 'item-long-press' to trigger
  * edit mode at the list level. In edit mode, the checkbox is replaced by a
  * reusable <quantity-stepper> component and delete button.
@@ -23,6 +25,9 @@ export class GroceryRow extends HTMLElement {
   /** @type {number | undefined} */
   _pressTimer = undefined;
 
+  /** @type {string} Cached recipe label for the badge (e.g. "Pasta Bolognese") */
+  _recipeLabel = '';
+
   /** Construct the component. */
   constructor() {
     super();
@@ -34,7 +39,10 @@ export class GroceryRow extends HTMLElement {
    */
   set item(item) {
     this._item = item;
+    this._recipeLabel = ''; // Clear cached label
     this._render();
+    // Async fetch recipe name
+    this._resolveRecipeLabel();
   }
 
   /**
@@ -63,6 +71,55 @@ export class GroceryRow extends HTMLElement {
   /** Called when element is added to the DOM. */
   connectedCallback() {
     this._render();
+    this._resolveRecipeLabel();
+  }
+
+  /**
+   * Async fetch recipe name from sourceRecipeIds and update the badge in light DOM.
+   * Business Logic: Queries Dexie for the first recipe ID in sourceRecipeIds and
+   * gets its title. If multiple recipes reference the same item, only the first
+   * recipe name is shown (with "+N more" if additional recipes exist).
+   * @returns {Promise<void>}
+   */
+  async _resolveRecipeLabel() {
+    if (!this._item) return;
+
+    /** @type {string[]} */
+    let recipeIds;
+    try {
+      recipeIds = JSON.parse(this._item.sourceRecipeIds || '[]');
+    } catch {
+      recipeIds = [];
+    }
+
+    if (recipeIds.length === 0) return;
+
+    try {
+      const { db } = await import('../db.js');
+      const recipe = await db.recipes.get(recipeIds[0]);
+      if (recipe) {
+        this._recipeLabel = recipe.title;
+      } else {
+        this._recipeLabel = 'Recipe';
+      }
+
+      // If there are additional recipes, append "+N more"
+      if (recipeIds.length > 1) {
+        this._recipeLabel += ` +${recipeIds.length - 1}`;
+      }
+
+      // Update the badge text in the DOM
+      const badge = this.querySelector('.gr-row__recipe-link');
+      if (badge) {
+        // Keep the SVG icon, update the text
+        const textNode = badge.childNodes[badge.childNodes.length - 1];
+        if (textNode) {
+          textNode.textContent = this._recipeLabel;
+        }
+      }
+    } catch (err) {
+      console.error('Failed to resolve recipe label:', err);
+    }
   }
 
   /** Internal render — builds the row HTML. */

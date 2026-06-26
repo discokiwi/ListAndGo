@@ -65,10 +65,11 @@ export async function getOrCreateActiveList() {
 }
 
 /**
- * Get all items for a given list, sorted by checked status then by category.
- * Business Logic: Unchecked items should appear first (organised by category),
- * followed by checked items moved to the bottom. Within each group, items are
- * ordered by their categoryId for store-layout grouping.
+ * Get all items for a given list, sorted by checked status then by completion time.
+ * Business Logic: Unchecked items appear first (organised by category for store-layout
+ * grouping), followed by checked items moved to the COMPLETED section at the bottom.
+ * Within the checked group, items are ordered by updatedAt descending so the most
+ * recently completed item appears highest in the COMPLETED section.
  * @param {string} listId - The grocery list UUID.
  * @returns {Promise<GroceryItem[]>} Sorted grocery items.
  */
@@ -77,11 +78,16 @@ export async function getGroceryItems(listId) {
     .where('listId').equals(listId)
     .toArray();
 
-  // Sort: unchecked first (by category), then checked (by category)
+  // Sort: unchecked first (by category), then checked (by completion time, most recent first)
   items.sort((/** @type {GroceryItem} */ a, /** @type {GroceryItem} */ b) => {
     if (a.isChecked !== b.isChecked) {
       return a.isChecked ? 1 : -1;
     }
+    // Both checked: order by completion time, most recent first ("last completed is highest")
+    if (a.isChecked) {
+      return (b.updatedAt || '').localeCompare(a.updatedAt || '');
+    }
+    // Both unchecked: order by category for store-layout grouping
     return (a.categoryId || '').localeCompare(b.categoryId || '');
   });
 
@@ -118,27 +124,42 @@ export async function getGroceryItemsByCategory(listId) {
  * Business Logic: Each item can only appear once on the grocery list. When a user
  * manually adds an item or a recipe pushes ingredients, this function first checks
  * if an item with the same itemId already exists in the list. If it does, the qty
- * is incremented instead of creating a duplicate.
+ * is incremented and the sourceRecipeIds are merged instead of creating a duplicate.
  * @param {string} listId - The grocery list UUID.
  * @param {string} itemId - The library item UUID.
  * @param {string} name - Denormalized item name for offline display.
  * @param {string} categoryId - Denormalized category for grouping.
  * @param {number} qty - Quantity to add.
  * @param {string} unit - Unit string.
+ * @param {string} [recipeId] - Optional recipe UUID to store in sourceRecipeIds.
  * @returns {Promise<string>} The grocery item UUID (existing or new).
  */
-export async function addGroceryItem(listId, itemId, name, categoryId, qty, unit) {
+export async function addGroceryItem(listId, itemId, name, categoryId, qty, unit, recipeId) {
   // Check if an item with the same itemId already exists in the list
   const existing = await db.groceryItems
     .where({ listId, itemId })
     .first();
 
   if (existing) {
-    // Item exists — increment qty
+    // Item exists — increment qty and merge sourceRecipeIds
     const now = new Date().toISOString();
     const newQty = (existing.qty || 0) + qty;
+    
+    // Merge recipeId into existing sourceRecipeIds
+    /** @type {string[]} */
+    let existingSourceIds;
+    try {
+      existingSourceIds = JSON.parse(existing.sourceRecipeIds || '[]');
+    } catch {
+      existingSourceIds = [];
+    }
+    if (recipeId && !existingSourceIds.includes(recipeId)) {
+      existingSourceIds.push(recipeId);
+    }
+    
     await db.groceryItems.update(existing.id, {
       qty: newQty,
+      sourceRecipeIds: JSON.stringify(existingSourceIds),
       updatedAt: now,
       isSynced: 0,
     });
@@ -160,7 +181,7 @@ export async function addGroceryItem(listId, itemId, name, categoryId, qty, unit
     qty,
     unit,
     isChecked: false,
-    sourceRecipeIds: '[]',
+    sourceRecipeIds: recipeId ? JSON.stringify([recipeId]) : '[]',
     updatedAt: now,
     isSynced: 0,
   });
@@ -250,6 +271,76 @@ export async function addEssentialItemToGrocery(listId, item) {
     item.defaultQty,
     item.unitId,
   );
+}
+
+/**
+ * Parse sourceRecipeIds from a grocery item's JSON string field.
+ * @param {GroceryItem} item - The grocery item.
+ * @returns {string[]} Array of recipe UUIDs.
+ */
+function parseSourceIds(item) {
+  try {
+    return JSON.parse(item.sourceRecipeIds || '[]');
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Remove grocery items that are only sourced from a given recipe ID.
+ * Business Logic: When a recipe is removed from the meal plan or its
+ * "Add to Grocery List" toggle is turned off, we need to clean up.
+ * If a grocery item has only this recipeId in its sourceRecipeIds,
+ * the item is deleted entirely. If the item is also sourced from
+ * other recipes, we just remove this recipeId from the array.
+ * Uses Dexie's filter() for indexed querying instead of loading
+ * the entire table into memory.
+ * @param {string} recipeId - The recipe UUID to remove.
+ * @returns {Promise<void>}
+ */
+export async function removeItemsByRecipeId(recipeId) {
+  // Use Dexie's filter to only load items with non-empty sourceRecipeIds
+  const items = await db.groceryItems
+    .filter((/** @type {GroceryItem} */ item) => item.sourceRecipeIds && item.sourceRecipeIds !== '[]')
+    .toArray();
+  
+  for (const item of items) {
+    const sourceIds = parseSourceIds(item);
+    if (!sourceIds.includes(recipeId)) continue;
+    
+    if (sourceIds.length === 1) {
+      // Only this recipe references it — delete entirely
+      await db.groceryItems.delete(item.id);
+    } else {
+      // Remove this recipeId from the array
+      const updatedSourceIds = sourceIds.filter((id) => id !== recipeId);
+      const now = new Date().toISOString();
+      await db.groceryItems.update(item.id, {
+        sourceRecipeIds: JSON.stringify(updatedSourceIds),
+        updatedAt: now,
+        isSynced: 0,
+      });
+    }
+  }
+}
+
+/**
+ * Remove all grocery items that have any recipe source (non-empty sourceRecipeIds).
+ * Business Logic: Used when the user clears all meal plans, to also clean up
+ * all recipe-originated items from the grocery list.
+ * Uses Dexie's filter() to only load items with recipe sources.
+ * @returns {Promise<void>}
+ */
+export async function removeAllRecipeItems() {
+  // Only fetch items that have non-empty sourceRecipeIds
+  const items = await db.groceryItems
+    .filter((/** @type {GroceryItem} */ item) => item.sourceRecipeIds && item.sourceRecipeIds !== '[]')
+    .toArray();
+
+  const ids = items.map((/** @type {GroceryItem} */ item) => item.id);
+  if (ids.length > 0) {
+    await db.groceryItems.bulkDelete(ids);
+  }
 }
 
 /**

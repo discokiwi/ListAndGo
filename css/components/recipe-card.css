@@ -129,6 +129,51 @@
   line-height: 1.4;
 }
 
+/* Heart Favourite button */
+.recipe-card__fav-btn {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: transform 0.15s ease, color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+  color: var(--color-outline-variant);
+  padding: 0;
+
+  & svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    transition: fill 0.2s ease, stroke 0.2s ease;
+  }
+
+  &:hover {
+    color: var(--color-primary);
+  }
+
+  &:active {
+    transform: scale(0.85);
+  }
+}
+
+.recipe-card__fav-btn--active {
+  color: var(--color-primary);
+
+  & svg {
+    fill: currentColor;
+    stroke: currentColor;
+  }
+}
+
 /* Add to Plan button — circular thumb-touch target */
 .recipe-card__add-btn {
   width: var(--spacing-thumb-touch);

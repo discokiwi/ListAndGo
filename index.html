@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>List&GO – Grocery & Meal Planner</title>
-  <meta name="description" content="A local‑first, offline‑first PWA for managing grocery lists and meal planning." />
+  <title id="page-title">List&GO – Boodschappen & Maaltijdplanner</title>
+  <meta name="description" content="Een local-first, offline-first PWA voor boodschappenlijsten en maaltijdplanning." />
   <meta name="theme-color" content="#f9f9fc" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -20,6 +20,7 @@
   <!-- Component Styles -->
   <link rel="stylesheet" href="css/components/badge.css" />
   <link rel="stylesheet" href="css/components/bottom-sheet.css" />
+  <link rel="stylesheet" href="css/components/meal-plan-card.css" />
   <link rel="stylesheet" href="css/components/category-section.css" />
   <link rel="stylesheet" href="css/components/fab.css" />
   <link rel="stylesheet" href="css/components/grocery-row.css" />
@@ -53,19 +54,19 @@
     <nav class="app-nav blur-target" id="app-nav">
       <a href="#/lists" data-route="lists">
         <svg width="24" height="24" viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2S15.9 22 17 22s2-.9 2-2-.9-2-2-2zm-8.9-5h7.45c.75 0 1.41-.41 1.75-1.03L21 4.96 19.25 4l-3.7 7H8.53L4.27 2H1v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5.48 17 7 17h12v-2H7l1.1-2z"/></svg>
-        <span>Lists</span>
+        <span id="nav-lists-label">Lijsten</span>
       </a>
       <a href="#/plan" data-route="plan">
         <svg width="24" height="24" viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
-        <span>Plan</span>
+        <span id="nav-plan-label">Planning</span>
       </a>
       <a href="#/recipes" data-route="recipes">
         <svg width="24" height="24" viewBox="0 0 24 24"><path d="M8.1 13.34l2.83-2.83L3.91 3.5c-1.56 1.56-1.56 4.09 0 5.66l4.19 4.18zm6.78-1.81c1.53.71 3.68.21 5.27-1.38 1.91-1.91 2.28-4.65.81-6.12-1.46-1.46-4.2-1.1-6.12.81-1.59 1.59-2.09 3.74-1.38 5.27L3.7 19.87l1.41 1.41L12 14.41l6.88 6.88 1.41-1.41L13.41 13l1.47-1.47z"/></svg>
-        <span>Recipes</span>
+        <span id="nav-recipes-label">Recepten</span>
       </a>
       <a href="#/items" data-route="items">
         <svg width="24" height="24" viewBox="0 -960 960 960"><path d="M640-80q-100 0-170-70t-70-170q0-100 70-170t170-70q100 0 170 70t70 170q0 100-70 170T640-80Zm0-80q66 0 113-47t47-113q0-66-47-113t-113-47q-66 0-113 47t-47 113q0 66 47 113t113 47Zm-480 0q-33 0-56.5-23.5T80-240v-304q0-8 1.5-16t4.5-16l80-184h-6q-17 0-28.5-11.5T120-800v-40q0-17 11.5-28.5T160-880h280q17 0 28.5 11.5T480-840v40q0 17-11.5 28.5T440-760h-6l66 152q-19 10-36 21t-32 25l-84-198h-96l-92 216v304h170q5 21 13.5 41.5T364-160H160Zm480-440q-42 0-71-29t-29-71q0-42 29-71t71-29v200q0-42 29-71t71-29q42 0 71 29t29 71H640Z"/></svg>
-        <span>Items</span>
+        <span id="nav-items-label">Items</span>
       </a>
     </nav>
 
@@ -84,23 +85,23 @@
     <template id="grocery-list-template">
       <section class="page">
         <div class="page__header page__header--hidden">
-          <h1 class="page__title">Grocery List</h1>
+          <h1 class="page__title" id="grocery-page-title">Boodschappenlijst</h1>
         </div>
         <!-- Search & Action Bar -->
         <div class="search-bar blur-target">
           <div class="search-bar__input-wrapper">
             <svg class="search-bar__icon" width="20" height="20" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-            <input class="search-bar__input" id="grocery-search" type="search" placeholder="Add milk, eggs, bread..." autocomplete="off" />
+            <input class="search-bar__input" id="grocery-search" type="search" placeholder="Melk, eieren, brood toevoegen..." autocomplete="off" />
             <div class="search-bar__dropdown" id="grocery-search-dropdown" style="display:none"></div>
           </div>
           <div class="search-bar__pills">
             <button class="pill pill--filled" id="essentials-btn">
               <svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-              EVERY WEEK
+              <span id="essentials-btn-label">ELKE WEEK</span>
             </button>
             <button class="pill pill--outlined pill--danger" id="clear-all-btn">
               <svg width="16" height="16" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-              CLEAR ALL
+              <span id="clear-all-btn-label">ALLES WISSEN</span>
             </button>
           </div>
         </div>
@@ -113,10 +114,18 @@
     <!-- Meal Plan Tab -->
     <template id="meal-plan-template">
       <section class="page">
-        <div class="page__header page__header--hidden">
-          <h1 class="page__title">Meal Plan</h1>
+        <div class="plan-header">
+          <div class="page__header">
+            <h1 class="page__title" id="mealplan-page-title">Maaltijdplanning</h1>
+          </div>
+          <div class="search-bar__pills">
+            <button class="pill pill--outlined pill--danger" id="plan-clear-all-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+              <span id="plan-clear-all-label">ALLES WISSEN</span>
+            </button>
+          </div>
         </div>
-        <div class="meal-plan-container" id="meal-plan-container">
+        <div class="meal-plan-card-list" id="meal-plan-card-list">
           <!-- Rendered by meal-planner component -->
         </div>
       </section>
@@ -126,15 +135,15 @@
     <template id="recipes-template">
       <section class="page">
         <div class="page__header page__header--hidden">
-          <h1 class="page__title">Recipes</h1>
-          <button class="btn btn--primary btn--small" id="add-recipe-btn" aria-label="Add recipe">
-            + New
+          <h1 class="page__title" id="recipes-page-title">Recepten</h1>
+          <button class="btn btn--primary btn--small" id="add-recipe-btn" aria-label="Recept toevoegen">
+            + Nieuw
           </button>
         </div>
         <div class="recipe-library-container" id="recipe-library-container">
           <!-- Rendered by recipe-library component -->
         </div>
-        <button class="recipe-fab" id="recipe-add-fab" aria-label="Add recipe">
+        <button class="recipe-fab" id="recipe-add-fab" aria-label="Recept toevoegen">
           <svg width="24" height="24" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
         </button>
       </section>
@@ -144,19 +153,19 @@
     <template id="items-library-template">
       <section class="page">
         <div class="page__header page__header--hidden">
-          <h1 class="page__title">Item list</h1>
+          <h1 class="page__title" id="items-page-title">Itemlijst</h1>
         </div>
         <!-- Search Section (same design as grocery list) -->
         <div class="search-bar">
           <div class="search-bar__input-wrapper">
             <svg class="search-bar__icon" width="20" height="20" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-            <input class="search-bar__input" type="text" id="items-search-input" placeholder="Search ingredients or categories..." autocomplete="off" />
+            <input class="search-bar__input" type="text" id="items-search-input" placeholder="Ingrediënten of categorieën doorzoeken..." autocomplete="off" />
           </div>
-          <!-- Filter Pills — single Essentials toggle (same design as grocery list's EVERY WEEK) -->
+          <!-- Filter Pills -- single Essentials toggle (same design as grocery list's EVERY WEEK) -->
           <div class="search-bar__pills" id="items-filter-pills">
             <button class="pill pill--outlined" id="items-essentials-btn">
               <svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-              ESSENTIALS
+              <span id="items-essentials-label">ESSENTIEEL</span>
             </button>
           </div>
         </div>
@@ -164,9 +173,9 @@
           <!-- Rendered by items-library component -->
         </div>
         <!-- Toast notification -->
-        <div class="items-toast" id="items-toast">Added to Grocery List</div>
+        <div class="items-toast" id="items-toast">Toegevoegd aan Boodschappenlijst</div>
         <!-- FAB for adding items -->
-        <button class="fab" id="add-item-btn" aria-label="Add item">
+        <button class="fab" id="add-item-btn" aria-label="Item toevoegen">
           <svg width="24" height="24" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
         </button>
       </section>
@@ -176,7 +185,7 @@
     <template id="settings-template">
       <section class="page">
         <div class="page__header page__header--hidden">
-          <h1 class="page__title">Settings</h1>
+          <h1 class="page__title">Instellingen</h1>
         </div>
         <div class="settings-container" id="settings-container">
           <!-- Rendered by settings-panel component -->
@@ -188,22 +197,19 @@
     <!-- Side Drawer Dialogs                           -->
     <!-- ============================================= -->
 
-    <!-- Add/Edit Item Drawer (Stitch "Edit Item - Inventory Manager" side drawer) -->
-    <!-- Uses a div rather than <dialog> because Chromium's top-layer layout for
-         showModal() doesn't support display:flex + justify-content:flex-end.
-         This div is shown/hidden via inline styles. -->
+    <!-- Add/Edit Item Drawer -->
     <div class="side-drawer" id="item-editor-sheet" style="display:none">
       <div class="side-drawer__backdrop" id="item-editor-overlay"></div>
       <div class="side-drawer__content">
         <div class="side-drawer__header">
           <div class="side-drawer__header-left">
-            <button class="side-drawer__back" id="item-editor-close" aria-label="Close">
+            <button class="side-drawer__back" id="item-editor-close" aria-label="Sluiten">
               <svg width="24" height="24" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
             </button>
-            <h2 class="side-drawer__title" id="item-editor-title">Edit Item</h2>
+            <h2 class="side-drawer__title" id="item-editor-title">Item Bewerken</h2>
           </div>
-          <button class="side-drawer__delete" id="item-editor-delete-btn" aria-label="Delete item">
-            DELETE ITEM
+          <button class="side-drawer__delete" id="item-editor-delete-btn" aria-label="Item verwijderen">
+            ITEM VERWIJDEREN
           </button>
         </div>
 
@@ -212,49 +218,26 @@
         </div>
 
         <div class="side-drawer__footer">
-          <button class="side-drawer__btn side-drawer__btn--secondary" id="item-editor-cancel">Cancel</button>
-          <button class="side-drawer__btn side-drawer__btn--primary" id="item-editor-save">Save Changes</button>
+          <button class="side-drawer__btn side-drawer__btn--secondary" id="item-editor-cancel">Annuleren</button>
+          <button class="side-drawer__btn side-drawer__btn--primary" id="item-editor-save">Wijzigingen Opslaan</button>
         </div>
       </div>
     </div>
-
-    <!-- Add/Edit Recipe Sheet — now dynamically rendered by recipe-editor component as a drawer -->
-    
-    <!-- Ingredient Picker Sheet -->
-    <dialog class="bottom-sheet" id="ingredient-picker-sheet">
-      <div class="bottom-sheet__content">
-        <div class="bottom-sheet__handle"></div>
-        <div class="bottom-sheet__header">
-          <h2 class="bottom-sheet__title">Select Ingredient</h2>
-          <button class="bottom-sheet__close" id="ingredient-picker-close" aria-label="Close">
-            <svg width="20" height="20" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-          </button>
-        </div>
-        <div class="bottom-sheet__body" id="ingredient-picker-body">
-          <input type="search" class="input input--search" id="ingredient-search" placeholder="Search ingredients..." autocomplete="off" />
-          <div id="ingredient-results">
-            <!-- Rendered by ingredient-picker component -->
-          </div>
-        </div>
-      </div>
-    </dialog>
-
   </div>
 
-  <!-- Recipe Editor Component (hidden — self-activates via event listener) -->
+  <!-- Recipe Editor Component -->
   <recipe-editor></recipe-editor>
 
-  <!-- Recipe Detail Component (hidden — self-activates via event listener) -->
+  <!-- Recipe Detail Component -->
   <recipe-detail></recipe-detail>
 
-  <!-- Settings Drawer Component (slide-in) -->
+  <!-- Settings Drawer Component -->
   <settings-panel></settings-panel>
 
   <!-- Global Snackbar Component -->
   <app-snackbar></app-snackbar>
 
   <!-- Global scripts -->
-  <!-- Dexie (IndexedDB wrapper) vendored locally for offline-first resilience -->
   <script src="js/vendor/dexie.min.js"></script>
   <script type="module" src="js/app.js"></script>
 </body>

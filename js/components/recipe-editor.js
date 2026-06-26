@@ -10,6 +10,8 @@
  * @class
  */
 import { escapeHtml } from '../utils/dom-utils.js';
+import { registerOverlay } from '../overlay-manager.js';
+import { STRINGS, t } from '../strings/i18n.js';
 import './search-autocomplete.js';
 
 /**
@@ -22,6 +24,8 @@ export class RecipeEditor extends HTMLElement {
   _currentRecipeId = null;
   /** @type {'add' | 'edit'} */
   _mode = 'add';
+  /** @type {(() => void) | null} */
+  _closeToken = null;
   /** @type {HTMLDivElement | null} */
   _drawer = null;
   /** @type {HTMLDivElement | null} */
@@ -77,13 +81,6 @@ export class RecipeEditor extends HTMLElement {
       this.close();
     });
 
-    // Close on escape key
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this._drawer?.classList.contains('rd-drawer__container--open')) {
-        this.close();
-      }
-    });
-
     // Delegate ingredient delete events
     document.addEventListener('click', (e) => {
       const deleteBtn = e.target.closest('.recipe-editor__ingredient-delete');
@@ -97,11 +94,20 @@ export class RecipeEditor extends HTMLElement {
     document.addEventListener('item-saved', (e) => {
       const detail = /** @type {CustomEvent} */ (e).detail;
       if (detail && detail.itemId && this._pendingCreateQuery) {
-        // The drawer is open and we were waiting for a new item to be created
-        this._pendingCreateQuery = ''; // Reset before async lookup
-
-        // Look up the saved item and add it as an ingredient
+        this._pendingCreateQuery = '';
         this._addSavedItemAsIngredient(detail.itemId);
+      }
+    });
+
+    // Listen for language changes
+    document.addEventListener('language-changed', () => {
+      if (this._drawer?.classList.contains('rd-drawer__container--open')) {
+        this._updateTopBar();
+        if (this._currentRecipeId) {
+          this._loadAndOpen(this._currentRecipeId);
+        } else {
+          this._renderForm(null);
+        }
       }
     });
   }
@@ -126,18 +132,18 @@ export class RecipeEditor extends HTMLElement {
     drawer.className = 'rd-drawer__container';
     drawer.innerHTML = `
       <header class="rd-drawer__top-bar">
-        <button class="rd-drawer__close-btn" id="recipe-editor-close-btn" aria-label="Close">
+        <button class="rd-drawer__close-btn" id="recipe-editor-close-btn" aria-label="${STRINGS.contentDialog.closeAria}">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
         </button>
-        <h1 class="rd-drawer__top-bar-title rd-drawer__top-bar-title--primary" id="recipe-editor-title">Add Recipe</h1>
+        <h1 class="rd-drawer__top-bar-title rd-drawer__top-bar-title--primary" id="recipe-editor-title">${STRINGS.recipeEditor.addTitle}</h1>
         <div class="rd-drawer__top-actions">
           <button class="rd-drawer__delete-btn" id="recipe-editor-delete-btn" style="display:none">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-            Delete
+            ${STRINGS.recipeEditor.delete}
           </button>
           <button class="rd-drawer__save-btn" id="recipe-editor-save-btn">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-            Save
+            ${STRINGS.recipeEditor.save}
           </button>
         </div>
       </header>
@@ -178,13 +184,26 @@ export class RecipeEditor extends HTMLElement {
 
     // Prevent body scroll
     document.body.style.overflow = 'hidden';
+
+    // Register with overlay manager for back-button handling
+    this._closeToken = registerOverlay({
+      /** Close the editor when the overlay manager requests it (e.g. back button). */
+      close: () => this.close(),
+      name: 'recipe-editor',
+    });
   }
 
   /**
-   * Close the editor.
+   * Close the editor and unregister from the overlay manager.
+   * Business Logic: Called either directly (via close button / save) or by the
+   * overlay manager when the back button is pressed. Must unregister first so
+   * the overlay stack stays in sync.
    * @returns {void}
    */
   close() {
+    // Unregister from overlay manager
+    this._closeToken?.();
+    this._closeToken = null;
     this._backdrop?.classList.remove('rd-drawer__backdrop--open');
     this._drawer?.classList.remove('rd-drawer__container--open');
 
@@ -224,9 +243,16 @@ export class RecipeEditor extends HTMLElement {
       this._backdrop?.classList.add('rd-drawer__backdrop--open');
       this._drawer?.classList.add('rd-drawer__container--open');
 
-      // Prevent body scroll
-      document.body.style.overflow = 'hidden';
-    } catch (err) {
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
+
+    // Register with overlay manager for back-button handling
+    this._closeToken = registerOverlay({
+      /** Close the editor when the overlay manager requests it (e.g. back button). */
+      close: () => this.close(),
+      name: 'recipe-editor',
+    });
+  } catch (err) {
       console.error('Failed to load recipe for editing:', err);
       this.open('add');
     }
@@ -239,7 +265,7 @@ export class RecipeEditor extends HTMLElement {
   _updateTopBar() {
     const titleEl = document.getElementById('recipe-editor-title');
     if (titleEl) {
-      titleEl.textContent = this._mode === 'add' ? 'Add Recipe' : 'Edit Recipe';
+      titleEl.textContent = this._mode === 'add' ? STRINGS.recipeEditor.addTitle : STRINGS.recipeEditor.editTitle;
     }
 
     const deleteBtn = document.getElementById('recipe-editor-delete-btn');
@@ -268,7 +294,7 @@ export class RecipeEditor extends HTMLElement {
         <span class="recipe-editor__ingredient-name">${escapeHtml(ing.name)}</span>
         <input class="recipe-editor__ingredient-qty" type="text" value="${ing.qty}" data-ingredient-qty="${i}" />
         <span class="recipe-editor__ingredient-unit">${escapeHtml(ing.unitId)}</span>
-        <button class="recipe-editor__ingredient-delete" data-index="${i}" aria-label="Remove ingredient">
+        <button class="recipe-editor__ingredient-delete" data-index="${i}" aria-label="${STRINGS.recipeEditor.form.removeAria}">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
         </button>
       </div>
@@ -278,42 +304,42 @@ export class RecipeEditor extends HTMLElement {
       <div class="recipe-editor__form">
         <!-- Title -->
         <div class="recipe-editor__field">
-          <label class="recipe-editor__label">Recipe Name</label>
-          <input class="recipe-editor__input recipe-editor__input--title" id="re-name" type="text" value="${escapeHtml(title)}" placeholder="Recipe name" autocomplete="off" />
+          <label class="recipe-editor__label">${STRINGS.recipeEditor.form.name}</label>
+          <input class="recipe-editor__input recipe-editor__input--title" id="re-name" type="text" value="${escapeHtml(title)}" placeholder="${STRINGS.recipeEditor.form.namePlaceholder}" autocomplete="off" />
         </div>
 
         <!-- Description -->
         <div class="recipe-editor__field">
-          <label class="recipe-editor__label">Description</label>
-          <textarea class="recipe-editor__textarea" id="re-description" placeholder="Brief description...">${escapeHtml(description)}</textarea>
+          <label class="recipe-editor__label">${STRINGS.recipeEditor.form.description}</label>
+          <textarea class="recipe-editor__textarea" id="re-description" placeholder="${STRINGS.recipeEditor.form.descriptionPlaceholder}">${escapeHtml(description)}</textarea>
         </div>
 
         <!-- Info Grid -->
         <div class="recipe-editor__info-grid">
           <div class="recipe-editor__info-box">
-            <label class="recipe-editor__label">Category</label>
+            <label class="recipe-editor__label">${STRINGS.recipeEditor.form.category}</label>
             <select id="re-category">
-              <option value="">Select…</option>
+              <option value="">${STRINGS.recipeEditor.form.categorySelect}</option>
             </select>
           </div>
           <div class="recipe-editor__info-box">
-            <label class="recipe-editor__label">Prep Time (min)</label>
+            <label class="recipe-editor__label">${STRINGS.recipeEditor.form.prepTime}</label>
             <input type="number" id="re-prep-time" value="${prepTime}" min="0" step="1" />
           </div>
           <div class="recipe-editor__info-box">
-            <label class="recipe-editor__label">Serves</label>
+            <label class="recipe-editor__label">${STRINGS.recipeEditor.form.serves}</label>
             <input type="number" id="re-servings" value="${servingsBase}" min="1" max="20" step="1" />
           </div>
           <div class="recipe-editor__info-box">
-            <label class="recipe-editor__label">Source URL</label>
-            <input type="url" id="re-url" value="${escapeHtml(instructionsUrl)}" placeholder="https://..." autocomplete="off" />
+            <label class="recipe-editor__label">${STRINGS.recipeEditor.form.sourceUrl}</label>
+            <input type="url" id="re-url" value="${escapeHtml(instructionsUrl)}" placeholder="${STRINGS.recipeEditor.form.sourcePlaceholder}" autocomplete="off" />
           </div>
         </div>
 
         <!-- Ingredients -->
         <div class="recipe-editor__ingredients-header">
-          <h3 class="recipe-editor__ingredients-title">Ingredients</h3>
-          <span class="recipe-editor__count-badge" id="re-ingredient-count">${this._ingredients.length} Items</span>
+          <h3 class="recipe-editor__ingredients-title">${STRINGS.recipeEditor.form.ingredients}</h3>
+          <span class="recipe-editor__count-badge" id="re-ingredient-count">${t(STRINGS.recipeEditor.form.items, { count: this._ingredients.length })}</span>
         </div>
 
         <!-- Ingredient Search Bar (between header and list) -->
@@ -354,7 +380,7 @@ export class RecipeEditor extends HTMLElement {
       const select = document.getElementById('re-category');
       if (!select) return;
 
-      select.innerHTML = '<option value="">Select…</option>';
+      select.innerHTML = `<option value="">${STRINGS.recipeEditor.form.categorySelect}</option>`;
       const categories = await db.recipeCategories.orderBy('name').toArray();
       categories.forEach((cat) => {
         const opt = document.createElement('option');
@@ -370,10 +396,6 @@ export class RecipeEditor extends HTMLElement {
 
   /**
    * Set up the permanent ingredient search bar using search-autocomplete.
-   * Business Logic: The search-autocomplete is always visible between the
-   * ingredients list and the form bottom. Selecting an existing item or
-   * creating a new one adds it to the ingredients list — same pattern as
-   * the grocery list searchbar.
    * @returns {void}
    */
   _setupIngredientSearch() {
@@ -384,7 +406,7 @@ export class RecipeEditor extends HTMLElement {
     searchContainer.innerHTML = '';
 
     const autoComplete = document.createElement('search-autocomplete');
-    autoComplete.setAttribute('placeholder', 'Add ingredient...');
+    autoComplete.setAttribute('placeholder', STRINGS.recipeEditor.form.addIngredientPlaceholder);
     autoComplete.className = 'search-bar__input';
     autoComplete.style.border = 'none';
     autoComplete.style.padding = '0';
@@ -414,11 +436,6 @@ export class RecipeEditor extends HTMLElement {
 
   /**
    * Open the item editor to create a new item on the fly, with pre-filled name.
-   * Business Logic: Dynamically imports the item-editor component, finds or
-   * creates the element inside the #item-editor-sheet body, and opens it in
-   * add mode with the search query pre-filled. After the user saves, the
-   * item-saved listener in connectedCallback() auto-adds the new item as
-   * a recipe ingredient — same pattern as the grocery list searchbar.
    * @param {string} query - The search query to pre-fill.
    * @returns {Promise<void>}
    */
@@ -427,10 +444,8 @@ export class RecipeEditor extends HTMLElement {
       const sheet = /** @type {HTMLElement | null} */ (document.getElementById('item-editor-sheet'));
       if (!sheet) return;
 
-      // Ensure item-editor component is loaded
       await import('./item-editor.js');
 
-      // Find or create <item-editor> inside the sheet body
       const body = sheet.querySelector('#item-editor-body');
       if (!body) return;
 
@@ -475,7 +490,7 @@ export class RecipeEditor extends HTMLElement {
     const list = document.getElementById('re-ingredients-list');
     const countBadge = document.getElementById('re-ingredient-count');
     if (countBadge) {
-      countBadge.textContent = `${this._ingredients.length} Items`;
+      countBadge.textContent = t(STRINGS.recipeEditor.form.items, { count: this._ingredients.length });
     }
     if (!list) return;
 
@@ -484,7 +499,7 @@ export class RecipeEditor extends HTMLElement {
         <span class="recipe-editor__ingredient-name">${escapeHtml(ing.name)}</span>
         <input class="recipe-editor__ingredient-qty" type="text" value="${ing.qty}" data-ingredient-qty="${i}" />
         <span class="recipe-editor__ingredient-unit">${escapeHtml(ing.unitId)}</span>
-        <button class="recipe-editor__ingredient-delete" data-index="${i}" aria-label="Remove ingredient">
+        <button class="recipe-editor__ingredient-delete" data-index="${i}" aria-label="${STRINGS.recipeEditor.form.removeAria}">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
         </button>
       </div>

@@ -15,10 +15,10 @@ import { db } from "../db.js";
  */
 
 /**
- * The 5 default units.
+ * The 6 default units.
  * @type {string[]}
  */
-const DEFAULT_UNITS = ['grams', 'ml', 'pcs', 'kg', 'Litres'];
+const DEFAULT_UNITS = ['stuks', 'pak', 'gram', 'kg', 'ml', 'liter'];
 
 /**
  * In-memory unit cache for synchronous name lookups.

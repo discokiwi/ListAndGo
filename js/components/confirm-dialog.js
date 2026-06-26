@@ -1,4 +1,6 @@
 // @ts-check
+import { registerOverlay } from '../overlay-manager.js';
+
 /**
  * Confirm Dialog Web Component — centered modal with heading, message, and two buttons.
  * Business Logic: Provides a reusable, accessible confirmation dialog pattern using the
@@ -31,6 +33,11 @@ export class ConfirmDialog extends HTMLElement {
   _confirmBtn = null;
   /** @type {HTMLButtonElement | null} */
   _cancelBtn = null;
+  /**
+   * Overlay close token for back-button handling.
+   * @type {(() => void) | null}
+   */
+  _closeToken = null;
 
   /** Observed attributes for reactive updates. */
   static get observedAttributes() {
@@ -108,6 +115,11 @@ export class ConfirmDialog extends HTMLElement {
    */
   show() {
     this._dialog?.showModal();
+    this._closeToken = registerOverlay({
+      /** Close function called by the overlay manager. */
+      close: () => this.hide(),
+      name: 'confirm-dialog',
+    });
   }
 
   /**
@@ -116,6 +128,7 @@ export class ConfirmDialog extends HTMLElement {
    */
   hide() {
     this._dialog?.close();
+    this._closeToken?.();
   }
 
   /**

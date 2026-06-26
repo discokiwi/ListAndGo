@@ -9,6 +9,7 @@
  * @module
  */
 import { db } from '../db.js';
+import { now } from '../utils/date-utils.js';
 
 /**
  * @typedef {import('../db.js').Recipe} Recipe
@@ -46,13 +47,6 @@ import { db } from '../db.js';
  * @property {string} [name] - Denormalized name for display.
  */
 
-/**
- * Generate a fresh ISO timestamp.
- * @returns {string} ISO timestamp.
- */
-function now() {
-  return new Date().toISOString();
-}
 
 /**
  * Get all recipes, ordered by title.
@@ -154,7 +148,7 @@ export async function getRecipesUnderTime(maxMinutes) {
 
 /**
  * Get recent recipes by updatedAt timestamp.
- * @param {number} [limit=20] - Max number to return.
+ * @param {number} [limit] - Max number to return.
  * @returns {Promise<Recipe[]>}
  */
 export async function getRecentRecipes(limit = 20) {
@@ -291,19 +285,12 @@ export async function deleteRecipe(id) {
 }
 
 /**
- * Get the display name for an item from the items_library.
- * @param {string} itemId - Item UUID.
- * @returns {Promise<string>} The item name or 'Unknown Item'.
- */
-export async function getItemName(itemId) {
-  const item = await db.items.get(itemId);
-  return item ? item.name : 'Unknown Item';
-}
-
-/**
- * Resolve ingredient names by joining with items_library.
- * @param {RecipeIngredient[]} ingredients - The ingredients to enrich.
- * @returns {Promise<Array<RecipeIngredient & { itemName: string; categoryId: string }>>}
+ * Resolve ingredient item details (name, category, isMultiUse) by joining with items_library.
+ * Business Logic: Adds display data from the items_library to each recipe ingredient.
+ * This allows the UI to show item names, category colors, and multi-use status without
+ * requiring a separate lookup for each ingredient.
+ * @param {RecipeIngredient[]} ingredients - The ingredients to enhance with item data.
+ * @returns {Promise<Array<RecipeIngredient & { itemName: string; categoryId: string; isMultiUse: boolean }>>}
  */
 export async function enrichIngredients(ingredients) {
   if (ingredients.length === 0) return [];
@@ -318,32 +305,9 @@ export async function enrichIngredients(ingredients) {
       ...ing,
       itemName: item?.name || 'Unknown Item',
       categoryId: item?.categoryId || 'uncategorized',
+      isMultiUse: item?.isMultiUse ?? false,
     };
   });
-}
-
-/**
- * Look up an item by name (case-insensitive) and return its ID.
- * @param {string} name - The item name to find.
- * @returns {Promise<string | null>} The item UUID or null if not found.
- */
-async function resolveItemId(name) {
-  const item = await db.items
-    .filter((/** @type {Item} */ i) => i.name.toLowerCase() === name.toLowerCase())
-    .first();
-  return item ? item.id : null;
-}
-
-/**
- * Look up a recipe category by name (case-insensitive) and return its ID.
- * @param {string} name - The recipe category name to find.
- * @returns {Promise<string | null>} The recipe category UUID or null if not found.
- */
-async function resolveRecipeCategoryId(name) {
-  const cat = await db.recipeCategories
-    .filter((/** @type {import('../db.js').RecipeCategory} */ c) => c.name.toLowerCase() === name.toLowerCase())
-    .first();
-  return cat ? cat.id : null;
 }
 
 /**
@@ -354,6 +318,29 @@ async function resolveRecipeCategoryId(name) {
  * @returns {Promise<void>}
  */
 export async function seedRecipes() {
+  /**
+   * Look up an item by name (case-insensitive) and return its ID.
+   * @param {string} name - The item name to find.
+   * @returns {Promise<string | null>} The item UUID or null if not found.
+   */
+  async function resolveItemId(name) {
+    const item = await db.items
+      .filter((/** @type {Item} */ i) => i.name.toLowerCase() === name.toLowerCase())
+      .first();
+    return item ? item.id : null;
+  }
+
+  /**
+   * Look up a recipe category by name (case-insensitive) and return its ID.
+   * @param {string} name - The recipe category name to find.
+   * @returns {Promise<string | null>} The recipe category UUID or null if not found.
+   */
+  async function resolveRecipeCategoryId(name) {
+    const cat = await db.recipeCategories
+      .filter((/** @type {import('../db.js').RecipeCategory} */ c) => c.name.toLowerCase() === name.toLowerCase())
+      .first();
+    return cat ? cat.id : null;
+  }
   const count = await db.recipes.count();
   if (count > 0) return;
 

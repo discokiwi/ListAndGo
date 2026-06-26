@@ -984,6 +984,46 @@
   box-shadow: 0 2px 8px rgba(15, 82, 56, 0.2);
 }
 
+/* ---- Language Toggle ---- */
+.settings-lang-toggle {
+  display: flex;
+  gap: 4px;
+  background: var(--color-surface-container-low);
+  border-radius: var(--radius-full);
+  padding: 2px;
+  border: 1px solid var(--color-outline-variant);
+}
+
+.settings-lang-btn {
+  padding: 6px 14px;
+  border: none;
+  background: none;
+  border-radius: var(--radius-full);
+  font: var(--font-badge-caps);
+  font-size: 11px;
+  color: var(--color-on-surface-variant);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  min-width: 36px;
+  white-space: nowrap;
+}
+
+.settings-lang-btn:active {
+  opacity: 0.7;
+}
+
+/* Highlight the active language. The selected language button gets a data-selected
+   attribute set by JS, or we use a class-based approach. For simplicity, we style
+   the first button as active by default. The actual active state is managed by
+   the language-changed event re-rendering the drawer. */
+.settings-lang-btn--active,
+.settings-lang-toggle .settings-lang-btn[data-selected] {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: 0 2px 8px rgba(15, 82, 56, 0.2);
+}
+
 /* ---- Body scroll lock ---- */
 body.settings-drawer-open {
   overflow: hidden;

@@ -4,6 +4,7 @@ import { escapeHtml } from '../utils/dom-utils.js';
 import { getCategoryName, getAllCategories } from '../store/categories.store.js';
 import { getEssentialItems } from '../store/items.store.js';
 import { groceryCache } from '../store/grocery.store.js';
+import { STRINGS, t } from '../strings/i18n.js';
 import './search-autocomplete.js';
 import './confirm-dialog.js';
 import './content-dialog.js';
@@ -62,6 +63,9 @@ export class GroceryList extends HTMLElement {
       this.appendChild(content);
     }
 
+    // Render dynamic template text
+    this._renderTemplateText();
+
     // Create the edit mode overlay
     this._createEditOverlay();
 
@@ -80,6 +84,13 @@ export class GroceryList extends HTMLElement {
 
     // Start the reactive render loop
     await this._startReactiveRender();
+
+    // Listen for language changes to re-render template text
+    document.addEventListener('language-changed', () => {
+      this._renderTemplateText();
+      this._setupSearchAutocomplete();
+      this._render();
+    });
   }
 
   /** Clean up on disconnect. */
@@ -96,6 +107,39 @@ export class GroceryList extends HTMLElement {
       this._overlayEl.parentNode.removeChild(this._overlayEl);
     }
     this._exitEditMode();
+  }
+
+  /**
+   * Render dynamic text from STRINGS into the template.
+   * Placeholders and text nodes that were hardcoded in index.html now get
+   * their values from the active language bundle.
+   * @returns {void}
+   */
+  _renderTemplateText() {
+    const essentialsBtn = this.querySelector('#essentials-btn');
+    if (essentialsBtn) {
+      const textSpan = essentialsBtn.querySelector('.pill__text') || essentialsBtn.querySelector('span:not(.material-symbols-outlined)');
+      if (textSpan) {
+        textSpan.textContent = STRINGS.grocery.everyWeek;
+      } else {
+        // If no separate text span, append after existing content
+        const textEl = document.createElement('span');
+        textEl.textContent = STRINGS.grocery.everyWeek;
+        essentialsBtn.appendChild(textEl);
+      }
+    }
+
+    const clearBtn = this.querySelector('#clear-all-btn');
+    if (clearBtn) {
+      const textSpan = clearBtn.querySelector('.pill__text') || clearBtn.querySelector('span:not(.material-symbols-outlined)');
+      if (textSpan) {
+        textSpan.textContent = STRINGS.grocery.clearAll;
+      } else {
+        const textEl = document.createElement('span');
+        textEl.textContent = STRINGS.grocery.clearAll;
+        clearBtn.appendChild(textEl);
+      }
+    }
   }
 
   /**
@@ -166,7 +210,7 @@ export class GroceryList extends HTMLElement {
 
     if (existingInput) {
       const autoComplete = /** @type {SearchAutocomplete} */ (document.createElement('search-autocomplete'));
-      autoComplete.setAttribute('placeholder', 'Add milk, eggs, bread...');
+      autoComplete.setAttribute('placeholder', STRINGS.grocery.searchPlaceholder);
       autoComplete.className = 'search-bar__input';
       autoComplete.style.border = 'none';
       autoComplete.style.padding = '0';
@@ -258,7 +302,7 @@ export class GroceryList extends HTMLElement {
 
       const snackbar = this._getSnackbar();
       if (snackbar) {
-        snackbar.show(`Added ${item.name} to Grocery List`);
+        snackbar.show(t(STRINGS.grocery.addedToGroceryList, { name: item.name }));
       }
 
       // Clear the search component
@@ -387,7 +431,7 @@ export class GroceryList extends HTMLElement {
     if (this._items.length === 0) {
       container.innerHTML = `
         <div class="page-empty">
-          <p>Your grocery list is empty. Add items or plan meals to get started.</p>
+          <p>${STRINGS.grocery.emptyState}</p>
         </div>
       `;
       return;
@@ -479,7 +523,7 @@ export class GroceryList extends HTMLElement {
    * @returns {string} HTML string for the section.
    */
   _buildCategorySection(categoryId, items, isCompleted) {
-    const label = isCompleted ? 'COMPLETED' : this._formatCategoryName(categoryId);
+    const label = isCompleted ? STRINGS.grocery.completed : this._formatCategoryName(categoryId);
     const count = items.length;
     const openAttr = 'open';
     const catClass = isCompleted ? 'category-section category-section--completed' : 'category-section';
@@ -561,7 +605,7 @@ export class GroceryList extends HTMLElement {
       const essentials = await getEssentialItems();
 
       if (essentials.length === 0) {
-        body.innerHTML = '<p class="essentials-empty">No essential items yet. Add some in Items Library.</p>';
+        body.innerHTML = `<p class="essentials-empty">${STRINGS.grocery.essentialsEmpty}</p>`;
       } else {
         // Stitch design: card-style rows with circular checkbox on the right
         body.innerHTML = essentials.map((item) => `
@@ -575,7 +619,7 @@ export class GroceryList extends HTMLElement {
               <span class="essentials-item__meta">${escapeHtml(getCategoryName(item.categoryId))} • ${item.defaultQty} ${item.unitId}</span>
             </div>
             <div class="essentials-item__check-wrapper">
-              <input type="checkbox" class="essentials-item__checkbox" checked aria-label="Select ${escapeHtml(item.name)}">
+              <input type="checkbox" class="essentials-item__checkbox" checked aria-label="${t(STRINGS.grocery.addSelected)} ${escapeHtml(item.name)}">
               <span class="essentials-item__check-visual">
                 <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
               </span>
@@ -602,8 +646,8 @@ export class GroceryList extends HTMLElement {
   _createEssentialsSheet() {
     const dialog = /** @type {ContentDialog} */ (document.createElement('content-dialog'));
     dialog.id = 'essentials-dialog';
-    dialog.setAttribute('heading', 'Weekly Essentials');
-    dialog.setAttribute('subtitle', 'Quickly add items you buy every week.');
+    dialog.setAttribute('heading', STRINGS.grocery.essentialsHeading);
+    dialog.setAttribute('subtitle', STRINGS.grocery.essentialsSubtitle);
 
     // Body content container
     const body = document.createElement('div');
@@ -614,14 +658,14 @@ export class GroceryList extends HTMLElement {
     const cancelBtn = document.createElement('button');
     cancelBtn.className = 'content-dialog__btn content-dialog__btn--secondary';
     cancelBtn.slot = 'actions';
-    cancelBtn.textContent = 'Cancel';
+    cancelBtn.textContent = STRINGS.grocery.cancel;
     dialog.appendChild(cancelBtn);
 
     // Add Selected button (slotted into actions)
     const addBtn = document.createElement('button');
     addBtn.className = 'content-dialog__btn content-dialog__btn--primary';
     addBtn.slot = 'actions';
-    addBtn.textContent = 'Add Selected';
+    addBtn.textContent = STRINGS.grocery.addSelected;
     dialog.appendChild(addBtn);
 
     // Wire cancel button
@@ -680,7 +724,7 @@ export class GroceryList extends HTMLElement {
       );
       const snackbar = this._getSnackbar();
       if (snackbar) {
-        snackbar.show(`Added ${detail.name} to Grocery List`);
+        snackbar.show(t(STRINGS.grocery.addedToGroceryList, { name: detail.name }));
       }
     } catch (err) {
       console.error('Failed to add ingredient:', err);
@@ -743,13 +787,13 @@ export class GroceryList extends HTMLElement {
             deletedItem.qty,
             deletedItem.unit,
           );
-          snackbar.show(`Restored ${deletedItem.name}`);
+          snackbar.show(t(STRINGS.grocery.restored, { name: deletedItem.name }));
         } catch (err) {
           console.error('Failed to restore item:', err);
         }
       };
 
-      snackbar.show(`Removed ${deletedItem.name}`, {
+      snackbar.show(t(STRINGS.grocery.removed, { name: deletedItem.name }), {
         undo: true,
         onUndo: handleUndo,
         type: 'removed',
@@ -787,11 +831,11 @@ export class GroceryList extends HTMLElement {
     if (!confirmDlg) {
       confirmDlg = /** @type {any} */ (document.createElement('confirm-dialog'));
       confirmDlg.id = 'clear-all-dialog';
-      confirmDlg.setAttribute('heading', 'Clear entire list?');
-      confirmDlg.setAttribute('message', 'This will remove all items (checked and unchecked) from your list. This cannot be undone.');
-      confirmDlg.setAttribute('confirm-label', 'Clear List');
+      confirmDlg.setAttribute('heading', STRINGS.grocery.clearAllHeading);
+      confirmDlg.setAttribute('message', STRINGS.grocery.clearAllMessage);
+      confirmDlg.setAttribute('confirm-label', STRINGS.grocery.clearAllConfirm);
       confirmDlg.setAttribute('confirm-variant', 'danger');
-      confirmDlg.setAttribute('cancel-label', 'Keep List');
+      confirmDlg.setAttribute('cancel-label', STRINGS.grocery.clearAllCancel);
       document.body.appendChild(confirmDlg);
 
       // One-time event listener for confirm
