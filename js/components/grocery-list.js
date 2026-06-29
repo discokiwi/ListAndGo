@@ -234,9 +234,12 @@ export class GroceryList extends HTMLElement {
     }
 
     // Listen for item-saved events — used by create-and-add flow
+    // Business Logic: Only auto-adds the saved item to the grocery list when
+    // the item was created from the grocery list search (autoAddToList = true).
+    // Items saved from the items library or recipe editor should NOT be added.
     document.addEventListener('item-saved', (e) => {
       const detail = /** @type {CustomEvent} */ (e).detail;
-      if (detail && detail.itemId && this._activeListId) {
+      if (detail && detail.itemId && this._activeListId && detail.autoAddToList) {
         // Look up the saved item to get full details (category, unit, etc.)
         this._addSavedItemToGroceryList(detail.itemId);
       }
@@ -270,7 +273,7 @@ export class GroceryList extends HTMLElement {
         body.appendChild(editor);
       }
 
-      editor.openAdd(query);
+      editor.openAddFromSearch(query);
     } catch (err) {
       console.error('Failed to open item editor from search:', err);
     }

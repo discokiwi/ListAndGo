@@ -22,6 +22,16 @@ export class ItemEditor extends HTMLElement {
   /** @type {(() => void) | null} */
   #closeToken = null;
 
+  /**
+   * Whether the saved item should be automatically added to the grocery list.
+   * Business Logic: The item editor can be opened from different contexts:
+   * - From grocery-list search → auto-add to grocery list (true)
+   * - From items library / recipe editor → just save the item (false)
+   * Consumers of the 'item-saved' event should check `detail.autoAddToList`.
+   * @type {boolean}
+   */
+  #autoAddToList = false;
+
   /** Construct the component. */
   constructor() {
     super();
@@ -422,7 +432,7 @@ export class ItemEditor extends HTMLElement {
       // for consumers that need to auto-add the new item to grocery list / recipe
       this.dispatchEvent(new CustomEvent('item-saved', {
         bubbles: true,
-        detail: { itemId: savedItemId, name: savedItemName },
+        detail: { itemId: savedItemId, name: savedItemName, autoAddToList: this.#autoAddToList },
       }));
     } catch (err) {
       console.error('Failed to save item:', err);
@@ -479,10 +489,35 @@ export class ItemEditor extends HTMLElement {
   /**
    * Open the editor for adding a new item.
    * Optionally pre-fill the item name from a search query.
+   * Business Logic: Opens the editor without the auto-add-to-grocery-list flag.
+   * Use `openAddFromSearch()` when opening from the grocery list search instead.
    * @param {string} [prefillName] - Optional name to pre-fill in the item name field.
    * @returns {void}
    */
   openAdd(prefillName = '') {
+    this.#autoAddToList = false;
+    this.#openAddInternal(prefillName);
+  }
+
+  /**
+   * Open the editor for adding a new item, with auto-add-to-grocery-list enabled.
+   * Business Logic: Called when the user creates a new item from the grocery list
+   * search. After saving, the `item-saved` event will have `autoAddToList: true`
+   * so the grocery-list listener can automatically add the new item.
+   * @param {string} [prefillName] - Optional name to pre-fill in the item name field.
+   * @returns {void}
+   */
+  openAddFromSearch(prefillName = '') {
+    this.#autoAddToList = true;
+    this.#openAddInternal(prefillName);
+  }
+
+  /**
+   * Internal open method shared by openAdd and openAddFromSearch.
+   * @param {string} prefillName
+   * @returns {void}
+   */
+  #openAddInternal(prefillName = '') {
     this.#mode = 'add';
     this.#currentItem = null;
     this.#prefillName = prefillName || '';
@@ -526,6 +561,7 @@ export class ItemEditor extends HTMLElement {
    * @returns {void}
    */
   openEdit(item) {
+    this.#autoAddToList = false;
     this.#mode = 'edit';
     this.#currentItem = item;
     this.renderForm();

@@ -7,18 +7,19 @@
 .app-shell {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
   background-color: var(--color-surface);
 }
 
-/* ---- Main content area ---- */
+/* ---- Main content area (flex container, no scroll) ---- */
 .app-main {
-  flex: 1 1 auto;
-  overflow-y: auto;
-  padding: var(--spacing-gutter);
-  padding-bottom: calc(56px + var(--safe-area-bottom) + var(--spacing-gutter));
-  /* 56px = nav height, + safe area + extra breathing room */
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--color-surface);
 }
 
 /* ---- Bottom Navigation ---- */
@@ -100,11 +101,23 @@
   fill: var(--color-text-dimmed);
 }
 
+/* ---- Route Web Components (router-injected) ---- */
+grocery-list,
+meal-planner,
+recipe-library,
+items-library {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
 /* ---- Page sections (router content) ---- */
 .page {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-gutter);
+  min-height: 0;
+  flex: 1;
 }
 
 .page__header {
@@ -126,6 +139,47 @@
 .page__subtitle {
   font: var(--font-body-reg);
   color: var(--color-on-surface-variant);
+}
+
+/* ---- Scrollable page content containers ---- */
+/* Each page's content area becomes the scroll container.
+   Headers/search bars sit above in normal flow. */
+.page-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: calc(var(--spacing-gutter) * 0.8) var(--spacing-gutter) var(--spacing-gutter);
+  padding-bottom: calc(56px + var(--safe-area-bottom) + var(--spacing-gutter));
+  /* 56px = nav height, + safe area + extra breathing room */
+  /* Top padding reduced 20% for tighter proximity to pill section */
+}
+
+/* ---- Non-scrolling headers in pages ---- */
+.page__static-header {
+  flex-shrink: 0;
+  padding: var(--spacing-gutter) var(--spacing-gutter) 0;
+  background: var(--color-surface-bright);
+}
+
+/* Standalone search bar (direct child of .page) gets full padding */
+.page > .search-bar {
+  flex-shrink: 0;
+  padding: var(--spacing-gutter) var(--spacing-gutter) 0;
+  background: var(--color-surface-bright);
+}
+
+/* Search bar inside a wrapper header inherits padding from parent */
+.recipes-header > .search-bar,
+.plan-header > .search-bar {
+  padding: 0;
+  box-shadow: none;
+}
+
+.plan-header,
+.recipes-header {
+  flex-shrink: 0;
+  padding: var(--spacing-gutter) var(--spacing-gutter) 0;
+  background: var(--color-surface-bright);
 }
 
 /* ---- Loading / Empty states ---- */

@@ -25,10 +25,10 @@
 
 /* ---- Card List Container ---- */
 .meal-plan-card-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-list-item-gap, 12px);
-  padding-bottom: 80px; /* space for bottom nav */
+  display: block;
+}
+.meal-plan-card-list > * + * {
+  margin-top: var(--spacing-list-item-gap, 12px);
 }
 
 /* ---- Plan Variant of Recipe Card ---- */

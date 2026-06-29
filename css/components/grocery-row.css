@@ -297,12 +297,15 @@ grocery-row .gr-row__info-bottom {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 grocery-row .gr-row__qty {
   font: var(--font-unit-label, 400 14px/1.2 'Hanken Grotesk', sans-serif);
   color: var(--color-primary, #0f5238);
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 grocery-row .gr-row__qty--checked {
@@ -317,6 +320,10 @@ grocery-row .gr-row__recipe-link {
   font-size: 11px;
   color: var(--color-primary, #0f5238);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  max-width: 100%;
 }
 
 grocery-row .gr-row__recipe-link svg {

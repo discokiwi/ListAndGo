@@ -85,6 +85,11 @@ export class SettingsDrawer extends HTMLElement {
    * @returns {void}
    */
   open() {
+    // Guard: prevent double-open if open() is called while already open
+    // Business Logic: If two 'open-settings' listeners fire (or duplicate calls),
+    // this prevents registering duplicate overlay entries that would accumulate
+    // in the overlayStack and block navigation clicks.
+    if (this.#isOpen) return;
     this.#isOpen = true;
     this.#updateDisplay();
     document.body.classList.add('settings-drawer-open');
@@ -378,7 +383,10 @@ export class SettingsDrawer extends HTMLElement {
       this.#drawer.addEventListener('touchstart', (e) => this.#handleTouchStart(e), false);
       this.#drawer.addEventListener('touchend', (e) => this.#handleTouchEnd(e), false);
     }
-    document.addEventListener('open-settings', () => { this.open(); });
+    // Note: The 'open-settings' listener is registered in app.js, not here.
+    // Adding it here would cause duplicate registrations over time (especially
+    // when re-rendered via the language-changed handler below), leading to
+    // phantom overlay entries that block navigation clicks.
 
     // Listen for language changes to re-render
     document.addEventListener('language-changed', () => {

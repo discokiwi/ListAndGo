@@ -244,39 +244,11 @@
 
 /* ---- Card List Container ---- */
 .recipe-card-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-list-item-gap, 12px);
-  padding-bottom: 80px; /* space for FAB and bottom nav */
+  display: block;
+}
+.recipe-card-list > * + * {
+  margin-top: var(--spacing-list-item-gap, 12px);
 }
 
 /* ---- Add Recipe FAB ---- */
-.recipe-fab {
-  position: fixed;
-  bottom: calc(72px + var(--spacing-gutter)); /* above bottom nav */
-  right: var(--spacing-gutter);
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-full);
-  background: var(--color-primary);
-  color: var(--color-on-primary);
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-  cursor: pointer;
-  transition: transform 0.1s ease, background 0.2s ease;
-  -webkit-tap-highlight-color: transparent;
-  z-index: 40;
-
-  & svg {
-    width: 24px;
-    height: 24px;
-    fill: currentColor;
-  }
-
-  &:active {
-    transform: scale(0.95);
-  }
-}
+/* Uses the same .fab class from fab.css for consistent positioning */
