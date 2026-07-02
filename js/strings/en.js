@@ -43,6 +43,58 @@ const STRINGS_EN = {
     deleteItemAria: "Delete item",
   },
 
+  // Auth
+  auth: {
+    loggedOut: {
+      heading: "Account",
+      welcome: "Welcome to List&GO",
+      subtitle: "Sign in to sync your kitchen across devices.",
+      createAccount: "CREATE ACCOUNT",
+      login: "LOG IN",
+    },
+    loginSheet: {
+      title: "Log In",
+      emailLabel: "Email Address",
+      emailPlaceholder: "jane@example.com",
+      passwordLabel: "Password",
+      passwordPlaceholder: "••••••••",
+      loginBtn: "Log In",
+      loginBtnIcon: "arrow_forward",
+      cancel: "Cancel",
+      noAccount: "Don't have an account?",
+      createLink: "Create Account",
+      errorRequired: "Email and password are required",
+      success: "Welcome back, {name}!",
+    },
+    createAccountSheet: {
+      title: "Create Account",
+      subheading: "Welcome to the family",
+      subtitle: "Join List&GO to sync your kitchen across devices and share lists with family.",
+      nameLabel: "Full Name",
+      namePlaceholder: "e.g. Jane Doe",
+      emailLabel: "Email Address",
+      emailPlaceholder: "jane@example.com",
+      passwordLabel: "Password",
+      passwordPlaceholder: "••••••••",
+      createBtn: "Create Account",
+      createBtnIcon: "arrow_forward",
+      cancel: "Cancel",
+      haveAccount: "Already have an account?",
+      loginLink: "Log In",
+      errorRequired: "All fields are required",
+      success: "Account created! Welcome, {name}!",
+    },
+    loggedIn: {
+      logout: "LOGOUT",
+      dataSync: "Data & Sync",
+      cloudSync: "Cloud Sync",
+      familyHeading: "Family & Household",
+      invite: "INVITE MEMBER",
+      admin: "Administrator",
+      member: "Member",
+    },
+  },
+
   // Settings
   settings: {
     title: "Settings",

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>List&amp;GO - Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-variant": "#e2e2e5",
+                    "outline-variant": "#bfc9c1",
+                    "secondary": "#53634e",
+                    "surface-pure": "#FFFFFF",
+                    "inverse-on-surface": "#f0f0f3",
+                    "on-error": "#ffffff",
+                    "background": "#f9f9fc",
+                    "success-light": "#D8E2DC",
+                    "surface-container-highest": "#e2e2e5",
+                    "on-tertiary-fixed-variant": "#6f3537",
+                    "secondary-fixed-dim": "#baccb3",
+                    "on-secondary": "#ffffff",
+                    "surface-container-low": "#f3f3f6",
+                    "on-tertiary-fixed": "#390b0e",
+                    "secondary-container": "#d3e5cb",
+                    "tertiary-fixed-dim": "#ffb3b3",
+                    "inverse-primary": "#95d4b3",
+                    "tertiary": "#713638",
+                    "outline": "#707973",
+                    "inverse-surface": "#2f3133",
+                    "surface-dim": "#dadadc",
+                    "primary-container": "#2d6a4f",
+                    "surface": "#f9f9fc",
+                    "primary-fixed": "#b1f0ce",
+                    "on-secondary-fixed-variant": "#3b4b38",
+                    "on-primary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-fixed-variant": "#0e5138",
+                    "text-dimmed": "#636E72",
+                    "secondary-fixed": "#d6e8ce",
+                    "primary": "#0f5238",
+                    "on-tertiary-container": "#ffcfce",
+                    "surface-container-high": "#e8e8ea",
+                    "surface-soft": "#F8F9F8",
+                    "on-error-container": "#93000a",
+                    "on-surface": "#1a1c1e",
+                    "surface-bright": "#f9f9fc",
+                    "on-primary-container": "#a8e7c5",
+                    "tertiary-container": "#8d4d4e",
+                    "surface-tint": "#2c694e",
+                    "on-secondary-fixed": "#111f0f",
+                    "on-primary-fixed": "#002114",
+                    "error": "#ba1a1a",
+                    "primary-fixed-dim": "#95d4b3",
+                    "surface-muted": "#EEF1EF",
+                    "tertiary-fixed": "#ffdad9",
+                    "surface-container-lowest": "#ffffff",
+                    "on-surface-variant": "#404943",
+                    "surface-container": "#eeeef0",
+                    "on-secondary-container": "#576752",
+                    "on-background": "#1a1c1e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "thumb-touch": "48px",
+                    "safe-margin": "20px",
+                    "list-item-gap": "12px",
+                    "gutter": "16px",
+                    "base": "8px"
+            },
+            "fontFamily": {
+                    "badge-caps": ["Hanken Grotesk"],
+                    "unit-label": ["Hanken Grotesk"],
+                    "display-lg": ["Hanken Grotesk"],
+                    "body-reg": ["Hanken Grotesk"],
+                    "headline-md": ["Hanken Grotesk"],
+                    "item-name": ["Hanken Grotesk"]
+            },
+            "fontSize": {
+                    "badge-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "unit-label": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "400"}],
+                    "display-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-reg": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "item-name": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Hanken Grotesk', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .thumb-zone-hit { min-height: 48px; min-width: 48px; }
+        .settings-drawer {
+            box-shadow: -4px 0 20px rgba(0, 0, 0, 0.05);
+        }
+        input:checked + .toggle-dot { transform: translateX(100%); background-color: white; }
+        input:checked ~ .toggle-bg { background-color: #0f5238; }
+        
+        /* Custom scrollbar for clean aesthetic */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #bfc9c1; border-radius: 10px; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-surface-soft text-on-surface overflow-x-hidden">
+<!-- Mock Background App Content (to show drawer context) -->
+<main class="fixed inset-0 p-safe-margin opacity-20 pointer-events-none">
+<h1 class="font-display-lg text-display-lg text-primary mb-base">Grocery List</h1>
+<div class="space-y-list-item-gap">
+<div class="h-20 bg-surface-pure rounded-xl shadow-sm"></div>
+<div class="h-20 bg-surface-pure rounded-xl shadow-sm"></div>
+<div class="h-20 bg-surface-pure rounded-xl shadow-sm"></div>
+</div>
+</main>
+<!-- Overlay Backdrop -->
+<div class="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 transition-opacity duration-300" id="drawer-backdrop"></div>
+<!-- Settings Side Drawer -->
+<aside class="fixed top-0 right-0 h-full w-[92%] max-w-md bg-surface-soft z-50 overflow-y-auto translate-x-0 transition-transform duration-300 ease-out flex flex-col" id="settings-drawer">
+<!-- Drawer Header -->
+<header class="flex items-center justify-between px-safe-margin py-base sticky top-0 bg-surface-soft z-10">
+<button class="thumb-zone-hit flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors" id="close-drawer">
+<span class="material-symbols-outlined">close</span>
+</button>
+<h2 class="font-headline-md text-headline-md text-primary">Settings</h2>
+<div class="w-12"></div> <!-- Spacer for symmetry -->
+</header>
+<!-- Settings Content Canvas -->
+<div class="flex-1 px-safe-margin pb-24"><nav class="flex border-b border-outline-variant/30 sticky top-0 bg-surface-soft z-20 -mx-safe-margin px-safe-margin mb-4"><button class="flex-1 py-3 font-badge-caps text-badge-caps text-primary border-b-2 border-primary" onclick="document.querySelectorAll('.settings-tab-content').forEach(el =&gt; el.classList.add('hidden')); document.getElementById('tab-account').classList.remove('hidden'); document.querySelectorAll('nav button').forEach(btn =&gt; { btn.classList.remove('text-primary', 'border-primary'); btn.classList.add('text-on-surface-variant', 'border-transparent'); }); this.classList.add('text-primary', 'border-primary'); this.classList.remove('text-on-surface-variant', 'border-transparent');">ACCOUNT</button><button class="flex-1 py-3 font-badge-caps text-badge-caps text-on-surface-variant border-b-2 border-transparent" onclick="document.querySelectorAll('.settings-tab-content').forEach(el =&gt; el.classList.add('hidden')); document.getElementById('tab-store').classList.remove('hidden'); document.querySelectorAll('nav button').forEach(btn =&gt; { btn.classList.remove('text-primary', 'border-primary'); btn.classList.add('text-on-surface-variant', 'border-transparent'); }); this.classList.add('text-primary', 'border-primary'); this.classList.remove('text-on-surface-variant', 'border-transparent');">STORE</button><button class="flex-1 py-3 font-badge-caps text-badge-caps text-on-surface-variant border-b-2 border-transparent" onclick="document.querySelectorAll('.settings-tab-content').forEach(el =&gt; el.classList.add('hidden')); document.getElementById('tab-recipe').classList.remove('hidden'); document.querySelectorAll('nav button').forEach(btn =&gt; { btn.classList.remove('text-primary', 'border-primary'); btn.classList.add('text-on-surface-variant', 'border-transparent'); }); this.classList.add('text-primary', 'border-primary'); this.classList.remove('text-on-surface-variant', 'border-transparent');">RECIPE</button><button class="flex-1 py-3 font-badge-caps text-badge-caps text-on-surface-variant border-b-2 border-transparent" onclick="document.querySelectorAll('.settings-tab-content').forEach(el =&gt; el.classList.add('hidden')); document.getElementById('tab-items').classList.remove('hidden'); document.querySelectorAll('nav button').forEach(btn =&gt; { btn.classList.remove('text-primary', 'border-primary'); btn.classList.add('text-on-surface-variant', 'border-transparent'); }); this.classList.add('text-primary', 'border-primary'); this.classList.remove('text-on-surface-variant', 'border-transparent');">ITEMS</button></nav>
+<!-- Account Management -->
+<div class="settings-tab-content space-y-8" id="tab-account"><!-- Logged-in State (Visible by default) -->
+<div class="space-y-8 hidden" id="account-logged-in">
+<section aria-labelledby="account-heading">
+<h3 class="font-badge-caps text-badge-caps text-on-surface-variant mb-base px-2 uppercase" id="account-heading">Account Management</h3>
+<div class="bg-surface-pure rounded-xl p-base shadow-sm space-y-4">
+<div class="flex items-center gap-4 p-2">
+<div class="flex-1">
+<p class="font-item-name text-item-name">Sarah Jenkins</p>
+<p class="font-unit-label text-unit-label text-on-surface-variant">sarah.j@kitchen-manager.com</p>
+</div>
+</div>
+<div class="flex gap-2 p-2">
+<button class="flex-1 h-thumb-touch bg-primary text-on-primary rounded-lg font-badge-caps text-badge-caps shadow-sm active:scale-95 transition-transform">UPDATE</button>
+<button class="flex-1 h-thumb-touch border border-error text-error rounded-lg font-badge-caps text-badge-caps active:bg-error-container/20 transition-colors">LOGOUT</button>
+</div>
+</div>
+</section>
+<section aria-labelledby="sync-heading">
+<h3 class="font-badge-caps text-badge-caps text-on-surface-variant mb-base px-2 uppercase" id="sync-heading">Data &amp; Sync</h3>
+<div class="bg-surface-pure rounded-xl p-base shadow-sm">
+<div class="flex items-center justify-between p-2">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">cloud_done</span>
+<label class="font-body-reg text-body-reg">Cloud Sync</label>
+</div>
+<label class="relative inline-flex items-center cursor-pointer thumb-zone-hit">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="toggle-bg w-12 h-6 bg-surface-container-highest rounded-full transition-colors"></div>
+<div class="toggle-dot absolute left-1 top-[14px] w-4 h-4 bg-on-surface-variant rounded-full transition-transform"></div>
+</label>
+</div>
+</div>
+</section>
+<section aria-labelledby="family-heading">
+<h3 class="font-badge-caps text-badge-caps text-on-surface-variant mb-base px-2 uppercase" id="family-heading">Family &amp; Household</h3>
+<div class="bg-surface-pure rounded-xl shadow-sm overflow-hidden">
+<div class="divide-y divide-outline-variant/30">
+<div class="flex items-center justify-between p-4 thumb-zone-hit">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">account_circle</span>
+<div>
+<p class="font-body-reg text-body-reg">Mark Jenkins</p>
+<p class="text-[12px] text-on-surface-variant">Administrator</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant">more_vert</span>
+</div>
+<div class="flex items-center justify-between p-4 thumb-zone-hit">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">account_circle</span>
+<div>
+<p class="font-body-reg text-body-reg">Olivia Jenkins</p>
+<p class="text-[12px] text-on-surface-variant">Member</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant">more_vert</span>
+</div>
+</div>
+<button class="w-full h-thumb-touch flex items-center justify-center gap-2 text-primary font-badge-caps text-badge-caps border-t border-outline-variant/30 active:bg-primary-container/10">
+<span class="material-symbols-outlined text-sm">person_add</span>INVITE MEMBER
+      </button>
+</div>
+</section>
+</div>
+<!-- Guest State (Hidden by default) -->
+<div class="space-y-8" id="account-guest"><section aria-labelledby="guest-heading"><h3 class="font-badge-caps text-badge-caps text-on-surface-variant mb-base px-2 uppercase" id="guest-heading">Account</h3><div class="bg-surface-pure rounded-xl p-6 shadow-sm text-center space-y-4"><div class="w-16 h-16 bg-surface-container-low rounded-full flex items-center justify-center mx-auto"><span class="material-symbols-outlined text-primary text-display-lg">account_circle</span></div><div><p class="font-item-name text-item-name">Welcome to List&amp;GO</p><p class="font-unit-label text-unit-label text-on-surface-variant">Sign in to sync your kitchen across devices.</p></div><div class="space-y-3 pt-2"><button class="w-full h-thumb-touch bg-primary text-on-primary rounded-lg font-badge-caps text-badge-caps shadow-sm active:scale-95 transition-transform">CREATE ACCOUNT</button><button class="w-full h-thumb-touch border border-primary text-primary rounded-lg font-badge-caps text-badge-caps active:bg-primary-container/10 transition-colors">LOG IN</button></div></div></section><section class="opacity-60 pointer-events-none"><h3 class="font-badge-caps text-badge-caps text-on-surface-variant mb-base px-2 uppercase">Data &amp; Sync</h3><div class="bg-surface-pure rounded-xl p-base shadow-sm"><div class="flex items-center justify-between p-2"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-outline-variant">cloud_off</span><label class="font-body-reg text-body-reg">Cloud Sync</label></div><div class="w-12 h-6 bg-surface-container-highest rounded-full relative"><div class="absolute left-1 top-1 w-4 h-4 bg-outline-variant rounded-full"></div></div></div></div></section><section class="opacity-60 pointer-events-none"><h3 class="font-badge-caps text-badge-caps text-on-surface-variant mb-base px-2 uppercase">Family &amp; Household</h3><div class="bg-surface-pure rounded-xl p-6 shadow-sm text-center border-2 border-dashed border-outline-variant/30"><span class="material-symbols-outlined text-outline-variant mb-2">lock</span><p class="font-unit-label text-unit-label text-on-surface-variant">Sign in to manage your household members.</p></div></section></div></div>
+<!-- Family & Household -->
+<!-- Planning Defaults -->
+<div class="settings-tab-content hidden space-y-8" id="tab-store"><section aria-labelledby="store-heading"><h3 class="font-badge-caps text-badge-caps text-on-surface-variant mb-base px-2 uppercase" id="store-heading">Store Layout</h3><div class="bg-surface-pure rounded-xl shadow-sm overflow-hidden"><div class="p-4 bg-primary-container text-on-primary-container flex justify-between items-center"><p class="font-unit-label text-unit-label">Custom Aisle Order</p><span class="material-symbols-outlined text-sm">info</span></div><div class="divide-y divide-outline-variant/20"><div class="flex items-center gap-4 p-4 active:bg-surface-soft transition-colors cursor-grab"><span class="material-symbols-outlined text-outline-variant">reorder</span><span class="font-body-reg text-body-reg">1. Fresh Produce</span></div><div class="flex items-center gap-4 p-4 active:bg-surface-soft transition-colors cursor-grab"><span class="material-symbols-outlined text-outline-variant">reorder</span><span class="font-body-reg text-body-reg">2. Bakery &amp; Deli</span></div><div class="flex items-center gap-4 p-4 active:bg-surface-soft transition-colors cursor-grab"><span class="material-symbols-outlined text-outline-variant">reorder</span><span class="font-body-reg text-body-reg">3. Dairy &amp; Eggs</span></div></div></div></section></div><div class="settings-tab-content hidden space-y-8" id="tab-recipe"><section aria-labelledby="planning-heading"><h3 class="font-badge-caps text-badge-caps text-on-surface-variant mb-base px-2 uppercase" id="planning-heading">Recipe Defaults</h3><div class="bg-surface-pure rounded-xl p-base shadow-sm space-y-2"><div class="flex items-center justify-between p-2"><label class="font-body-reg text-body-reg">Default Recipe Scaling</label><div class="flex items-center bg-surface-container-low rounded-full p-1 border border-outline-variant/20"><button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-pure text-primary transition-colors"><span class="material-symbols-outlined">remove</span></button><span class="px-4 font-bold text-primary">x2</span><button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-pure text-primary transition-colors"><span class="material-symbols-outlined">add</span></button></div></div><div class="flex items-center justify-between p-2"><label class="font-body-reg text-body-reg">Auto-check existing items</label><label class="relative inline-flex items-center cursor-pointer thumb-zone-hit"><input checked="" class="sr-only peer" type="checkbox"/><div class="toggle-bg w-12 h-6 bg-surface-container-highest rounded-full transition-colors"></div><div class="toggle-dot absolute left-1 top-[14px] w-4 h-4 bg-on-surface-variant rounded-full transition-transform"></div></label></div></div></section></div><div class="settings-tab-content hidden space-y-8" id="tab-items"><section aria-labelledby="config-heading"><h3 class="font-badge-caps text-badge-caps text-on-surface-variant mb-base px-2 uppercase" id="config-heading">Item Configuration</h3><div class="space-y-4"><div class="bg-surface-pure rounded-xl p-4 shadow-sm"><p class="font-unit-label text-unit-label text-on-surface-variant mb-3">Preferred Units</p><div class="space-y-2"><div class="flex items-center justify-between bg-surface-soft p-3 rounded-lg border-l-4 border-primary"><span class="font-body-reg text-body-reg">Metric (g, ml)</span><span class="material-symbols-outlined text-outline-variant">drag_handle</span></div><div class="flex items-center justify-between bg-surface-soft p-3 rounded-lg border-l-4 border-transparent opacity-60"><span class="font-body-reg text-body-reg">Imperial (oz, lb)</span><span class="material-symbols-outlined text-outline-variant">drag_handle</span></div></div></div><div class="bg-surface-pure rounded-xl p-4 shadow-sm"><p class="font-unit-label text-unit-label text-on-surface-variant mb-3">Category Management</p><div class="flex flex-wrap gap-2"><span class="bg-secondary-container text-on-secondary-container px-3 py-1.5 rounded-full font-badge-caps text-[10px]">VEGAN</span><span class="bg-secondary-container text-on-secondary-container px-3 py-1.5 rounded-full font-badge-caps text-[10px]">GLUTEN-FREE</span><span class="bg-secondary-container text-on-secondary-container px-3 py-1.5 rounded-full font-badge-caps text-[10px]">QUICK MEAL</span><span class="bg-secondary-container text-on-secondary-container px-3 py-1.5 rounded-full font-badge-caps text-[10px]">KIDS</span><button class="border border-primary text-primary px-3 py-1.5 rounded-full font-badge-caps text-[10px]">+ ADD</button></div></div></div></section></div>
+<!-- Configuration -->
+<!-- Store Layout -->
+</div>
+<!-- Footer Actions -->
+<footer class="p-safe-margin bg-surface-soft/80 backdrop-blur-md sticky bottom-0 border-t border-outline-variant/30">
+<button class="w-full h-thumb-touch bg-primary text-on-primary rounded-xl font-headline-md text-[18px] shadow-lg active:scale-95 transition-all">
+                Save All Changes
+            </button>
+</footer>
+</aside>
+<script>
+        const drawer = document.getElementById('settings-drawer');
+        const backdrop = document.getElementById('drawer-backdrop');
+        const closeBtn = document.getElementById('close-drawer');
+
+        function toggleDrawer() {
+            const isClosed = drawer.style.transform === 'translateX(100%)';
+            drawer.style.transform = isClosed ? 'translateX(0)' : 'translateX(100%)';
+            backdrop.style.opacity = isClosed ? '1' : '0';
+            backdrop.style.pointerEvents = isClosed ? 'auto' : 'none';
+        }
+
+        closeBtn.addEventListener('click', toggleDrawer);
+        backdrop.addEventListener('click', toggleDrawer);
+
+        // Micro-interactions for stepper
+        document.querySelectorAll('.thumb-zone-hit button').forEach(btn => {
+            btn.addEventListener('touchstart', function() {
+                this.classList.add('scale-90');
+            });
+            btn.addEventListener('touchend', function() {
+                this.classList.remove('scale-90');
+            });
+        });
+
+        // Horizontal swipe gesture to close
+        let touchstartX = 0;
+        let touchendX = 0;
+
+        drawer.addEventListener('touchstart', e => {
+            touchstartX = e.changedTouches[0].screenX;
+        }, false);
+
+        drawer.addEventListener('touchend', e => {
+            touchendX = e.changedTouches[0].screenX;
+            if (touchendX > touchstartX + 100) toggleDrawer();
+        }, false);
+    </script>
+</body></html>

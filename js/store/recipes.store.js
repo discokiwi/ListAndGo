@@ -27,7 +27,7 @@ import { now } from '../utils/date-utils.js';
 /**
  * Interface for creating/updating a recipe.
  * @typedef {object} RecipeInput
- * @property {string} [familyId] - Defaults to 'default'.
+ * @property {string} [workspaceId] - Defaults to 'default'.
  * @property {string} title - Recipe title.
  * @property {string} recipeCategoryId - Recipe category reference.
  * @property {number} prepTime - Minutes.
@@ -182,7 +182,7 @@ export async function addRecipe(input) {
 
   const recipe = {
     id,
-    familyId: input.familyId || 'default',
+    workspaceId: input.workspaceId || 'default',
     title: input.title,
     recipeCategoryId: input.recipeCategoryId || 'uncategorized',
     prepTime: input.prepTime || 0,
@@ -204,7 +204,7 @@ export async function addRecipe(input) {
     if (input.ingredients && input.ingredients.length > 0) {
       const ingredients = input.ingredients.map((ing) => ({
         id: crypto.randomUUID(),
-        familyId: input.familyId || 'default',
+        workspaceId: input.workspaceId || 'default',
         recipeId: id,
         itemId: ing.itemId,
         quantity: ing.quantity || 1,
@@ -259,7 +259,7 @@ export async function replaceRecipeIngredients(recipeId, ingredients) {
     if (ingredients.length > 0) {
       const newIngredients = ingredients.map((ing) => ({
         id: crypto.randomUUID(),
-        familyId: 'default',
+        workspaceId: 'default',
         recipeId,
         itemId: ing.itemId,
         quantity: ing.quantity || 1,
@@ -344,7 +344,7 @@ export async function seedRecipes() {
   const count = await db.recipes.count();
   if (count > 0) return;
 
-  const familyId = 'default';
+  const workspaceId = 'default';
   const timestamp = now();
 
   // Resolve all item IDs by name from the seeded items_library
@@ -445,7 +445,7 @@ export async function seedRecipes() {
 
       const recipe = {
         id: recipeId,
-        familyId,
+        workspaceId,
         title: r.title,
         recipeCategoryId: r.recipeCategoryId || 'uncategorized',
         prepTime: r.prepTime,
@@ -466,7 +466,7 @@ export async function seedRecipes() {
       if (r.ingredients.length > 0) {
         const ingredients = r.ingredients.map((ingData) => ({
           id: crypto.randomUUID(),
-          familyId,
+          workspaceId,
           recipeId,
           itemId: ingData.itemId,
           quantity: ingData.quantity,

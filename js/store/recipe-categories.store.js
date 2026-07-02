@@ -2,7 +2,7 @@
 /**
  * Recipe Categories store for List&GO.
  * Business Logic: Provides CRUD operations on the `recipeCategories` Dexie table
- * with sync fields (familyId, updatedAt, isSynced). Seeded on first run with
+ * with sync fields (workspaceId, updatedAt, isSynced). Seeded on first run with
  * 12 default recipe-type labels (e.g. "Pasta", "Salad"). Exposes an in-memory
  * cache so UI components can look up recipe category names synchronously.
  * Separated from the `categories` table which holds grocery-department categories.
@@ -87,16 +87,17 @@ export async function refreshRecipeCategoryCache() {
 export async function seedRecipeCategories() {
   const count = await db.recipeCategories.count();
   if (count === 0) {
-    const familyId = 'default';
+    const workspaceId = 'default';
     const now = new Date().toISOString();
 
     /** @type {RecipeCategory[]} */
     const defaultData = DEFAULT_RECIPE_CATEGORIES.map(({ name }) => ({
       id: crypto.randomUUID(),
-      familyId,
+      workspaceId,
       name,
       updatedAt: now,
       isSynced: 0,
+      isDeleted: 0,
     }));
 
     await db.recipeCategories.bulkAdd(defaultData);
@@ -117,7 +118,7 @@ export async function addRecipeCategory(name) {
   const now = new Date().toISOString();
   await db.recipeCategories.add({
     id,
-    familyId: 'default',
+    workspaceId: 'default',
     name,
     updatedAt: now,
     isSynced: 0,

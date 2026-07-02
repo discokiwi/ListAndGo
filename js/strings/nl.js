@@ -43,6 +43,58 @@ const STRINGS_NL = {
     deleteItemAria: "Item verwijderen",
   },
 
+  // Auth
+  auth: {
+    loggedOut: {
+      heading: "Account",
+      welcome: "Welkom bij List&GO",
+      subtitle: "Log in om je keuken te synchroniseren tussen apparaten.",
+      createAccount: "ACCOUNT MAKEN",
+      login: "INLOGGEN",
+    },
+    loginSheet: {
+      title: "Inloggen",
+      emailLabel: "E-mailadres",
+      emailPlaceholder: "jane@voorbeeld.com",
+      passwordLabel: "Wachtwoord",
+      passwordPlaceholder: "••••••••",
+      loginBtn: "Inloggen",
+      loginBtnIcon: "arrow_forward",
+      cancel: "Annuleren",
+      noAccount: "Nog geen account?",
+      createLink: "Account Maken",
+      errorRequired: "E-mail en wachtwoord zijn verplicht",
+      success: "Welkom terug, {name}!",
+    },
+    createAccountSheet: {
+      title: "Account Maken",
+      subheading: "Welkom bij de familie",
+      subtitle: "Word lid van List&GO om je keuken te synchroniseren en lijsten te delen met je gezin.",
+      nameLabel: "Volledige Naam",
+      namePlaceholder: "bijv. Jan Jansen",
+      emailLabel: "E-mailadres",
+      emailPlaceholder: "jane@voorbeeld.com",
+      passwordLabel: "Wachtwoord",
+      passwordPlaceholder: "••••••••",
+      createBtn: "Account Maken",
+      createBtnIcon: "arrow_forward",
+      cancel: "Annuleren",
+      haveAccount: "Heb je al een account?",
+      loginLink: "Inloggen",
+      errorRequired: "Alle velden zijn verplicht",
+      success: "Account aangemaakt! Welkom, {name}!",
+    },
+    loggedIn: {
+      logout: "UITLOGGEN",
+      dataSync: "Data & Sync",
+      cloudSync: "Cloud Sync",
+      familyHeading: "Gezin & Huishouden",
+      invite: "LID UITNODIGEN",
+      admin: "Beheerder",
+      member: "Lid",
+    },
+  },
+
   // Settings
   settings: {
     title: "Instellingen",

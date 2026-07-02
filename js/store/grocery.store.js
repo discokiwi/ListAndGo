@@ -49,16 +49,17 @@ export async function getOrCreateActiveList() {
 
   const now = new Date().toISOString();
   const id = crypto.randomUUID();
-  const familyId = 'default';
+  const workspaceId = 'default';
   list = {
     id,
-    familyId,
+    workspaceId,
     name: DEFAULT_LIST_NAME,
     isActive: true,
     isArchived: false,
     createdAt: now,
     updatedAt: now,
     isSynced: 0,
+    isDeleted: 0,
   };
   await db.groceryLists.add(list);
   return list;
@@ -169,11 +170,11 @@ export async function addGroceryItem(listId, itemId, name, categoryId, qty, unit
   // No existing item — create new
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
-  const familyId = 'default';
+  const workspaceId = 'default';
 
   await db.groceryItems.add({
     id,
-    familyId,
+    workspaceId,
     listId,
     itemId,
     name,

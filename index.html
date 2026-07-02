@@ -38,6 +38,7 @@
   <link rel="stylesheet" href="css/components/recipe-details-edit-drawer.css" />
   <link rel="stylesheet" href="css/components/recipe-detail.css" />
   <link rel="stylesheet" href="css/components/recipe-editor.css" />
+  <link rel="stylesheet" href="css/components/auth-sheets.css" />
 
   <link rel="manifest" href="manifest.webmanifest" />
 </head>
@@ -234,11 +235,18 @@
   <!-- Settings Drawer Component -->
   <settings-panel></settings-panel>
 
+  <!-- Login Sheet Component -->
+  <login-sheet></login-sheet>
+
+  <!-- Create Account Sheet Component -->
+  <create-account-sheet></create-account-sheet>
+
   <!-- Global Snackbar Component -->
   <app-snackbar></app-snackbar>
 
   <!-- Global scripts -->
   <script src="js/vendor/dexie.min.js"></script>
+  <script src="js/vendor/pocketbase.umd.js"></script>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 /**
  * Item store functions for List&GO.
  * Business Logic: Provides CRUD operations on the `items` table with sync fields
- * (familyId, updatedAt, isSynced) and seeds the store with default grocery items
+ * (workspaceId, updatedAt, isSynced) and seeds the store with default grocery items
  * on first run. The seed flow first seeds categories and units, then looks up their
  * UUIDs by name so items have proper foreign key references. Every write sets
  * isSynced = 0 so the sync engine can push changes.
@@ -56,7 +56,7 @@ export async function getEssentialItems() {
 
 /**
  * Add a new item with sync fields.
- * @param {Omit<Item, "id" | "updatedAt" | "isSynced">} data - Item data without generated fields.
+ * @param {Omit<Item, "id" | "updatedAt" | "isSynced" | "isDeleted">} data - Item data without generated fields.
  * @returns {Promise<string>} The generated UUID of the new item.
  */
 export async function addItem(data) {
@@ -66,6 +66,7 @@ export async function addItem(data) {
     id,
     updatedAt: now,
     isSynced: 0,
+    isDeleted: 0,
     ...data,
   });
   return id;
@@ -206,7 +207,7 @@ export async function seedItems() {
   const count = await db.items.count();
   if (count > 0) return;
 
-  const familyId = 'default';
+  const workspaceId = 'default';
   const now = new Date().toISOString();
 
   // Resolve category UUIDs by name
@@ -226,45 +227,45 @@ export async function seedItems() {
   /** @type {Item[]} */
   const defaultItems = [
     // Groenten & Fruit
-    { id: crypto.randomUUID(), familyId, name: "Appel", categoryId: catFruits?.id || '', unitId: 'stuks', defaultQty: 4, isEssential: true, isMultiUse: true, updatedAt: now, isSynced: 0 },
-    { id: crypto.randomUUID(), familyId, name: "Banaan", categoryId: catFruits?.id || '', unitId: 'stuks', defaultQty: 6, isEssential: true, isMultiUse: true, updatedAt: now, isSynced: 0 },
-    { id: crypto.randomUUID(), familyId, name: "Wortel", categoryId: catFruits?.id || '', unitId: 'kg', defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
-    { id: crypto.randomUUID(), familyId, name: "Sla", categoryId: catFruits?.id || '', unitId: 'stuks', defaultQty: 1, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0 },
-    { id: crypto.randomUUID(), familyId, name: "Tomaat", categoryId: catFruits?.id || '', unitId: 'stuks', defaultQty: 6, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
-    { id: crypto.randomUUID(), familyId, name: "Ui", categoryId: catFruits?.id || '', unitId: 'kg', defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
-    { id: crypto.randomUUID(), familyId, name: "Aardappel", categoryId: catFruits?.id || '', unitId: 'kg', defaultQty: 2, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
-    { id: crypto.randomUUID(), familyId, name: "Knoflook", categoryId: catFruits?.id || '', unitId: 'stuks', defaultQty: 3, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Appel", categoryId: catFruits?.id || '', unitId: 'stuks', defaultQty: 4, isEssential: true, isMultiUse: true, updatedAt: now, isSynced: 0, isDeleted: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Banaan", categoryId: catFruits?.id || '', unitId: 'stuks', defaultQty: 6, isEssential: true, isMultiUse: true, updatedAt: now, isSynced: 0, isDeleted: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Wortel", categoryId: catFruits?.id || '', unitId: 'kg', defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0, isDeleted: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Sla", categoryId: catFruits?.id || '', unitId: 'stuks', defaultQty: 1, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0, isDeleted: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Tomaat", categoryId: catFruits?.id || '', unitId: 'stuks', defaultQty: 6, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0, isDeleted: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Ui", categoryId: catFruits?.id || '', unitId: 'kg', defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0, isDeleted: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Aardappel", categoryId: catFruits?.id || '', unitId: 'kg', defaultQty: 2, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0, isDeleted: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Knoflook", categoryId: catFruits?.id || '', unitId: 'stuks', defaultQty: 3, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0, isDeleted: 0 },
     // Zuivel
-    { id: crypto.randomUUID(), familyId, name: "Melk", categoryId: catDairy?.id || '', unitId: 'liter', defaultQty: 1, isEssential: true, isMultiUse: false, updatedAt: now, isSynced: 0 },
-    { id: crypto.randomUUID(), familyId, name: "Boter", categoryId: catDairy?.id || '', unitId: 'stuks', defaultQty: 1, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0 },
-    { id: crypto.randomUUID(), familyId, name: "Kaas", categoryId: catDairy?.id || '', unitId: 'gram', defaultQty: 200, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
-    { id: crypto.randomUUID(), familyId, name: "Yoghurt", categoryId: catDairy?.id || '', unitId: 'stuks', defaultQty: 4, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0 },
-    { id: crypto.randomUUID(), familyId, name: "Eieren", categoryId: catDairy?.id || '', unitId: 'stuks', defaultQty: 12, isEssential: true, isMultiUse: true, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Melk", categoryId: catDairy?.id || '', unitId: 'liter', defaultQty: 1, isEssential: true, isMultiUse: false, updatedAt: now, isSynced: 0, isDeleted: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Boter", categoryId: catDairy?.id || '', unitId: 'stuks', defaultQty: 1, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0, isDeleted: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Kaas", categoryId: catDairy?.id || '', unitId: 'gram', defaultQty: 200, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0, isDeleted: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Yoghurt", categoryId: catDairy?.id || '', unitId: 'stuks', defaultQty: 4, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0, isDeleted: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Eieren", categoryId: catDairy?.id || '', unitId: 'stuks', defaultQty: 12, isEssential: true, isMultiUse: true, updatedAt: now, isSynced: 0, isDeleted: 0 },
     // Brood / Ontbijt
-    { id: crypto.randomUUID(), familyId, name: "Brood", categoryId: catBakery?.id || '', unitId: 'stuks', defaultQty: 1, isEssential: true, isMultiUse: false, updatedAt: now, isSynced: 0 },
-    { id: crypto.randomUUID(), familyId, name: "Croissant", categoryId: catBakery?.id || '', unitId: 'stuks', defaultQty: 4, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Brood", categoryId: catBakery?.id || '', unitId: 'stuks', defaultQty: 1, isEssential: true, isMultiUse: false, updatedAt: now, isSynced: 0, isDeleted: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Croissant", categoryId: catBakery?.id || '', unitId: 'stuks', defaultQty: 4, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0, isDeleted: 0 },
     // Beenhouwerij
-    { id: crypto.randomUUID(), familyId, name: "Kipfilet", categoryId: catButcher?.id || '', unitId: 'gram', defaultQty: 500, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0 },
-    { id: crypto.randomUUID(), familyId, name: "Gehakt", categoryId: catButcher?.id || '', unitId: 'gram', defaultQty: 500, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0 },
-    { id: crypto.randomUUID(), familyId, name: "Zalmfilet", categoryId: catButcher?.id || '', unitId: 'gram', defaultQty: 300, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Kipfilet", categoryId: catButcher?.id || '', unitId: 'gram', defaultQty: 500, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0, isDeleted: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Gehakt", categoryId: catButcher?.id || '', unitId: 'gram', defaultQty: 500, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0, isDeleted: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Zalmfilet", categoryId: catButcher?.id || '', unitId: 'gram', defaultQty: 300, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0, isDeleted: 0 },
     // Droge Voeding
-    { id: crypto.randomUUID(), familyId, name: "Rijst", categoryId: catPantry?.id || '', unitId: 'kg', defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
-    { id: crypto.randomUUID(), familyId, name: "Pasta", categoryId: catPantry?.id || '', unitId: 'gram', defaultQty: 500, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
-    { id: crypto.randomUUID(), familyId, name: "Olijfolie", categoryId: catPantry?.id || '', unitId: 'liter', defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
-    { id: crypto.randomUUID(), familyId, name: "Zout", categoryId: catPantry?.id || '', unitId: 'stuks', defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
-    { id: crypto.randomUUID(), familyId, name: "Zwarte Peper", categoryId: catPantry?.id || '', unitId: 'stuks', defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Rijst", categoryId: catPantry?.id || '', unitId: 'kg', defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0, isDeleted: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Pasta", categoryId: catPantry?.id || '', unitId: 'gram', defaultQty: 500, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0, isDeleted: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Olijfolie", categoryId: catPantry?.id || '', unitId: 'liter', defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0, isDeleted: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Zout", categoryId: catPantry?.id || '', unitId: 'stuks', defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0, isDeleted: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Zwarte Peper", categoryId: catPantry?.id || '', unitId: 'stuks', defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0, isDeleted: 0 },
     // Conserveren
-    { id: crypto.randomUUID(), familyId, name: "Tomaten in Blik", categoryId: catCanned?.id || '', unitId: 'stuks', defaultQty: 2, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Tomaten in Blik", categoryId: catCanned?.id || '', unitId: 'stuks', defaultQty: 2, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0, isDeleted: 0 },
     // Diepvries
-    { id: crypto.randomUUID(), familyId, name: "Diepvrieserwten", categoryId: catFrozen?.id || '', unitId: 'gram', defaultQty: 500, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Diepvrieserwten", categoryId: catFrozen?.id || '', unitId: 'gram', defaultQty: 500, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0, isDeleted: 0 },
     // Drank
-    { id: crypto.randomUUID(), familyId, name: "Sinaasappelsap", categoryId: catDrinks?.id || '', unitId: 'liter', defaultQty: 1, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0 },
-    { id: crypto.randomUUID(), familyId, name: "Koffie", categoryId: catDrinks?.id || '', unitId: 'stuks', defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Sinaasappelsap", categoryId: catDrinks?.id || '', unitId: 'liter', defaultQty: 1, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0, isDeleted: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Koffie", categoryId: catDrinks?.id || '', unitId: 'stuks', defaultQty: 1, isEssential: false, isMultiUse: true, updatedAt: now, isSynced: 0, isDeleted: 0 },
     // Snacks
-    { id: crypto.randomUUID(), familyId, name: "Chips", categoryId: catSnacks?.id || '', unitId: 'stuks', defaultQty: 1, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Chips", categoryId: catSnacks?.id || '', unitId: 'stuks', defaultQty: 1, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0, isDeleted: 0 },
     // Non-food
-    { id: crypto.randomUUID(), familyId, name: "Tandpasta", categoryId: catNonFood?.id || '', unitId: 'stuks', defaultQty: 1, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0 },
-    { id: crypto.randomUUID(), familyId, name: "Hondenvoer", categoryId: catNonFood?.id || '', unitId: 'kg', defaultQty: 2, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Tandpasta", categoryId: catNonFood?.id || '', unitId: 'stuks', defaultQty: 1, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0, isDeleted: 0 },
+    { id: crypto.randomUUID(), workspaceId, name: "Hondenvoer", categoryId: catNonFood?.id || '', unitId: 'kg', defaultQty: 2, isEssential: false, isMultiUse: false, updatedAt: now, isSynced: 0, isDeleted: 0 },
   ];
 
   await db.items.bulkAdd(defaultItems);

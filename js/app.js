@@ -5,12 +5,14 @@
  * units, items) in the correct dependency order, registers the router for SPA
  * navigation, and registers the Service Worker for offline support. Listens for
  * 'categories-changed' events to refresh the UI after settings changes.
+ * On boot, checks for a stored PocketBase auth token to restore the session.
  * @module
  */
 
 import { initRouter } from './router.js';
 import { initOverlayManager } from './overlay-manager.js';
 import { STRINGS } from './strings/i18n.js';
+import { tryAutoRefresh } from './store/auth.store.js';
 
 // Import all Web Components so their customElements.define() calls execute.
 // The router creates these elements by tag name, so they must be registered.
@@ -24,6 +26,8 @@ import './components/items-library.js';
 import './components/meal-planner.js';
 import './components/recipe-library.js';
 import './components/settings-panel.js';
+import './components/login-sheet.js';
+import './components/create-account-sheet.js';
 import './components/toggle-switch.js';
 import './components/quantity-stepper.js';
 import './components/search-autocomplete.js';
@@ -121,6 +125,11 @@ async function initApp() {
   } catch (err) {
     console.error('Database init error:', err);
   }
+
+  // Try to restore a previous PocketBase auth session
+  tryAutoRefresh().catch(() => {
+    // Silent fail — guest mode is fine
+  });
 
   // Initialize the overlay manager (blocks navigation while modals/drawers are open)
   initOverlayManager();

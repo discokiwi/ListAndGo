@@ -2,7 +2,7 @@
 /**
  * Units store for List&GO.
  * Business Logic: Provides CRUD operations on the `units` Dexie table
- * with sync fields (familyId, updatedAt, isSynced). Seeded on first run
+ * with sync fields (workspaceId, updatedAt, isSynced). Seeded on first run
  * with 5 default units. Unit names are not editable (per SPEC), but can
  * be deleted and re-added from settings.
  * @module
@@ -80,16 +80,17 @@ export function getUnitName(unitId) {
 export async function seedUnits() {
   const count = await db.units.count();
   if (count === 0) {
-    const familyId = 'default';
+    const workspaceId = 'default';
     const now = new Date().toISOString();
 
     /** @type {Unit[]} */
     const defaultData = DEFAULT_UNITS.map((name) => ({
       id: crypto.randomUUID(),
-      familyId,
+      workspaceId,
       name,
       updatedAt: now,
       isSynced: 0,
+      isDeleted: 0,
     }));
 
     await db.units.bulkAdd(defaultData);
@@ -116,7 +117,7 @@ export async function addUnit(name) {
   const now = new Date().toISOString();
   await db.units.add({
     id,
-    familyId: 'default',
+    workspaceId: 'default',
     name,
     updatedAt: now,
     isSynced: 0,

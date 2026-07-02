@@ -1,0 +1,365 @@
+/* =============================================
+   List&GO — Auth Sheets (Login & Create Account)
+   Form styles for bottom-sheet auth dialogs
+   ============================================= */
+
+/* ---- Form Container ---- */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-gutter);
+}
+
+/* ---- Field ---- */
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-base);
+}
+
+.auth-label {
+  font: var(--font-unit-label);
+  color: var(--color-on-surface-variant);
+  margin-left: 4px;
+}
+
+/* ---- Input Wrapper ---- */
+.auth-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.auth-input {
+  width: 100%;
+  height: var(--spacing-thumb-touch);
+  padding: 0 var(--spacing-gutter);
+  padding-right: 44px; /* Space for icon */
+  background: var(--color-surface-pure);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-md);
+  font: var(--font-body-reg);
+  color: var(--color-on-surface);
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.auth-input::placeholder {
+  color: var(--color-outline-variant);
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-fixed-dim);
+}
+
+.auth-input-icon {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-outline-variant);
+  font-size: 20px;
+  pointer-events: none;
+}
+
+/* ---- Password Toggle ---- */
+.auth-password-toggle {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: var(--color-outline-variant);
+  cursor: pointer;
+  border-radius: var(--radius-full);
+  transition: color 0.2s ease, background 0.2s ease;
+  min-width: 36px;
+  min-height: 36px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.auth-password-toggle:active {
+  color: var(--color-on-surface-variant);
+  background: var(--color-surface-container-low);
+}
+
+.auth-password-toggle .material-symbols-outlined {
+  font-size: 20px;
+}
+
+/* ---- Submit Button ---- */
+.auth-submit-btn {
+  width: 100%;
+  height: var(--spacing-thumb-touch);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-base);
+  background: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+  border: none;
+  border-radius: var(--radius-md);
+  font: var(--font-item-name);
+  font-size: 16px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.auth-submit-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.auth-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.auth-submit-btn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+/* ---- Switch Link (between login and create account) ---- */
+.auth-switch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: var(--spacing-gutter) 0 var(--spacing-base);
+}
+
+.auth-switch__text {
+  font: var(--font-unit-label);
+  color: var(--color-on-surface-variant);
+}
+
+.auth-switch__link {
+  background: none;
+  border: none;
+  font: var(--font-unit-label);
+  font-weight: 700;
+  color: var(--color-primary);
+  cursor: pointer;
+  padding: 4px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.auth-switch__link:active {
+  opacity: 0.7;
+}
+
+/* ---- Error Message ---- */
+.auth-error {
+  font: var(--font-unit-label);
+  color: var(--color-error);
+  padding: var(--spacing-base) var(--spacing-gutter);
+  background: var(--color-error-container);
+  border-radius: var(--radius-default);
+  margin-bottom: var(--spacing-gutter);
+}
+
+.auth-error--hidden {
+  display: none;
+}
+
+/* ---- Hero Section (Create Account only) ---- */
+.auth-hero {
+  text-align: center;
+  margin-bottom: var(--spacing-gutter);
+  padding: 0 var(--spacing-base);
+}
+
+.auth-hero__icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-full);
+  background: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--spacing-gutter);
+  box-shadow: var(--shadow-card);
+}
+
+.auth-hero__icon .material-symbols-outlined {
+  font-size: 32px;
+}
+
+.auth-hero__heading {
+  font: var(--font-headline-md);
+  color: var(--color-on-surface);
+  margin-bottom: var(--spacing-base);
+}
+
+.auth-hero__subtitle {
+  font: var(--font-unit-label);
+  color: var(--color-on-surface-variant);
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+/* ---- Guest State Card (in settings panel) ---- */
+.auth-guest-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--spacing-gutter);
+  gap: var(--spacing-gutter);
+}
+
+.auth-guest-card__icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-low);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-guest-card__icon .material-symbols-outlined {
+  font-size: 32px;
+  color: var(--color-primary);
+}
+
+.auth-guest-card__heading {
+  font: var(--font-item-name);
+  color: var(--color-on-surface);
+}
+
+.auth-guest-card__subtitle {
+  font: var(--font-unit-label);
+  color: var(--color-on-surface-variant);
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+.auth-guest-card__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-base);
+  width: 100%;
+}
+
+.auth-guest-btn--primary {
+  width: 100%;
+  height: var(--spacing-thumb-touch);
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font: var(--font-badge-caps);
+  font-size: 12px;
+  letter-spacing: var(--ls-badge-caps);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.auth-guest-btn--primary:active {
+  transform: scale(0.97);
+}
+
+.auth-guest-btn--outline {
+  width: 100%;
+  height: var(--spacing-thumb-touch);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--color-primary);
+  font: var(--font-badge-caps);
+  font-size: 12px;
+  letter-spacing: var(--ls-badge-caps);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.auth-guest-btn--outline:active {
+  background: var(--color-primary-container);
+}
+
+/* ---- Disabled sections (for guest state) ---- */
+.settings-section--disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.settings-section--disabled .settings-section__card {
+  border: 2px dashed var(--color-outline-variant);
+}
+
+.auth-locked-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--spacing-gutter);
+  gap: var(--spacing-base);
+}
+
+.auth-locked-card .material-symbols-outlined {
+  font-size: 24px;
+  color: var(--color-outline-variant);
+}
+
+.auth-locked-card__text {
+  font: var(--font-unit-label);
+  color: var(--color-on-surface-variant);
+}
+
+/* ---- Guest Data Sync toggle placeholder ---- */
+.auth-toggle-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-gutter);
+  min-height: var(--spacing-thumb-touch);
+}
+
+.auth-toggle-placeholder__left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-base);
+}
+
+.auth-toggle-placeholder__icon .material-symbols-outlined {
+  font-size: 20px;
+  color: var(--color-outline-variant);
+}
+
+.auth-toggle-placeholder__label {
+  font: var(--font-body-reg);
+  color: var(--color-on-surface);
+}
+
+.auth-toggle-placeholder__toggle {
+  width: 44px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-highest);
+  position: relative;
+}
+
+.auth-toggle-placeholder__toggle-dot {
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  background: var(--color-outline-variant);
+}

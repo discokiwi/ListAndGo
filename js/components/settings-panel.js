@@ -12,6 +12,7 @@ import { registerOverlay } from '../overlay-manager.js';
 import { addCategory, updateCategory, deleteCategory, getAllCategories, updateCategoryOrder } from '../store/categories.store.js';
 import { getAllRecipeCategories, addRecipeCategory, updateRecipeCategory, deleteRecipeCategory } from '../store/recipe-categories.store.js';
 import { STRINGS, t, setLanguage, getCurrentLanguage } from '../strings/i18n.js';
+import { isLoggedIn, getUser, logout } from '../store/auth.store.js';
 
 /**
  * The 14 category accent colors from design tokens.
@@ -208,77 +209,8 @@ export class SettingsDrawer extends HTMLElement {
           <button class="settings-tabs__btn" data-tab="items">${STRINGS.settings.tabs.items}</button>
         </nav>
         <div class="settings-drawer__body">
-          <div class="settings-tabpanel" data-panel="account">
-            <section>
-              <h3 class="settings-section__heading">${STRINGS.settings.account.heading}</h3>
-              <div class="settings-section__card">
-                <div class="settings-row settings-row--profile">
-                  <div class="settings-profile">
-                    <div class="settings-profile__avatar">
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="var(--color-on-surface-variant)"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                    </div>
-                    <div class="settings-profile__info">
-                      <p class="settings-profile__name">Sarah Jenkins</p>
-                      <p class="settings-profile__email">sarah.j@kitchen-manager.com</p>
-                    </div>
-                  </div>
-                </div>
-                <div class="settings-btn-group">
-                  <button class="btn btn--primary">${STRINGS.settings.account.update}</button>
-                  <button class="btn btn--danger">${STRINGS.settings.account.delete}</button>
-                </div>
-              </div>
-            </section>
-            <section>
-              <h3 class="settings-section__heading">${STRINGS.settings.account.familyHeading}</h3>
-              <div class="settings-section__card">
-                <div class="settings-family-row">
-                  <div class="settings-family-info">
-                    <svg class="settings-family-icon" width="24" height="24" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                    <div class="settings-family-detail">
-                      <span class="settings-family-name">Mark Jenkins</span>
-                      <span class="settings-family-role">${STRINGS.settings.account.admin}</span>
-                    </div>
-                  </div>
-                  <button class="settings-family-more" aria-label="${STRINGS.settings.account.moreOptions}"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg></button>
-                </div>
-                <div class="settings-family-row">
-                  <div class="settings-family-info">
-                    <svg class="settings-family-icon" width="24" height="24" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                    <div class="settings-family-detail">
-                      <span class="settings-family-name">Olivia Jenkins</span>
-                      <span class="settings-family-role">${STRINGS.settings.account.member}</span>
-                    </div>
-                  </div>
-                  <button class="settings-family-more" aria-label="${STRINGS.settings.account.moreOptions}"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg></button>
-                </div>
-                <button class="settings-invite-btn"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg> ${STRINGS.settings.account.invite}</button>
-              </div>
-            </section>
-            <!-- Language switch section -->
-            <section>
-              <h3 class="settings-section__heading">${STRINGS.settings.account.language}</h3>
-              <div class="settings-section__card">
-                <div class="settings-row">
-                  <span class="settings-row__label">${STRINGS.settings.account.language}</span>
-                  <div class="settings-lang-toggle">
-                    <button class="settings-lang-btn" data-lang="nl">Nederlands</button>
-                    <button class="settings-lang-btn" data-lang="en">English</button>
-                  </div>
-                </div>
-              </div>
-            </section>
-            <section>
-              <h3 class="settings-section__heading">${STRINGS.settings.account.resetHeading}</h3>
-              <div class="settings-section__card">
-                <div class="settings-row">
-                  <span class="settings-row__label">${STRINGS.settings.account.resetDescription}</span>
-                </div>
-                <div class="settings-btn-group">
-                  <button class="btn btn--danger" id="reset-defaults-btn">${STRINGS.settings.account.resetBtn}</button>
-                </div>
-              </div>
-            </section>
+          <div class="settings-tabpanel" data-panel="account" id="settings-account-tab">
+            <!-- Rendered by #renderAccountTab() -->
           </div>
 
           <div class="settings-tabpanel settings-tabpanel--hidden" data-panel="store">
@@ -353,13 +285,28 @@ export class SettingsDrawer extends HTMLElement {
       });
     });
 
+    this.#renderAccountTab();
+
     this.querySelector('#drawer-save-btn')?.addEventListener('click', () => {
       this.#saveStoreLayout();
       this.dispatchEvent(new CustomEvent('settings-save', { bubbles: true, composed: true, detail: { action: 'save' } }));
       this.close();
     });
 
-    this.querySelector('#reset-defaults-btn')?.addEventListener('click', () => this.#handleResetDefaults());
+    // Listen for auth changes to re-render the account tab
+    document.addEventListener('auth-changed', () => {
+      this.#renderAccountTab();
+    });
+
+    // Listen for open-login and open-create-account events (from auth sheet switching)
+    document.addEventListener('open-login', () => {
+      const loginSheet = /** @type {any} */ (document.querySelector('login-sheet'));
+      if (loginSheet && typeof loginSheet.open === 'function') loginSheet.open();
+    });
+    document.addEventListener('open-create-account', () => {
+      const createSheet = /** @type {any} */ (document.querySelector('create-account-sheet'));
+      if (createSheet && typeof createSheet.open === 'function') createSheet.open();
+    });
 
     // Wire language toggle buttons
     this.querySelectorAll('.settings-lang-btn').forEach((btn) => {
@@ -392,6 +339,207 @@ export class SettingsDrawer extends HTMLElement {
     document.addEventListener('language-changed', () => {
       this.innerHTML = '';
       this.connectedCallback();
+    });
+  }
+
+  /**
+   * Render the account tab panel based on authentication state.
+   * Business Logic: If logged in, shows the user's profile, family, and data sync sections.
+   * If logged out, shows a guest card with "Create Account" and "Log In" buttons,
+   * with disabled Family & Household and Data & Sync sections behind it.
+   * @returns {void}
+   */
+  #renderAccountTab() {
+    const container = this.querySelector('#settings-account-tab');
+    if (!container) return;
+
+    const user = getUser();
+    const loggedIn = isLoggedIn();
+
+    if (loggedIn && user) {
+      // Logged-in state: show profile, family, language, reset
+      container.innerHTML = `
+        <section>
+          <h3 class="settings-section__heading">${STRINGS.settings.account.heading}</h3>
+          <div class="settings-section__card">
+            <div class="settings-row settings-row--profile">
+              <div class="settings-profile">
+                <div class="settings-profile__avatar">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="var(--color-on-surface-variant)"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                </div>
+                <div class="settings-profile__info">
+                  <p class="settings-profile__name">${this.#escapeHtml(user.name)}</p>
+                  <p class="settings-profile__email">${this.#escapeHtml(user.email)}</p>
+                </div>
+              </div>
+            </div>
+            <div class="settings-btn-group">
+              <button class="btn btn--primary">${STRINGS.settings.account.update}</button>
+              <button class="btn btn--danger" id="logout-btn">${STRINGS.auth.loggedIn.logout}</button>
+            </div>
+          </div>
+        </section>
+        <section>
+          <h3 class="settings-section__heading">${STRINGS.auth.loggedIn.dataSync}</h3>
+          <div class="settings-section__card">
+            <div class="auth-toggle-placeholder">
+              <div class="auth-toggle-placeholder__left">
+                <span class="auth-toggle-placeholder__icon"><span class="material-symbols-outlined">cloud_done</span></span>
+                <span class="auth-toggle-placeholder__label">${STRINGS.auth.loggedIn.cloudSync}</span>
+              </div>
+              <div class="auth-toggle-placeholder__toggle">
+                <div class="auth-toggle-placeholder__toggle-dot" style="transform: translateX(20px); background: var(--color-primary);"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section>
+          <h3 class="settings-section__heading">${STRINGS.auth.loggedIn.familyHeading}</h3>
+          <div class="settings-section__card">
+            <div class="settings-family-row">
+              <div class="settings-family-info">
+                <svg class="settings-family-icon" width="24" height="24" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                <div class="settings-family-detail">
+                  <span class="settings-family-name">${this.#escapeHtml(user.name)}</span>
+                  <span class="settings-family-role">${STRINGS.auth.loggedIn.admin}</span>
+                </div>
+              </div>
+            </div>
+            <button class="settings-invite-btn"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg> ${STRINGS.auth.loggedIn.invite}</button>
+          </div>
+        </section>
+        <!-- Language switch section -->
+        <section>
+          <h3 class="settings-section__heading">${STRINGS.settings.account.language}</h3>
+          <div class="settings-section__card">
+            <div class="settings-row">
+              <span class="settings-row__label">${STRINGS.settings.account.language}</span>
+              <div class="settings-lang-toggle">
+                <button class="settings-lang-btn" data-lang="nl">Nederlands</button>
+                <button class="settings-lang-btn" data-lang="en">English</button>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section>
+          <h3 class="settings-section__heading">${STRINGS.settings.account.resetHeading}</h3>
+          <div class="settings-section__card">
+            <div class="settings-row">
+              <span class="settings-row__label">${STRINGS.settings.account.resetDescription}</span>
+            </div>
+            <div class="settings-btn-group">
+              <button class="btn btn--danger" id="reset-defaults-btn">${STRINGS.settings.account.resetBtn}</button>
+            </div>
+          </div>
+        </section>
+      `;
+
+      // Wire logout button
+      this.querySelector('#logout-btn')?.addEventListener('click', () => {
+        logout();
+      });
+
+      // Wire reset button
+      this.querySelector('#reset-defaults-btn')?.addEventListener('click', () => this.#handleResetDefaults());
+    } else {
+      // Guest (logged-out) state: show guest card + disabled sections
+      container.innerHTML = `
+        <section>
+          <h3 class="settings-section__heading">${STRINGS.auth.loggedOut.heading}</h3>
+          <div class="settings-section__card">
+            <div class="auth-guest-card">
+              <div class="auth-guest-card__icon">
+                <span class="material-symbols-outlined">account_circle</span>
+              </div>
+              <p class="auth-guest-card__heading">${STRINGS.auth.loggedOut.welcome}</p>
+              <p class="auth-guest-card__subtitle">${STRINGS.auth.loggedOut.subtitle}</p>
+              <div class="auth-guest-card__actions">
+                <button class="auth-guest-btn--primary" id="guest-create-account-btn">${STRINGS.auth.loggedOut.createAccount}</button>
+                <button class="auth-guest-btn--outline" id="guest-login-btn">${STRINGS.auth.loggedOut.login}</button>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section class="settings-section--disabled">
+          <h3 class="settings-section__heading">${STRINGS.auth.loggedIn.dataSync}</h3>
+          <div class="settings-section__card">
+            <div class="auth-toggle-placeholder">
+              <div class="auth-toggle-placeholder__left">
+                <span class="auth-toggle-placeholder__icon"><span class="material-symbols-outlined">cloud_off</span></span>
+                <span class="auth-toggle-placeholder__label">${STRINGS.auth.loggedIn.cloudSync}</span>
+              </div>
+              <div class="auth-toggle-placeholder__toggle">
+                <div class="auth-toggle-placeholder__toggle-dot"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section class="settings-section--disabled">
+          <h3 class="settings-section__heading">${STRINGS.auth.loggedIn.familyHeading}</h3>
+          <div class="settings-section__card">
+            <div class="auth-locked-card">
+              <span class="material-symbols-outlined">lock</span>
+              <p class="auth-locked-card__text">${STRINGS.auth.loggedOut.subtitle}</p>
+            </div>
+          </div>
+        </section>
+        <!-- Language switch section -->
+        <section>
+          <h3 class="settings-section__heading">${STRINGS.settings.account.language}</h3>
+          <div class="settings-section__card">
+            <div class="settings-row">
+              <span class="settings-row__label">${STRINGS.settings.account.language}</span>
+              <div class="settings-lang-toggle">
+                <button class="settings-lang-btn" data-lang="nl">Nederlands</button>
+                <button class="settings-lang-btn" data-lang="en">English</button>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section>
+          <h3 class="settings-section__heading">${STRINGS.settings.account.resetHeading}</h3>
+          <div class="settings-section__card">
+            <div class="settings-row">
+              <span class="settings-row__label">${STRINGS.settings.account.resetDescription}</span>
+            </div>
+            <div class="settings-btn-group">
+              <button class="btn btn--danger" id="reset-defaults-btn">${STRINGS.settings.account.resetBtn}</button>
+            </div>
+          </div>
+        </section>
+      `;
+
+      // Wire guest buttons to open auth sheets
+      this.querySelector('#guest-create-account-btn')?.addEventListener('click', () => {
+        const createSheet = /** @type {any} */ (document.querySelector('create-account-sheet'));
+        if (createSheet && typeof createSheet.open === 'function') createSheet.open();
+      });
+
+      this.querySelector('#guest-login-btn')?.addEventListener('click', () => {
+        const loginSheet = /** @type {any} */ (document.querySelector('login-sheet'));
+        if (loginSheet && typeof loginSheet.open === 'function') loginSheet.open();
+      });
+
+      // Wire reset button
+      this.querySelector('#reset-defaults-btn')?.addEventListener('click', () => this.#handleResetDefaults());
+    }
+
+    // Wire language toggle buttons
+    this.querySelectorAll('.settings-lang-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const lang = btn.getAttribute('data-lang');
+        if (lang) setLanguage(lang);
+      });
+    });
+
+    // Set active language button
+    const currentLang = getCurrentLanguage();
+    this.querySelectorAll('.settings-lang-btn').forEach((btn) => {
+      const lang = btn.getAttribute('data-lang');
+      if (lang === currentLang) {
+        btn.setAttribute('data-selected', 'true');
+        btn.classList.add('settings-lang-btn--active');
+      }
     });
   }
 

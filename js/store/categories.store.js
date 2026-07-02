@@ -2,7 +2,7 @@
 /**
  * Categories store for List&GO.
  * Business Logic: Provides CRUD operations on the `categories` Dexie table
- * with sync fields (familyId, updatedAt, isSynced). Seeded on first run with
+ * with sync fields (workspaceId, updatedAt, isSynced). Seeded on first run with
  * 11 default categories. Exposes an in-memory cache
  * so UI components can look up category names and colors synchronously.
  * @module
@@ -106,18 +106,19 @@ export async function refreshCategoryCache() {
 export async function seedCategories() {
   const count = await db.categories.count();
   if (count === 0) {
-    const familyId = 'default';
+    const workspaceId = 'default';
     const now = new Date().toISOString();
 
     /** @type {Category[]} */
     const defaultData = DEFAULT_CATEGORIES.map(({ name, color }, index) => ({
       id: crypto.randomUUID(),
-      familyId,
+      workspaceId,
       name,
       color,
       sortOrder: index,
       updatedAt: now,
       isSynced: 0,
+      isDeleted: 0,
     }));
 
     await db.categories.bulkAdd(defaultData);
@@ -147,7 +148,7 @@ export async function addCategory(name, color) {
   );
   await db.categories.add({
     id,
-    familyId: 'default',
+    workspaceId: 'default',
     name,
     color,
     sortOrder: maxOrder + 1,

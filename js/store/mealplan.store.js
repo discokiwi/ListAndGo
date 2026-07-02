@@ -79,7 +79,7 @@ export async function addMealPlan(recipeId, servingsTarget) {
 
   const plan = {
     id,
-    familyId: 'default',
+    workspaceId: 'default',
     date: now().slice(0, 10), // YYYY-MM-DD
     recipeId,
     servingsTarget: servingsTarget || 4,

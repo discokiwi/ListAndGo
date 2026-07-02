@@ -404,7 +404,7 @@ export class ItemEditor extends HTMLElement {
 
       if (this.#mode === 'add') {
         savedItemId = await addItem({
-          familyId: 'default',
+          workspaceId: 'default',
           name,
           categoryId,
           unitId,
@@ -471,7 +471,7 @@ export class ItemEditor extends HTMLElement {
       const { addItem } = await import('../store/items.store.js');
       const dup = { ...this.#currentItem };
       await addItem({
-        familyId: dup.familyId,
+        workspaceId: dup.workspaceId,
         name: dup.name,
         categoryId: dup.categoryId,
         unitId: dup.unitId,
